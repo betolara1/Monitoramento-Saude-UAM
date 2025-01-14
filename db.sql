@@ -76,7 +76,7 @@ CREATE TABLE consultas (
  pressao_arterial VARCHAR(20),
  glicemia VARCHAR(20),
  peso DECIMAL(5, 2),
- altura DECIMAL(4, 2),
+ altura VARCHAR(10),
  imc DECIMAL(5, 2),
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
  FOREIGN KEY (profissional_id) REFERENCES profissionais(id) ON DELETE SET NULL
@@ -105,7 +105,7 @@ CREATE TABLE historico_acompanhamento (
  pressao_arterial VARCHAR(20),
  glicemia VARCHAR(20),
  peso DECIMAL(5, 2),
- altura DECIMAL(4, 2),
+ altura VARCHAR(10),
  imc DECIMAL(5, 2),
  habitos_de_vida TEXT, -- Ex: exercício físico, alimentação, uso de álcool/tabaco
  emocao VARCHAR(100), -- Ex: ansioso, calmo, estressado

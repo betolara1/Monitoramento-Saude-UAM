@@ -3,17 +3,22 @@
 include "conexao.php";
 include "sidebar.php";
 
-// Verificar se o ID foi passado na URL
-if (!isset($_GET['id'])) {
-    header('Location: listar_pacientes.php');
-    exit;
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+    echo "<div class='container mt-5 alert alert-danger'>ID do usuário não fornecido.</div>";
+    exit();
 }
 
 $usuario_id = $_GET['id'];
 
 // Buscar informações do usuário e da doença
 $stmt = $conn->prepare("
-    SELECT u.*, p.tipo_doenca, p.historico_familiar, p.estado_civil, p.profissao 
+    SELECT 
+        u.*,
+        p.id as paciente_id, 
+        p.tipo_doenca,
+        p.historico_familiar,
+        p.estado_civil,
+        p.profissao 
     FROM usuarios u 
     LEFT JOIN pacientes p ON u.id = p.usuario_id 
     WHERE u.id = ?
@@ -23,11 +28,12 @@ $stmt->execute();
 $resultado = $stmt->get_result();
 $dados = $resultado->fetch_assoc();
 
-// Verificar se o usuário existe e tem doença cadastrada
-if (!$dados || !$dados['tipo_doenca']) {
-    header('Location: listar_pacientes.php');
-    exit;
+// Adicionar verificação após buscar os dados
+if (!$dados) {
+    echo "<div class='container mt-5 alert alert-danger'>Paciente não encontrado.</div>";
+    exit();
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -41,6 +47,7 @@ if (!$dados || !$dados['tipo_doenca']) {
         <h2>Editar DCNT - <?php echo htmlspecialchars($dados['nome']); ?></h2>
         <form action="salvar_edicao_pacientes_doenca.php" method="POST">
             <input type="hidden" name="usuario_id" value="<?php echo $usuario_id; ?>">
+            <input type="hidden" name="paciente_id" value="<?php echo $dados['paciente_id']; ?>">
             
             <div class="mb-3">
                 <label for="tipo_doenca" class="form-label">Tipo de Doença:</label>
