@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $_SESSION['nome'] = $usuario['nome'];
             $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
             
-            // Registra o log de acesso
+            // Registrar o login no log de acesso
             $ip = $_SERVER['REMOTE_ADDR'];
             $sql_log = "INSERT INTO logs_acesso (usuario_id, acao, endereco_ip) VALUES (?, 'login', ?)";
             $stmt_log = $conn->prepare($sql_log);

@@ -60,10 +60,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         );
 
         if ($stmt->execute()) {
+            // Registrar a ação no log
+            $ip = $_SERVER['REMOTE_ADDR'];
+            $acao = $consulta_id ? 'atualização de consulta' : 'nova consulta';
+            $sql_log = "INSERT INTO logs_acesso (usuario_id, acao, endereco_ip) VALUES (?, ?, ?)";
+            $stmt_log = $conn->prepare($sql_log);
+            $stmt_log->bind_param("iss", $_SESSION['usuario_id'], $acao, $ip);
+            $stmt_log->execute();
+
             echo json_encode([
                 'success' => true, 
                 'message' => 'Consulta cadastrada com sucesso',
-                'imc' => $imc // Opcional: retorna o IMC calculado
+                'imc' => $imc
             ]);
         } else {
             throw new Exception('Erro ao cadastrar consulta');

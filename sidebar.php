@@ -51,6 +51,11 @@ $is_paciente = $is_logged && $_SESSION['tipo_usuario'] === 'Paciente';
         <?php if ($is_logged): ?>
             <a href="logout.php">Sair</a> 
         <?php endif; ?>
+
+        <!-- Opção exclusiva para Admin -->
+        <?php if ($is_admin): ?>
+            <a href="visualizar_logs.php">Logs de Acesso</a>
+        <?php endif; ?>
     </div>
     <br>
 </body> 
