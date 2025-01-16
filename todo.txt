@@ -1,25 +1,5 @@
--- Tabela de Exames (resultados de exames dos pacientes)
-CREATE TABLE exames (
- id INT AUTO_INCREMENT PRIMARY KEY,
- paciente_id INT NOT NULL,
- tipo_exame VARCHAR(100),
- resultado TEXT,
- data_exame DATE NOT NULL,
- arquivo_exame VARCHAR(255), -- Link para arquivo na nuvem, caso necessário
- FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
-);
 
 
--- Tabela para Análises e Estatísticas
-CREATE TABLE analises_estatisticas (
- id INT AUTO_INCREMENT PRIMARY KEY,
- paciente_id INT NOT NULL,
- data_analise DATE,
- comparativo_pa VARCHAR(20),
- comparativo_glicemia VARCHAR(20),
- comparativo_risco_cardio VARCHAR(20),
- FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
-);
 
 
 -- Tabela de Logs de Acesso (para questões de segurança e rastreamento)

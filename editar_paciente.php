@@ -709,6 +709,181 @@ function temPermissao() {
             </table>
         </div>
 
+        <!-- Seção de Exames -->
+        <div class="section-card">
+            <h2 class="section-header">Exames</h2>
+            <?php if (temPermissao()): ?>
+                <div class="section-actions">
+                    <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                        Novo Exame
+                    </button>
+                </div>
+            <?php endif; ?>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo de Exame</th>
+                        <th>Resultado</th>
+                        <th>Arquivo</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC";
+                    $stmt_exames = $conn->prepare($query_exames);
+                    $stmt_exames->bind_param('i', $paciente_id);
+                    $stmt_exames->execute();
+                    $result_exames = $stmt_exames->get_result();
+
+                    while ($exame = $result_exames->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
+                            <td><?php echo $exame['tipo_exame']; ?></td>
+                            <td><?php echo nl2br($exame['resultado']); ?></td>
+                            <td>
+                                <?php if ($exame['arquivo_exame']): ?>
+                                    <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fas fa-file-medical"></i> Ver Arquivo
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Seção de Análises e Estatísticas -->
+        <div class="section-card">
+            <h2 class="section-header">Análises e Estatísticas</h2>
+            <?php if (temPermissao()): ?>
+                <div class="section-actions">
+                    <button onclick="abrirModalAnalise(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                        Nova Análise
+                    </button>
+                </div>
+            <?php endif; ?>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Pressão Arterial</th>
+                        <th>Glicemia</th>
+                        <th>Risco Cardiovascular</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC";
+                    $stmt_analises = $conn->prepare($query_analises);
+                    $stmt_analises->bind_param('i', $paciente_id);
+                    $stmt_analises->execute();
+                    $result_analises = $stmt_analises->get_result();
+
+                    while ($analise = $result_analises->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                            <td><?php echo $analise['comparativo_pa']; ?></td>
+                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <button onclick='editarAnalise(<?php echo json_encode($analise); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal de Análise -->
+        <div class="modal fade" id="modalAnalise" tabindex="-1" aria-labelledby="modalAnaliseLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAnaliseLabel">Nova Análise</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formAnalise" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="analise_id" id="analise_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="mb-3">
+                                <label>Data da Análise:</label>
+                                <input type="date" name="data_analise" id="data_analise" class="form-control" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Comparativo Pressão Arterial:</label>
+                                <select name="comparativo_pa" id="comparativo_pa" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Melhorou">Melhorou</option>
+                                    <option value="Estável">Estável</option>
+                                    <option value="Piorou">Piorou</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Comparativo Glicemia:</label>
+                                <select name="comparativo_glicemia" id="comparativo_glicemia" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Melhorou">Melhorou</option>
+                                    <option value="Estável">Estável</option>
+                                    <option value="Piorou">Piorou</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Comparativo Risco Cardiovascular:</label>
+                                <select name="comparativo_risco_cardio" id="comparativo_risco_cardio" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Baixo">Baixo</option>
+                                    <option value="Moderado">Moderado</option>
+                                    <option value="Alto">Alto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal de Medicamento -->
         <div class="modal fade" id="modalMedicamento" tabindex="-1" aria-labelledby="modalMedicamentoLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -823,6 +998,50 @@ function temPermissao() {
                                 <label>Hábitos de Vida:</label>
                                 <textarea name="habitos_de_vida" id="habitos_de_vida" class="form-control" rows="4"
                                           placeholder="Descreva os hábitos de vida (exercícios, alimentação, uso de álcool/tabaco, etc)"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Exame -->
+        <div class="modal fade" id="modalExame" tabindex="-1" aria-labelledby="modalExameLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalExameLabel">Novo Exame</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formExame" method="POST" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <input type="hidden" name="exame_id" id="exame_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Data do Exame:</label>
+                                    <input type="date" name="data_exame" id="data_exame" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Tipo de Exame:</label>
+                                    <input type="text" name="tipo_exame" id="tipo_exame" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Resultado:</label>
+                                <textarea name="resultado" id="resultado" class="form-control" rows="4"></textarea>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Arquivo do Exame:</label>
+                                <input type="file" name="arquivo_exame" id="arquivo_exame" class="form-control">
+                                <div id="arquivo_atual" class="mt-2"></div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -1824,6 +2043,175 @@ function temPermissao() {
                 });
             });
         });
+
+        function abrirModalExame(pacienteId) {
+            console.log('Abrindo modal para paciente:', pacienteId);
+            $('#formExame')[0].reset();
+            $('#exame_id').val('');
+            $('input[name="paciente_id"]').val(pacienteId);
+            $('#arquivo_atual').html('');
+            $('#modalExameLabel').text('Novo Exame');
+            $('#modalExame').modal('show');
+        }
+
+        function editarExame(exame) {
+            console.log('Editando exame:', exame);
+            $('#exame_id').val(exame.id);
+            $('#data_exame').val(exame.data_exame);
+            $('#tipo_exame').val(exame.tipo_exame);
+            $('#resultado').val(exame.resultado);
+            
+            if (exame.arquivo_exame) {
+                $('#arquivo_atual').html(
+                    `<p>Arquivo atual: <a href="${exame.arquivo_exame}" target="_blank">Ver arquivo</a></p>`
+                );
+            } else {
+                $('#arquivo_atual').html('');
+            }
+            
+            $('#modalExameLabel').text('Editar Exame');
+            $('#modalExame').modal('show');
+        }
+
+        function excluirExame(exameId) {
+            if (confirm('Tem certeza que deseja excluir este exame?')) {
+                $.ajax({
+                    url: 'excluir_exame.php',
+                    type: 'POST',
+                    data: { exame_id: exameId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Exame excluído com sucesso!');
+                            location.reload();
+                        } else {
+                            alert(response.message || 'Erro ao excluir exame');
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao processar a requisição');
+                    }
+                });
+            }
+        }
+
+        $(document).ready(function() {
+            // Manipular o envio do formulário de exame
+            $('#formExame').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Debug - mostrar dados antes do envio
+                console.log('Dados do formulário:', {
+                    paciente_id: $('#formExame input[name="paciente_id"]').val(),
+                    exame_id: $('#exame_id').val(),
+                    data_exame: $('#data_exame').val(),
+                    tipo_exame: $('#tipo_exame').val(),
+                    resultado: $('#resultado').val()
+                });
+
+                let formData = new FormData(this);
+
+                // Debug - mostrar FormData
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
+                $.ajax({
+                    url: 'salvar_exame.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log('Resposta do servidor:', response);
+                        if (response.success) {
+                            alert('Exame salvo com sucesso!');
+                            $('#modalExame').modal('hide');
+                            location.reload();
+                        } else {
+                            alert('Erro ao salvar: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro na requisição:', {
+                            status: status,
+                            error: error,
+                            response: xhr.responseText
+                        });
+                        alert('Erro ao processar a requisição. Verifique o console.');
+                    }
+                });
+            });
+        });
+
+        $(document).ready(function() {
+            $('#formAnalise').on('submit', function(e) {
+                e.preventDefault();
+                
+                let formData = new FormData(this);
+                
+                $.ajax({
+                    url: 'salvar_analise.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Análise salva com sucesso!');
+                            $('#modalAnalise').modal('hide');
+                            location.reload();
+                        } else {
+                            alert('Erro ao salvar: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Erro ao processar a requisição');
+                        console.error(xhr, status, error);
+                    }
+                });
+            });
+        });
+
+        function abrirModalAnalise(pacienteId) {
+            $('#formAnalise')[0].reset();
+            $('#analise_id').val('');
+            $('#modalAnaliseLabel').text('Nova Análise');
+            $('#modalAnalise').modal('show');
+        }
+
+        function editarAnalise(analise) {
+            $('#analise_id').val(analise.id);
+            $('#data_analise').val(analise.data_analise);
+            $('#comparativo_pa').val(analise.comparativo_pa);
+            $('#comparativo_glicemia').val(analise.comparativo_glicemia);
+            $('#comparativo_risco_cardio').val(analise.comparativo_risco_cardio);
+            
+            $('#modalAnaliseLabel').text('Editar Análise');
+            $('#modalAnalise').modal('show');
+        }
+
+        function excluirAnalise(analiseId) {
+            if (confirm('Tem certeza que deseja excluir esta análise?')) {
+                $.ajax({
+                    url: 'excluir_analise.php',
+                    type: 'POST',
+                    data: { analise_id: analiseId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Análise excluída com sucesso!');
+                            location.reload();
+                        } else {
+                            alert(response.message || 'Erro ao excluir análise');
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao processar a requisição');
+                    }
+                });
+            }
+        }
     </script>
 
 </body>
