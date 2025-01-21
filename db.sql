@@ -6,9 +6,11 @@ USE medicina;
 CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
-    tipo_usuario ENUM('Paciente', 'Profissional', 'Familia', 'Cidadão', 'Admin') NOT NULL,
+    tipo_usuario ENUM('Admin', 'Medico', 'Enfermeiro', 'ACS', 'Paciente') NOT NULL,
+    numero_familia VARCHAR(10) NOT NULL,
     telefone VARCHAR(20),
     cep VARCHAR(10) NOT NULL,
     rua VARCHAR(100) NOT NULL,
@@ -49,6 +51,7 @@ CREATE TABLE paciente_profissional (
     id INT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
     profissional_id INT NOT NULL,
+    tipo_profissional ENUM('Medico', 'Enfermeiro', 'ACS') NOT NULL,
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
     FOREIGN KEY (profissional_id) REFERENCES profissionais(id) ON DELETE CASCADE
 );
@@ -72,16 +75,17 @@ CREATE TABLE consultas (
  paciente_id INT NOT NULL,
  profissional_id INT,
  data_consulta DATE NOT NULL,
- observacoes TEXT,
- pressao_arterial VARCHAR(20),
- glicemia VARCHAR(20),
- peso DECIMAL(5, 2),
+ observacoes TEXT;
+ pressao_arterial VARCHAR(10),
+ glicemia VARCHAR(10),
+ peso DECIMAL(5,2),
  altura VARCHAR(10),
- imc DECIMAL(5, 2),
+ imc DECIMAL(4,1),
+ estado_emocional VARCHAR(50),
+ habitos_vida TEXT,
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
  FOREIGN KEY (profissional_id) REFERENCES profissionais(id) ON DELETE SET NULL
 );
-
 
 -- Tabela de Medicamentos e Controle de Uso
 CREATE TABLE medicamentos (
@@ -93,22 +97,6 @@ CREATE TABLE medicamentos (
  observacoes TEXT,
  data_inicio DATE,
  data_fim DATE,
- FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
-);
-
-
--- Tabela de Histórico de Acompanhamento
-CREATE TABLE historico_acompanhamento (
- id INT AUTO_INCREMENT PRIMARY KEY,
- paciente_id INT NOT NULL,
- data_acompanhamento DATE NOT NULL,
- pressao_arterial VARCHAR(20),
- glicemia VARCHAR(20),
- peso DECIMAL(5, 2),
- altura VARCHAR(10),
- imc DECIMAL(5, 2),
- habitos_de_vida TEXT, -- Ex: exercício físico, alimentação, uso de álcool/tabaco
- emocao VARCHAR(100), -- Ex: ansioso, calmo, estressado
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
 

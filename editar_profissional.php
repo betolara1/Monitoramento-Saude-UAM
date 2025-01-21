@@ -1,6 +1,7 @@
 <?php
-include "sidebar.php";
 include "conexao.php";
+include 'verificar_login.php';
+include "sidebar.php";
 
 $id = $_GET['id'];
 
@@ -159,6 +160,7 @@ $profissional = $stmt->get_result()->fetch_assoc();
             "Medicina Legal e Perícia Médica",
             "Medicina Nuclear",
             "Medicina Preventiva e Social",
+            "Médico de Família",
             "Nefrologia",
             "Neurocirurgia",
             "Neurologia",
@@ -198,24 +200,24 @@ $profissional = $stmt->get_result()->fetch_assoc();
             "CRAB Piracicamirim",
             "CRAB Vila Rezende",
             "CRAB Vila Sônia",
-            "PSF 1° de Maio",
-            "PSF Algodoal",
-            "PSF Anhumas",
-            "PSF Artemis",
-            "PSF Boa Esperança",
-            "PSF Chapadão",
-            "PSF Costa Rica",
-            "PSF Jardim Gilda",
-            "PSF Jardim Vitória",
-            "PSF Monte Líbano",
-            "PSF Novo Horizonte",
-            "PSF Santa Fé",
-            "PSF Santa Rosa",
-            "PSF Santo Antonio",
-            "PSF São Francisco",
-            "PSF Serra Verde",
-            "PSF Tanquinho",
-            "PSF Tupi",
+            "USF 1° de Maio",
+            "USF Algodoal",
+            "USF Anhumas",
+            "USF Artemis",
+            "USF Boa Esperança",
+            "USF Chapadão",
+            "USF Costa Rica",
+            "USF Jardim Gilda",
+            "USF Jardim Vitória",
+            "USF Monte Líbano",
+            "USF Novo Horizonte",
+            "USF Santa Fé",
+            "USF Santa Rosa",
+            "USF Santo Antonio",
+            "USF São Francisco",
+            "USF Serra Verde",
+            "USF Tanquinho",
+            "USF Tupi",
             "Santa Casa de Piracicaba",
             "Hospital dos Fornecedores de Cana",
             "Hospital Unimed Piracicaba"

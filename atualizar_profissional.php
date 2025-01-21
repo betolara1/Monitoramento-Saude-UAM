@@ -1,34 +1,30 @@
 <?php
 include "conexao.php";
+include 'verificar_login.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = $_POST['id'];
-    $usuario_id = $_POST['usuario_id'];
+$response = ['success' => false, 'message' => ''];
+
+try {
+    $profissional_id = $_POST['profissional_id'];
     $especialidade = $_POST['especialidade'];
-    $registro_profissional = $_POST['registro_profissional'];
     $unidade_saude = $_POST['unidade_saude'];
+    $registro_profissional = $_POST['registro_profissional'] === 'null' ? null : $_POST['registro_profissional'];
 
-    // Prepare the SQL statement
-    $stmt = $conn->prepare("UPDATE profissionais SET usuario_id = ?, especialidade = ?, registro_profissional = ?, unidade_saude = ? WHERE id = ?");
-    $stmt->bind_param("isssi", $usuario_id, $especialidade, $registro_profissional, $unidade_saude, $id);
-
-    // Execute the statement
-    if ($stmt->execute()) {
-        // Redirect to a success page or list of professionals
-        header("Location: listar_profissionais.php?success=2");
-        exit();
+    $sql = "UPDATE profissionais SET 
+            especialidade = ?, 
+            registro_profissional = ?, 
+            unidade_saude = ? 
+            WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sssi", $especialidade, $registro_profissional, $unidade_saude, $profissional_id);
+    
+    if($stmt->execute()) {
+        $response['success'] = true;
     } else {
-        // If there's an error, redirect back to the form with an error message
-        header("Location: editar_profissionais.php?id=$id&error=1");
-        exit();
+        $response['message'] = "Erro ao atualizar no banco de dados";
     }
-
-    $stmt->close();
-} else {
-    // If the form wasn't submitted, redirect to the list of professionals
-    header("Location: listar_profissionais.php");
-    exit();
+} catch (Exception $e) {
+    $response['message'] = "Erro: " . $e->getMessage();
 }
 
-$conn->close();
-?>
+echo json_encode($response);

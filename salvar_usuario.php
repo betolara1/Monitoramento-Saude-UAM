@@ -13,9 +13,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Prepara a query SQL com todas as colunas necessárias
     $sql = "INSERT INTO usuarios (
         nome, 
+        cpf,
         email, 
         senha, 
         tipo_usuario, 
+        numero_familia,
         telefone, 
         cep, 
         rua, 
@@ -26,16 +28,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         estado,
         data_nascimento,
         sexo
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
     // Bind dos parâmetros na mesma ordem das colunas
-    $stmt->bind_param("ssssssssssssss", 
+    $stmt->bind_param("ssssssssssssssss", 
         $_POST['nome'],
+        $_POST['cpf'],
         $_POST['email'],
         $senha_hash,
         $_POST['tipo_usuario'],
+        $_POST['numero_familia'],
         $_POST['telefone'],
         $_POST['cep'],
         $_POST['rua'],
@@ -49,9 +53,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     );
     
     if ($stmt->execute()) {
-        header("Location: index.php");
+        echo "<script>alert('Cadastro realizado com sucesso!'); window.location.href='cadastro_usuario.php';</script>";
     } else {
-        header("Location: index.php");
+        echo "<script>alert('Erro ao cadastrar usuario: " . $stmt->error . "'); window.location.href='cadastro_usuario.php';</script>";
     }
     
     $conn->close();

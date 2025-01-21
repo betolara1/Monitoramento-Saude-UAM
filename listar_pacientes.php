@@ -1,21 +1,23 @@
 <?php
 include "conexao.php";
-include "sidebar.php";
 include 'verificar_login.php';
+include "sidebar.php";
 
 // Verifica o tipo de usuário
 $is_admin = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] === 'Admin';
-$is_profissional = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] === 'Profissional';
+$is_medico = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] === 'Medico';
+$is_enfermeiro = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] === 'Enfermeiro';
 $is_paciente = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] === 'Paciente';
 $usuario_id = $_SESSION['usuario_id'] ?? null;
 
 // Query SQL diferente baseada no tipo de usuário
-if ($is_admin || $is_profissional) {
+if ($is_admin || $is_medico || $is_enfermeiro || $is_acs) {
     // Admin e Profissional veem todos os pacientes
     $sql = "SELECT 
         u.*,
         p.id as paciente_id,
-        p.tipo_doenca
+        p.tipo_doenca,
+        u.cpf
         FROM usuarios u 
         LEFT JOIN pacientes p ON u.id = p.usuario_id 
         WHERE u.tipo_usuario = 'Paciente' 
@@ -26,7 +28,8 @@ if ($is_admin || $is_profissional) {
     $sql = "SELECT 
         u.*,
         p.id as paciente_id,
-        p.tipo_doenca
+        p.tipo_doenca,
+        u.cpf
         FROM usuarios u 
         LEFT JOIN pacientes p ON u.id = p.usuario_id 
         WHERE u.tipo_usuario = 'Paciente' 
@@ -40,7 +43,7 @@ $stmt->execute();
 $usuarios = $stmt->get_result();
 
 // Ajusta o título baseado no tipo de usuário
-$titulo = ($is_admin || $is_profissional) ? "Lista de Pacientes" : "Meus Dados";
+$titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pacientes" : "Meus Dados";
 ?>
 
 <!DOCTYPE html>
@@ -167,13 +170,13 @@ $titulo = ($is_admin || $is_profissional) ? "Lista de Pacientes" : "Meus Dados";
     <div class="container">
         <h1><?php echo $titulo; ?></h1>
         
-        <?php if ($is_admin || $is_profissional): ?>
+        <?php if ($is_admin || $is_medico || $is_enfermeiro || $is_acs): ?>
             <div class="search-box">
                 <input type="text" 
                        id="busca" 
                        class="form-control" 
                        onkeyup="filtrarPacientes()" 
-                       placeholder="Buscar por nome, email ou telefone...">
+                       placeholder="Buscar por nome, CPF, email ou telefone...">
             </div>
         <?php endif; ?>
         
@@ -182,6 +185,7 @@ $titulo = ($is_admin || $is_profissional) ? "Lista de Pacientes" : "Meus Dados";
                 <thead>
                     <tr>
                         <th>Nome</th>
+                        <th>CPF</th>
                         <th>Email</th>
                         <th>Telefone</th>
                         <th>Status</th>
@@ -192,6 +196,7 @@ $titulo = ($is_admin || $is_profissional) ? "Lista de Pacientes" : "Meus Dados";
                     <?php foreach ($usuarios as $usuario): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
+                            <td><?php echo htmlspecialchars($usuario['cpf'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($usuario['email']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['telefone']); ?></td>
                             <td>
@@ -237,7 +242,7 @@ $titulo = ($is_admin || $is_profissional) ? "Lista de Pacientes" : "Meus Dados";
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     
-    <?php if ($is_admin || $is_profissional): ?>
+    <?php if ($is_admin || $is_medico || $is_enfermeiro || $is_acs): ?>
     <script>
     function filtrarPacientes() {
         const input = document.getElementById('busca');
@@ -247,10 +252,12 @@ $titulo = ($is_admin || $is_profissional) ? "Lista de Pacientes" : "Meus Dados";
 
         for (let row of rows) {
             const nome = row.cells[0].textContent.toLowerCase();
-            const email = row.cells[1].textContent.toLowerCase();
-            const telefone = row.cells[2].textContent.toLowerCase();
+            const cpf = row.cells[1].textContent.toLowerCase();
+            const email = row.cells[2].textContent.toLowerCase();
+            const telefone = row.cells[3].textContent.toLowerCase();
             
             if (nome.includes(filter) || 
+                cpf.includes(filter) || 
                 email.includes(filter) || 
                 telefone.includes(filter)) {
                 row.style.display = '';

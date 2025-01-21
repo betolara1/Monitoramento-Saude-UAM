@@ -34,7 +34,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 case 'Admin':
                     header("Location: index.php");
                     break;
-                case 'Profissional':
+                case 'Medico':
+                    header("Location: index.php");
+                    break;
+                case 'Enfermeiro':
                     header("Location: index.php");
                     break;
                 case 'Paciente':

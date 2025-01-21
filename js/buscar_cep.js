@@ -2,6 +2,7 @@
 $(document).ready(function() {
     $('#cep').mask('00000-000');
     $('#telefone').mask('(00) 0000-00000');
+    $('#numero_familia').mask('00000000');
 
     $('#cep').blur(function() {
         var cep = $(this).val().replace(/\D/g, '');

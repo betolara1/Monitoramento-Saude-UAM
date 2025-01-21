@@ -4,7 +4,9 @@ include "conexao.php";
 // Verifica se o usuário está logado e seu tipo
 $is_logged = isset($_SESSION['tipo_usuario']);
 $is_admin = $is_logged && $_SESSION['tipo_usuario'] === 'Admin';
-$is_profissional = $is_logged && $_SESSION['tipo_usuario'] === 'Profissional';
+$is_medico = $is_logged && $_SESSION['tipo_usuario'] === 'Medico';
+$is_enfermeiro = $is_logged && $_SESSION['tipo_usuario'] === 'Enfermeiro';
+$is_acs = $is_logged && $_SESSION['tipo_usuario'] === 'ACS';
 $is_paciente = $is_logged && $_SESSION['tipo_usuario'] === 'Paciente';
 ?>
 
@@ -32,29 +34,41 @@ $is_paciente = $is_logged && $_SESSION['tipo_usuario'] === 'Paciente';
 
         <!-- Cadastro disponível apenas para deslogados -->
         <?php if (!$is_logged): ?>
-            <a href="cadastro_usuario.php">Cadastrar Usuario</a>
+            <a href="cadastro_usuario.php">Cadastro</a>
         <?php endif; ?>
 
         <!-- Opções para Admin e Profissional -->
-        <?php if ($is_admin || $is_profissional): ?>
-            <a href="cadastro_usuario.php">Cadastrar Usuario</a>
+        <?php if ($is_admin): ?>
+            <a href="cadastro_usuario.php">Cadastro</a>
             <a href="listar_profissionais.php">Profissionais</a>
+            <a href="listar_pacientes.php">Pacientes</a>
+        <?php endif; ?>
+
+        <?php if ($is_medico || $is_enfermeiro): ?>
+            <a href="cadastro_usuario.php">Cadastro</a>
+            <a href="listar_profissionais.php">Meus Dados</a>
+            <a href="listar_pacientes.php">Pacientes</a>
+        <?php endif; ?>
+
+        <?php if ($is_acs): ?>
+            <a href="cadastro_usuario.php">Cadastro</a>
+            <a href="listar_profissionais.php">Meus Dados</a>
             <a href="listar_pacientes.php">Pacientes</a>
         <?php endif; ?>
 
         <!-- Opção exclusiva para Paciente -->
         <?php if ($is_paciente): ?>
-            <a href="listar_pacientes.php">Paciente</a>
-        <?php endif; ?>
-
-        <!-- Logout apenas para usuários logados -->
-        <?php if ($is_logged): ?>
-            <a href="logout.php">Sair</a> 
+            <a href="listar_pacientes.php">Meus Dados</a>
         <?php endif; ?>
 
         <!-- Opção exclusiva para Admin -->
         <?php if ($is_admin): ?>
             <a href="visualizar_logs.php">Logs de Acesso</a>
+        <?php endif; ?>
+
+        <!-- Logout apenas para usuários logados -->
+        <?php if ($is_logged): ?>
+            <a href="logout.php">Sair</a> 
         <?php endif; ?>
     </div>
     <br>
