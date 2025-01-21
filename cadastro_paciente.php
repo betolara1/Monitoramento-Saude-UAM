@@ -159,6 +159,19 @@ if (!$usuario) {
                         <option value="">Selecione o tipo de doença...</option>
                         <option value="Hipertensão">Hipertensão</option>
                         <option value="Diabetes">Diabetes</option>
+                        <option value="Doenças Cardiovasculares">Doenças Cardiovasculares</option>
+                        <option value="Asma">Asma</option>
+                        <option value="DPOC">Doença Pulmonar Obstrutiva Crônica (DPOC)</option>
+                        <option value="Câncer de Mama">Câncer de Mama</option>
+                        <option value="Câncer de Pulmão">Câncer de Pulmão</option>
+                        <option value="Câncer Colorretal">Câncer Colorretal</option>
+                        <option value="Câncer de Próstata">Câncer de Próstata</option>
+                        <option value="Doenças Renais Crônicas">Doenças Renais Crônicas</option>
+                        <option value="Obesidade">Obesidade</option>
+                        <option value="Depressão">Depressão</option>
+                        <option value="Ansiedade">Ansiedade</option>
+                        <option value="Artrite">Artrite</option>
+                        <option value="Osteoporose">Osteoporose</option>
                     </select>
                 </div>
 

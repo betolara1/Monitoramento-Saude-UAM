@@ -7,13 +7,6 @@ paciente  (permissão de usuario)
 
 
 
-tipo de doença:
-pegar todos os tipos de doença que eles vão passar
-
-
-
-
-
 editar paciente:
 
 colocar fotos no Acompanhamento em casa para o usuario se localizar

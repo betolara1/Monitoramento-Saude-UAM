@@ -645,9 +645,22 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <div class="mb-3">
                                 <label for="edit_tipo_doenca" class="form-label">Tipo de Doença:</label>
                                 <select class="form-select" id="edit_tipo_doenca" name="tipo_doenca" required>
-                                    <option value="">Selecione...</option>
-                                    <option value="Diabetes">Diabetes</option>
+                                <option value="">Selecione o tipo de doença...</option>
                                     <option value="Hipertensão">Hipertensão</option>
+                                    <option value="Diabetes">Diabetes</option>
+                                    <option value="Doenças Cardiovasculares">Doenças Cardiovasculares</option>
+                                    <option value="Asma">Asma</option>
+                                    <option value="DPOC">Doença Pulmonar Obstrutiva Crônica (DPOC)</option>
+                                    <option value="Câncer de Mama">Câncer de Mama</option>
+                                    <option value="Câncer de Pulmão">Câncer de Pulmão</option>
+                                    <option value="Câncer Colorretal">Câncer Colorretal</option>
+                                    <option value="Câncer de Próstata">Câncer de Próstata</option>
+                                    <option value="Doenças Renais Crônicas">Doenças Renais Crônicas</option>
+                                    <option value="Obesidade">Obesidade</option>
+                                    <option value="Depressão">Depressão</option>
+                                    <option value="Ansiedade">Ansiedade</option>
+                                    <option value="Artrite">Artrite</option>
+                                    <option value="Osteoporose">Osteoporose</option>
                                 </select>
                             </div>
 
@@ -1277,6 +1290,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 $query_medicos = "SELECT p.id, u.nome, p.especialidade 
                                                 FROM profissionais p 
                                                 JOIN usuarios u ON p.usuario_id = u.id 
+                                                WHERE u.tipo_usuario = 'Medico'
                                                 ORDER BY u.nome";
                                 $result_medicos = $conn->query($query_medicos);
                                 while($medico = $result_medicos->fetch_assoc()) {
@@ -1316,6 +1330,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             $query_prof = "SELECT p.id, u.nome 
                                            FROM profissionais p 
                                            JOIN usuarios u ON p.usuario_id = u.id 
+                                           WHERE u.tipo_usuario = 'Medico'
                                            ORDER BY u.nome";
                             $result_prof = $conn->query($query_prof);
                             while($row = $result_prof->fetch_assoc()) {
