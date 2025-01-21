@@ -444,6 +444,17 @@ function temPermissao() {
         .btn-edit:hover {
             background-color: #1976D2;
         }
+        /* Estilo para mostrar a classificação do IMC no hover */
+        #imc[title]:hover:after {
+            content: attr(title);
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -1055,149 +1066,6 @@ function temPermissao() {
             </div>
         </div>
 
-        <!-- Seção de Histórico Clínico -->
-        <div class="section-card">
-            <h2 class="section-header">Histórico Clínico do Paciente</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
-                    <button onclick="abrirModalConsulta(<?php echo $paciente_id; ?>)" 
-                            class="btn btn-primary"
-                            <?php echo ($_SESSION['tipo_usuario'] === 'Enfermeiro' ? 'disabled' : ''); ?>>
-                        <i class="fas fa-plus"></i> Nova Consulta
-                        <?php if ($_SESSION['tipo_usuario'] === 'Enfermeiro'): ?>
-                            <span class="tooltip-text">(Apenas médicos podem criar novas consultas)</span>
-                        <?php endif; ?>
-                    </button>
-                </div>
-            <?php endif; ?>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Profissional</th>
-                        <th>Pressão Arterial</th>
-                        <th>Glicemia</th>
-                        <th>Peso</th>
-                        <th>Altura</th>
-                        <th>IMC</th>
-                        <th>Hábitos de Vida</th>
-                        <th>Estado Emocional</th>
-                        <th>Observações</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query = "SELECT c.*, 
-                             COALESCE(u.nome, 'Não informado') as nome_profissional,
-                             p.especialidade,
-                             p.unidade_saude
-                             FROM consultas c 
-                             LEFT JOIN profissionais p ON c.profissional_id = p.id 
-                             LEFT JOIN usuarios u ON p.usuario_id = u.id
-                             WHERE c.paciente_id = ? 
-                             ORDER BY c.data_consulta DESC";
-                    
-                    $stmt = $conn->prepare($query);
-                    $stmt->bind_param('i', $paciente_id);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-
-                    while ($registro = mysqli_fetch_assoc($result)):
-                    ?>
-                        <tr>
-                            <td><?php echo date('d/m/Y', strtotime($registro['data_consulta'])); ?></td>
-                            <td>
-                                <?php 
-                                    echo htmlspecialchars($registro['nome_profissional']);
-                                    if (!empty($registro['especialidade'])) {
-                                        echo " (" . htmlspecialchars($registro['especialidade']) . ")";
-                                    }
-                                ?>
-                            </td>
-                            <td><?php echo htmlspecialchars($registro['pressao_arterial']); ?></td>
-                            <td><?php echo htmlspecialchars($registro['glicemia']); ?></td>
-                            <td><?php echo $registro['peso'] ? number_format($registro['peso'], 2) . ' kg' : '-'; ?></td>
-                            <td><?php echo $registro['altura'] ? number_format($registro['altura'], 1) . ' cm' : '-'; ?></td>
-                            <td><?php echo $registro['imc'] ? number_format($registro['imc'], 1) : '-'; ?></td>
-                            <td>
-                                <?php 
-                                    if (!empty($registro['habitos_vida'])) {
-                                        echo '<span class="text-truncate d-inline-block" style="max-width: 150px;" title="' . 
-                                             htmlspecialchars($registro['habitos_vida']) . '">' . 
-                                             nl2br(htmlspecialchars($registro['habitos_vida'])) . 
-                                             '</span>';
-                                    } else {
-                                        echo '-';
-                                    }
-                                ?>
-                            </td>
-                            <td>
-                                <?php 
-                                    echo $registro['estado_emocional'] ? 
-                                        htmlspecialchars($registro['estado_emocional']) : 
-                                        '-'; 
-                                ?>
-                            </td>
-                            <td>
-                                <?php 
-                                    if (!empty($registro['observacoes'])) {
-                                        echo '<span class="text-truncate d-inline-block" style="max-width: 150px;" title="' . 
-                                             htmlspecialchars($registro['observacoes']) . '">' . 
-                                             nl2br(htmlspecialchars($registro['observacoes'])) . 
-                                             '</span>';
-                                    } else {
-                                        echo '-';
-                                    }
-                                ?>
-                            </td>
-                            <?php if (temPermissao()): ?>
-                                <td>
-                                    <div class="btn-group">
-                                        <?php
-                                        $pode_editar = false;
-                                        
-                                        // Admin pode editar tudo
-                                        if ($_SESSION['tipo_usuario'] === 'Admin') {
-                                            $pode_editar = true;
-                                        }
-                                        // Médico pode editar suas próprias consultas e de enfermeiros
-                                        else if ($_SESSION['tipo_usuario'] === 'Medico') {
-                                            $pode_editar = true;
-                                        }
-                                        // Enfermeiro pode editar apenas suas próprias consultas
-                                        else if ($_SESSION['tipo_usuario'] === 'Enfermeiro' && 
-                                                $_SESSION['id'] == $registro['profissional_id']) {
-                                            $pode_editar = true;
-                                        }
-                                        ?>
-
-                                        <?php if ($pode_editar): ?>
-                                            <button onclick='editarConsulta(<?php echo json_encode($registro, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
-                                                    class="btn btn-sm btn-warning">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            
-                                            <?php if ($_SESSION['tipo_usuario'] === 'Admin' || 
-                                                    ($_SESSION['tipo_usuario'] === 'Medico' && $_SESSION['id'] == $registro['profissional_id'])): ?>
-                                                <button onclick="excluirConsulta(<?php echo $registro['id']; ?>)" 
-                                                        class="btn btn-sm btn-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-
         <style>
         .section-actions {
             position: relative;
@@ -1240,9 +1108,35 @@ function temPermissao() {
                     </div>
                     <form id="formConsulta" method="POST">
                         <div class="modal-body">
-                            <input type="hidden" name="paciente_id" id="consulta_paciente_id">
                             <input type="hidden" name="consulta_id" id="consulta_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                             
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="profissional" class="form-label">Profissional*:</label>
+                                    <select class="form-select" id="profissional" name="profissional" required>
+                                        <option value="">Selecione...</option>
+                                        <?php
+                                        // Consulta para obter os profissionais
+                                        $sql = "SELECT id, nome, tipo_usuario FROM usuarios WHERE tipo_usuario IN ('Medico', 'Enfermeiro')";
+                                        $result = $conn->query($sql);
+
+                                        // Verifica se há resultados e preenche o select
+                                        if ($result->num_rows > 0) {
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<option value='" . $row['id'] . "'>" . $row['nome'] . " (" . $row['tipo_usuario'] . ")</option>";
+                                            }
+                                        } else {
+                                            echo "<option value=''>Nenhum profissional encontrado</option>";
+                                        }
+
+                                        // Fecha a conexão
+                                        $conn->close();
+                                        ?>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label for="data_consulta" class="form-label">Data da Consulta*:</label>
@@ -1250,7 +1144,7 @@ function temPermissao() {
                                 </div>
                                 <div class="col-md-6">
                                     <label for="pressao_arterial" class="form-label">Pressão Arterial:</label>
-                                    <input type="text" class="form-control" id="pressao_arterial" name="pressao_arterial" 
+                                    <input type="text" class="form-control" id="pressao_arterial" name="pressao_arterial" required
                                            placeholder="Ex: 120/80" maxlength="7">
                                 </div>
                             </div>
@@ -1258,17 +1152,17 @@ function temPermissao() {
                             <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label for="glicemia" class="form-label">Glicemia (mg/dL):</label>
-                                    <input type="text" class="form-control" id="glicemia" name="glicemia" 
+                                    <input type="text" class="form-control" id="glicemia" name="glicemia" required
                                            placeholder="Ex: 100">
                                 </div>
                                 <div class="col-md-3">
                                     <label for="peso" class="form-label">Peso (kg):</label>
-                                    <input type="text" class="form-control" id="peso" name="peso" 
+                                    <input type="text" class="form-control" id="peso" name="peso" required
                                            placeholder="Ex: 70.5">
                                 </div>
                                 <div class="col-md-3">
                                     <label for="altura" class="form-label">Altura (cm):</label>
-                                    <input type="text" class="form-control" id="altura" name="altura" 
+                                    <input type="text" class="form-control" id="altura" name="altura" required
                                            placeholder="Ex: 170">
                                 </div>
                                 <div class="col-md-3">
@@ -1281,7 +1175,129 @@ function temPermissao() {
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="estado_emocional" class="form-label">Estado Emocional:</label>
-                                    <select class="form-select" id="estado_emocional" name="estado_emocional">
+                                    <select class="form-select" id="estado_emocional" name="estado_emocional" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="Calmo">Calmo</option>
+                                        <option value="Ansioso">Ansioso</option>
+                                        <option value="Deprimido">Deprimido</option>
+                                        <option value="Estressado">Estressado</option>
+                                        <option value="Irritado">Irritado</option>
+                                        <option value="Alegre">Alegre</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                    <textarea class="form-control" id="habitos_vida" name="habitos_vida" rows="3"
+                                              placeholder="Descreva os hábitos de vida do paciente (alimentação, exercícios, sono, etc)"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="observacoes" class="form-label">Observações:</label>
+                                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3"
+                                              placeholder="Observações adicionais sobre a consulta"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar Consulta -->
+        <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formEditarConsulta" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="consulta_id" id="edit_consulta_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="profissional" class="form-label">Profissional*:</label>
+                                    <select class="form-select" id="profissional" name="profissional" required>
+                                        <option value="">Selecione...</option>
+                                        <?php
+                                        // Conexão com o banco de dados
+                                        $conn = new mysqli('localhost', 'usuario', 'senha', 'nome_do_banco');
+
+                                        // Verifica a conexão
+                                        if ($conn->connect_error) {
+                                            die("Conexão falhou: " . $conn->connect_error);
+                                        }
+
+                                        // Consulta para obter os profissionais
+                                        $sql = "SELECT id, nome FROM profissionais";
+                                        $result = $conn->query($sql);
+
+                                        // Preenche o select com os profissionais
+                                        if ($result->num_rows > 0) {
+                                            while ($row = $result->fetch_assoc()) {
+                                                echo "<option value='" . $row['id'] . "'>" . $row['nome'] . "</option>";
+                                            }
+                                        } else {
+                                            echo "<option value=''>Nenhum profissional encontrado</option>";
+                                        }
+
+                                        // Fecha a conexão
+                                        $conn->close();
+                                        ?>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="data_consulta" class="form-label">Data da Consulta*:</label>
+                                    <input type="date" class="form-control" id="edit_data_consulta" name="data_consulta" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="pressao_arterial" class="form-label">Pressão Arterial:</label>
+                                    <input type="text" class="form-control" id="edit_pressao_arterial" name="pressao_arterial" 
+                                           placeholder="Ex: 120/80" maxlength="7">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label for="glicemia" class="form-label">Glicemia (mg/dL):</label>
+                                    <input type="text" class="form-control" id="edit_glicemia" name="glicemia" 
+                                           placeholder="Ex: 100">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="peso" class="form-label">Peso (kg):</label>
+                                    <input type="text" class="form-control" id="edit_peso" name="peso" 
+                                           placeholder="Ex: 70.5">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="altura" class="form-label">Altura (cm):</label>
+                                    <input type="text" class="form-control" id="edit_altura" name="altura" 
+                                           placeholder="Ex: 170">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="imc" class="form-label">IMC:</label>
+                                    <input type="text" class="form-control" id="edit_imc" name="imc" readonly>
+                                    <small class="form-text text-muted" id="edit_imc_classificacao"></small>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="estado_emocional" class="form-label">Estado Emocional:</label>
+                                    <select class="form-select" id="edit_estado_emocional" name="estado_emocional">
                                         <option value="">Selecione...</option>
                                         <option value="Calmo">Calmo</option>
                                         <option value="Ansioso">Ansioso</option>
@@ -1296,16 +1312,16 @@ function temPermissao() {
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
-                                    <textarea class="form-control" id="habitos_vida" name="habitos_vida" rows="3"
-                                            placeholder="Descreva os hábitos de vida do paciente (alimentação, exercícios, sono, etc)"></textarea>
+                                    <textarea class="form-control" id="edit_habitos_vida" name="habitos_vida" rows="3"
+                                              placeholder="Descreva os hábitos de vida do paciente (alimentação, exercícios, sono, etc)"></textarea>
                                 </div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <label for="observacoes" class="form-label">Observações:</label>
-                                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3"
-                                            placeholder="Observações adicionais sobre a consulta"></textarea>
+                                    <textarea class="form-control" id="edit_observacoes" name="observacoes" rows="3"
+                                              placeholder="Observações adicionais sobre a consulta"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -1323,8 +1339,12 @@ function temPermissao() {
             // Máscaras para os campos
             $('#pressao_arterial').mask('000/000');
             $('#glicemia').mask('000');
-            $('#peso').mask('000.00', {reverse: true});
+            $('#peso').mask('000.0', {reverse: true});
             $('#altura').mask('000');
+            $('#edit_pressao_arterial').mask('000/000');
+            $('#edit_glicemia').mask('000');
+            $('#edit_peso').mask('000.0', {reverse: true});
+            $('#edit_altura').mask('000');
 
             // Função para calcular e classificar o IMC
             function calcularIMC() {
@@ -1354,43 +1374,36 @@ function temPermissao() {
 
             // Eventos para calcular IMC
             $('#peso, #altura').on('input', calcularIMC);
-
-            // Validações de range
-            $('#glicemia').on('input', function() {
-                let value = $(this).val();
-                if (value > 999) $(this).val(999);
-            });
-
-            $('#peso').on('input', function() {
-                let value = parseFloat($(this).val());
-                if (value > 400) $(this).val('400.00');
-            });
-
-            $('#altura').on('input', function() {
-                let value = parseInt($(this).val());
-                if (value > 300) $(this).val(300);
-            });
         });
 
-        // Função para editar consulta
-        function editarConsulta(consulta) {
-            $('#consulta_id').val(consulta.id);
-            $('#consulta_paciente_id').val(consulta.paciente_id);
-            $('#data_consulta').val(consulta.data_consulta.split(' ')[0]);
-            $('#pressao_arterial').val(consulta.pressao_arterial);
-            $('#glicemia').val(consulta.glicemia);
-            $('#peso').val(consulta.peso);
-            $('#altura').val(consulta.altura);
-            $('#estado_emocional').val(consulta.estado_emocional);
-            $('#habitos_vida').val(consulta.habitos_vida);
-            $('#observacoes').val(consulta.observacoes);
+        // Função para calcular e classificar o IMC
+        function calcularIMC() {
+            let peso = parseFloat($('#edit_peso').val().replace(',', '.'));
+            let altura = parseInt($('#edit_altura').val());
             
-            // Recalcula o IMC
-            $('#peso, #altura').trigger('input');
-            
-            var myModal = new bootstrap.Modal(document.getElementById('modalConsulta'));
-            myModal.show();
+            if (peso && altura) {
+                let alturaMetros = altura / 100;
+                let imc = peso / (alturaMetros * alturaMetros);
+                $('#edit_imc').val(imc.toFixed(1));
+                
+                // Classificação do IMC
+                let classificacao = '';
+                if (imc < 18.5) classificacao = 'Abaixo do peso';
+                else if (imc < 25) classificacao = 'Peso normal';
+                else if (imc < 30) classificacao = 'Sobrepeso';
+                else if (imc < 35) classificacao = 'Obesidade Grau I';
+                else if (imc < 40) classificacao = 'Obesidade Grau II';
+                else classificacao = 'Obesidade Grau III';
+                
+                $('#edit_imc_classificacao').text(classificacao);
+            } else {
+                $('#edit_imc').val('');
+                $('#edit_imc_classificacao').text('');
+            }
         }
+
+        // Eventos para calcular IMC
+        $('#edit_peso, #edit_altura').on('input', calcularIMC);
         </script>
 
         <style>
@@ -1606,22 +1619,22 @@ function temPermissao() {
                     
                     // Validar glicemia
                     const glicemia = $('input[name="glicemia"]').val();
-                    if (glicemia && (glicemia < 20 || glicemia > 600)) {
-                        alert('Valor de glicemia fora do intervalo aceitável (20-600 mg/dL)');
+                    if (glicemia && (glicemia < 20 || glicemia > 999)) {
+                        alert('Valor de glicemia fora do intervalo aceitável (20-999 mg/dL)');
                         return false;
                     }
                     
                     // Validar peso
                     const peso = $('input[name="peso"]').val();
-                    if (peso && (peso < 20 || peso > 300)) {
-                        alert('Valor de peso fora do intervalo aceitável (20-300 kg)');
+                    if (peso && (peso < 20 || peso > 500)) {
+                        alert('Valor de peso fora do intervalo aceitável (20-500 kg)');
                         return false;
                     }
                     
                     // Validar altura
                     const altura = $('input[name="altura"]').val();
-                    if (altura && (altura < 10 || altura > 250)) {
-                        alert('Valor de altura fora do intervalo aceitável (10-250 cm)');
+                    if (altura && (altura < 10 || altura > 300)) {
+                        alert('Valor de altura fora do intervalo aceitável (10-300 cm)');
                         return false;
                     }
                     
@@ -1680,33 +1693,6 @@ function temPermissao() {
             }
 
             $(document).ready(function() {
-                // Máscara para pressão arterial (000/000)
-                $('.pressao-arterial').mask('000/000');
-                
-                // Máscara para glicemia (até 3 dígitos)
-                $('.glicemia').mask('000', {
-                    reverse: true,
-                    translation: {
-                        '0': {pattern: /[0-9]/}
-                    }
-                });
-                
-                // Máscara para peso (000.0)
-                $('.peso').mask('000.0', {
-                    reverse: true,
-                    translation: {
-                        '0': {pattern: /[0-9]/}
-                    }
-                });
-                
-                // Máscara para altura (000)
-                $('.altura').mask('000', {
-                    reverse: true,
-                    translation: {
-                        '0': {pattern: /[0-9]/}
-                    }
-                });
-
                 // Validação adicional para pressão arterial
                 $('.pressao-arterial').on('blur', function() {
                     let valor = $(this).val();
@@ -1747,35 +1733,26 @@ function temPermissao() {
                 });
             });
 
+            // Função para editar consulta
             function editarConsulta(consulta) {
                 // Converte a data para o formato correto
                 let dataConsulta = consulta.data_consulta;
                 if (dataConsulta) {
-                    // Garante que a data esteja no formato YYYY-MM-DD
                     dataConsulta = dataConsulta.split('T')[0];
                 }
 
-                // Debug
-                console.log('Dados recebidos:', {
-                    id: consulta.id,
-                    profissional_id: consulta.profissional_id,
-                    data: dataConsulta,
-                    pressao: consulta.pressao_arterial,
-                    glicemia: consulta.glicemia,
-                    peso: consulta.peso,
-                    altura: consulta.altura,
-                    obs: consulta.observacoes
-                });
-
                 // Preenche os campos do modal
                 $('#edit_consulta_id').val(consulta.id);
-                $('#edit_profissional_id').val(consulta.profissional_id);
-                $('#edit_data_consulta').val(dataConsulta);
+                $('#edit_data_consulta').val(consulta.data_consulta);
                 $('#edit_pressao_arterial').val(consulta.pressao_arterial);
                 $('#edit_glicemia').val(consulta.glicemia);
                 $('#edit_peso').val(consulta.peso);
                 $('#edit_altura').val(consulta.altura);
+                $('#edit_imc').val(consulta.imc);
+                $('#edit_estado_emocional').val(consulta.estado_emocional);
+                $('#edit_habitos_vida').val(consulta.habitos_vida);
                 $('#edit_observacoes').val(consulta.observacoes);
+                $('#profissional').val(consulta.profissional_id);
 
                 // Abre o modal
                 var myModal = new bootstrap.Modal(document.getElementById('modalEditarConsulta'));
@@ -1825,10 +1802,6 @@ function temPermissao() {
                     }
                 });
             });
-
-            function verDetalhesConsulta(consultaId) {
-                // Implementação existente...
-            }
 
             function excluirConsulta(consultaId) {
                 if (confirm('Tem certeza que deseja excluir esta consulta?')) {
@@ -2056,21 +2029,6 @@ function temPermissao() {
             });
         </script>
 
-        <style>
-            /* Estilo para mostrar a classificação do IMC no hover */
-            #imc[title]:hover:after {
-                content: attr(title);
-                position: absolute;
-                background: #333;
-                color: white;
-                padding: 5px;
-                border-radius: 3px;
-                font-size: 12px;
-                margin-left: 10px;
-            }
-        </style>
-
     </div>
-
 </body>
 </html>

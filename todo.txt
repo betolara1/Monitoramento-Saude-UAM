@@ -16,16 +16,10 @@ pegar todos os tipos de doença que eles vão passar
 
 editar paciente:
 
-
-mudar a pressão: colocar de 0 a 999
-
 colocar fotos no Acompanhamento em casa para o usuario se localizar
 
 
 no imc colocar valor e resultado
-
-
-Historico clinico do paciente - juntar consulta e acompanhamento com historico de acompanhamento
 
 
 adicionar a table Acompanhamento em casa: glicemia e hipertensão e observação e data

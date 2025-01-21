@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     try {
         // Captura o paciente_id e verifica se o paciente existe
-        $paciente_id = isset($_POST['paciente_id']) ? intval($_POST['paciente_id']) : 0;
+        $paciente_id = intval($_POST['paciente_id']);
 
         // Verifica se o paciente_id é válido
         if ($paciente_id <= 0) {
@@ -44,6 +44,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $estado_emocional = $_POST['estado_emocional'] ?? null;
         $habitos_vida = $_POST['habitos_vida'] ?? null;
         $observacoes = $_POST['observacoes'] ?? null;
+        $profissional_id = intval($_POST['profissional']); // Captura o ID do profissional
+
+        // Verifica se o profissional_id é válido e se corresponde ao usuario_id
+        $sql_check_profissional = "SELECT id FROM profissionais WHERE usuario_id = ?";
+        $stmt_check_profissional = $conn->prepare($sql_check_profissional);
+        $stmt_check_profissional->bind_param("i", $profissional_id);
+        $stmt_check_profissional->execute();
+        $result_check_profissional = $stmt_check_profissional->get_result();
+
+        if ($result_check_profissional->num_rows === 0) {
+            throw new Exception("Profissional com usuario_id $profissional_id não encontrado na tabela profissionais");
+        }
+
+        // Obtém o ID do profissional
+        $profissional_data = $result_check_profissional->fetch_assoc();
+        $profissional_id = $profissional_data['id']; // Atualiza o profissional_id com o ID encontrado
 
         // Função para preparar e executar a consulta
         function executeQuery($conn, $query, $params) {
@@ -70,9 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         imc = ?, 
                         estado_emocional = ?, 
                         habitos_vida = ?, 
-                        observacoes = ? 
+                        observacoes = ?, 
+                        profissional_id = ?
                      WHERE id = ? AND paciente_id = ?";
-            $params = ["ssssssssii", $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $estado_emocional, $habitos_vida, $observacoes, $consulta_id, $paciente_id];
+            $params = ["sssssssssiii", $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $estado_emocional, $habitos_vida, $observacoes, $profissional_id, $consulta_id, $paciente_id];
             executeQuery($conn, $query, $params);
         } else {
             // Inserção
@@ -86,9 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         imc, 
                         estado_emocional, 
                         habitos_vida, 
-                        observacoes
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $params = ["issssssss", $paciente_id, $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $estado_emocional, $habitos_vida, $observacoes];
+                        observacoes,
+                        profissional_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $params = ["isssssssssi", $paciente_id, $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $estado_emocional, $habitos_vida, $observacoes, $profissional_id];
             executeQuery($conn, $query, $params);
         }
 
