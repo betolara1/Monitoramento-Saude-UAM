@@ -44,22 +44,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $estado_emocional = $_POST['estado_emocional'] ?? null;
         $habitos_vida = $_POST['habitos_vida'] ?? null;
         $observacoes = $_POST['observacoes'] ?? null;
-        $profissional_id = intval($_POST['profissional']); // Captura o ID do profissional
+        $profissional_id = $_POST['profissional_id'] ?? null; // Use o operador null coalescing para evitar erros
 
-        // Verifica se o profissional_id é válido e se corresponde ao usuario_id
-        $sql_check_profissional = "SELECT id FROM profissionais WHERE usuario_id = ?";
-        $stmt_check_profissional = $conn->prepare($sql_check_profissional);
-        $stmt_check_profissional->bind_param("i", $profissional_id);
-        $stmt_check_profissional->execute();
-        $result_check_profissional = $stmt_check_profissional->get_result();
-
-        if ($result_check_profissional->num_rows === 0) {
-            throw new Exception("Profissional com usuario_id $profissional_id não encontrado na tabela profissionais");
+        if (!$profissional_id) {
+            echo json_encode(['success' => false, 'message' => 'Erro: Profissional não selecionado.']);
+            exit;
         }
 
-        // Obtém o ID do profissional
-        $profissional_data = $result_check_profissional->fetch_assoc();
-        $profissional_id = $profissional_data['id']; // Atualiza o profissional_id com o ID encontrado
+        // Verifique se o profissional existe na tabela
+        $query_profissional = "SELECT * FROM profissionais WHERE id = ?";
+        $stmt = $conn->prepare($query_profissional);
+        $stmt->bind_param("i", $profissional_id);
+        $stmt->execute();
+        $result_profissional = $stmt->get_result();
+
+        if ($result_profissional->num_rows === 0) {
+            echo json_encode(['success' => false, 'message' => "Erro: Profissional com usuario_id {$profissional_id} não encontrado na tabela profissionais."]);
+            exit;
+        }
 
         // Função para preparar e executar a consulta
         function executeQuery($conn, $query, $params) {

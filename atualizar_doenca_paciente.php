@@ -1,46 +1,33 @@
 <?php
-include 'conexao.php';
-include 'verificar_login.php';
+session_start();
+require_once 'conexao.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $response = array();
-    
-    try {
-        $paciente_id = $_POST['paciente_id'];
-        $tipo_doenca = $_POST['tipo_doenca'];
-        $historico_familiar = $_POST['historico_familiar'];
-        $estado_civil = $_POST['estado_civil'];
-        $profissao = $_POST['profissao'];
+header('Content-Type: application/json');
 
-        $sql = "UPDATE pacientes SET 
-                tipo_doenca = ?,
-                historico_familiar = ?,
-                estado_civil = ?,
-                profissao = ?
-                WHERE id = ?";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssi", 
-            $tipo_doenca, 
-            $historico_familiar, 
-            $estado_civil, 
-            $profissao, 
-            $paciente_id
-        );
-
-        if ($stmt->execute()) {
-            $response['success'] = true;
-            $response['message'] = 'Informações atualizadas com sucesso!';
-        } else {
-            throw new Exception("Erro ao atualizar: " . $stmt->error);
-        }
-
-    } catch (Exception $e) {
-        $response['success'] = false;
-        $response['message'] = 'Erro: ' . $e->getMessage();
-    }
-
-    echo json_encode($response);
+// Verifica permissão
+if (!isset($_SESSION['tipo_usuario']) || 
+    !in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro'])) {
+    echo json_encode(['success' => false, 'message' => 'Acesso não autorizado']);
     exit;
 }
-?> 
+
+// Recebe os dados do formulário
+$id = intval($_POST['id']);
+$tipo_doenca = $_POST['tipo_doenca'];
+$historico_familiar = $_POST['historico_familiar'];
+$estado_civil = $_POST['estado_civil'];
+$profissao = $_POST['profissao'];
+
+// Atualiza os dados no banco de dados
+$sql = "UPDATE pacientes SET tipo_doenca = ?, historico_familiar = ?, estado_civil = ?, profissao = ? WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ssssi", $tipo_doenca, $historico_familiar, $estado_civil, $profissao, $id);
+
+if ($stmt->execute()) {
+    echo json_encode(['success' => true]);
+} else {
+    echo json_encode(['success' => false, 'message' => 'Erro ao atualizar os dados']);
+}
+
+$conn->close();
+?>
