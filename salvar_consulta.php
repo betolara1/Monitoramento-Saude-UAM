@@ -94,6 +94,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $params = ["sssssssssiii", $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $estado_emocional, $habitos_vida, $observacoes, $profissional_id, $consulta_id, $paciente_id];
             executeQuery($conn, $query, $params);
         } else {
+            // Calcular IMC
+            if ($peso > 0 && $altura > 0) {
+                $altura_metros = $altura / 100; // Converter cm para metros
+                $imc = $peso / ($altura_metros * $altura_metros);
+                $imc = round($imc, 1); // Arredondar para uma casa decimal
+
+                // Classificação do IMC
+                $classificacao_imc = '';
+                if ($imc < 18.5) $classificacao_imc = 'Abaixo do peso';
+                else if ($imc < 25) $classificacao_imc = 'Peso normal';
+                else if ($imc < 30) $classificacao_imc = 'Sobrepeso';
+                else if ($imc < 35) $classificacao_imc = 'Obesidade Grau I';
+                else if ($imc < 40) $classificacao_imc = 'Obesidade Grau II';
+                else $classificacao_imc = 'Obesidade Grau III';
+            } else {
+                $imc = null;
+                $classificacao_imc = null;
+            }
+
             // Inserção
             $query = "INSERT INTO consultas (
                         paciente_id, 
@@ -103,12 +122,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         peso, 
                         altura, 
                         imc, 
+                        classificacao_imc, 
                         estado_emocional, 
                         habitos_vida, 
                         observacoes,
                         profissional_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $params = ["isssssssssi", $paciente_id, $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $estado_emocional, $habitos_vida, $observacoes, $profissional_id];
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $params = ["issssssssssi", $paciente_id, $data_consulta, $pressao_arterial, $glicemia, $peso, $altura, $imc, $classificacao_imc, $estado_emocional, $habitos_vida, $observacoes, $profissional_id];
             executeQuery($conn, $query, $params);
         }
 

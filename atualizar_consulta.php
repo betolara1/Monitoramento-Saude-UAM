@@ -39,9 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Calcula o IMC
         $imc = null;
+        $classificacao_imc = null;
         if ($peso && $altura) {
             $altura_metros = $altura / 100;
             $imc = $peso / ($altura_metros * $altura_metros);
+            $imc = round($imc, 1);
+
+            // Classificação do IMC
+            if ($imc < 18.5) $classificacao_imc = 'Abaixo do peso';
+            else if ($imc < 25) $classificacao_imc = 'Peso normal';
+            else if ($imc < 30) $classificacao_imc = 'Sobrepeso';
+            else if ($imc < 35) $classificacao_imc = 'Obesidade Grau I';
+            else if ($imc < 40) $classificacao_imc = 'Obesidade Grau II';
+            else $classificacao_imc = 'Obesidade Grau III';
         }
 
         $query = "UPDATE consultas SET 
@@ -52,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             peso = ?, 
             altura = ?, 
             imc = ?, 
+            classificacao_imc = ?, 
             observacoes = ?
             WHERE id = ?";
 
@@ -62,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         $stmt->bind_param(
-            "isssdddsi", 
+            "issssssssi", 
             $profissional_id,
             $data_consulta,
             $pressao_arterial,
@@ -70,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $peso,
             $altura,
             $imc,
+            $classificacao_imc,
             $observacoes,
             $consulta_id
         );
@@ -83,7 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'message' => 'Consulta atualizada com sucesso',
             'dados_atualizados' => [
                 'consulta_id' => $consulta_id,
-                'imc' => $imc
+                'imc' => $imc,
+                'classificacao_imc' => $classificacao_imc
             ]
         ]);
 

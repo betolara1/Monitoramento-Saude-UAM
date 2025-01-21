@@ -19,8 +19,3 @@ editar paciente:
 colocar fotos no Acompanhamento em casa para o usuario se localizar
 
 
-no imc colocar valor e resultado
-
-
-adicionar a table Acompanhamento em casa: glicemia e hipertensão e observação e data
-

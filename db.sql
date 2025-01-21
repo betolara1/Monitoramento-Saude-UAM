@@ -68,6 +68,15 @@ CREATE TABLE exames (
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
 
+CREATE TABLE acompanhamento_em_casa (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ paciente_id INT NOT NULL,
+ data_acompanhamento DATE NOT NULL,
+ glicemia VARCHAR(10),
+ hipertensao VARCHAR(10),
+ observacoes TEXT,
+ FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+);
 
 -- Tabela de Consultas e Acompanhamento
 CREATE TABLE consultas (
@@ -81,6 +90,7 @@ CREATE TABLE consultas (
  peso DECIMAL(5,2),
  altura VARCHAR(10),
  imc DECIMAL(4,1),
+ classificacao_imc VARCHAR(20),
  estado_emocional VARCHAR(50),
  habitos_vida TEXT,
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,

@@ -38,6 +38,13 @@ function temPermissao() {
            ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro');
 }
 
+// Consultar dados de acompanhamento em casa
+$query_acompanhamento = "SELECT * FROM acompanhamento_em_casa WHERE paciente_id = ? ORDER BY data_acompanhamento DESC";
+$stmt_acompanhamento = $conn->prepare($query_acompanhamento);
+$stmt_acompanhamento->bind_param("i", $paciente_id);
+$stmt_acompanhamento->execute();
+$result_acompanhamento = $stmt_acompanhamento->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -417,6 +424,152 @@ function temPermissao() {
         </div>
         <input type="hidden" id="p_id" value="<?php echo $paciente_id; ?>">
 
+                <!-- Seção de Acompanhamento em Casa -->
+                <div class="section-card">
+            <!-- Tabela de Acompanhamento em Casa -->
+            <h2 class="section-header">Acompanhamento em Casa</h2>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAcompanhamento">
+                <i class="fas fa-plus"></i> Adicionar
+            </button>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Glicemia</th>
+                        <th>Hipertensão</th>
+                        <th>Observações</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($acompanhamento = $result_acompanhamento->fetch_assoc()): ?>
+                        <tr data-id="<?php echo $acompanhamento['id']; ?>">
+                            <td><?php echo date('d/m/Y', strtotime($acompanhamento['data_acompanhamento'])); ?></td>
+                            <td><?php echo htmlspecialchars($acompanhamento['glicemia']) ?: 'Não informado'; ?></td>
+                            <td><?php echo htmlspecialchars($acompanhamento['hipertensao']) ?: 'Não informado'; ?></td>
+                            <td><?php echo htmlspecialchars($acompanhamento['observacoes']) ?: 'Não informado'; ?></td>
+                            <td>
+                                <a href="#" onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, ENT_QUOTES)); ?>)" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <a href="#" onclick="excluirAcompanhamento(<?php echo $acompanhamento['id']; ?>)" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal de Acompanhamento -->
+        <div class="modal fade" id="modalAcompanhamento" tabindex="-1" aria-labelledby="modalAcompanhamentoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAcompanhamentoLabel">Adicionar Acompanhamento em Casa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formAcompanhamento" method="POST" action="salvar_acompanhamento.php">
+                        <div class="modal-body">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Data:</label>
+                                    <input type="date" name="data_acompanhamento" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Glicemia:</label>
+                                    <input type="text" 
+                                        name="glicemia" 
+                                        class="form-control glicemia" 
+                                        placeholder="Ex: 99"
+                                        title="Valor entre 20 e 600 mg/dL" required>
+                                    <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Pressão Arterial:</label>
+                                    <input type="text" 
+                                        name="hipertensao" 
+                                        class="form-control pressao-arterial" 
+                                        placeholder="Ex: 120/80"
+                                        title="Formato: 120/80 (sistólica/diastólica)" required>
+                                    <small class="form-text text-muted">Sistólica: 70-200 / Diastólica: 40-130</small>
+                                </div>
+                            </div>
+                        
+
+                            <div class="row">
+                                <div class="mb-3">
+                                    <label>Observações:</label>
+                                    <textarea name="observacoes" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Edição de Acompanhamento -->
+        <div class="modal fade" id="modalEditarAcompanhamento" tabindex="-1" aria-labelledby="modalEditarAcompanhamentoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarAcompanhamentoLabel">Editar Acompanhamento em Casa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formEditarAcompanhamento" method="POST" action="atualizar_acompanhamento.php">
+                        <div class="modal-body">
+                            <input type="hidden" name="id" id="edit_acompanhamento_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Data:</label>
+                                    <input type="date" name="data_acompanhamento" id="edit_data_acompanhamento" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Glicemia:</label>
+                                    <input type="text" 
+                                        name="glicemia" 
+                                        id="edit_glicemia"
+                                        class="form-control glicemia" 
+                                        placeholder="Ex: 99"
+                                        title="Valor entre 20 e 600 mg/dL" required>
+                                    <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Pressão Arterial:</label>
+                                    <input type="text" 
+                                        name="hipertensao" 
+                                        id="edit_hipertensao"
+                                        class="form-control pressao-arterial" 
+                                        placeholder="Ex: 120/80"
+                                        title="Formato: 120/80 (sistólica/diastólica)" required>
+                                    <small class="form-text text-muted">Sistólica: 70-200 / Diastólica: 40-130</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Observações:</label>
+                                <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
         <!-- Seção de Doença -->
         <div class="section-card">
             <h2 class="section-header">Tipo de Doença</h2>
@@ -462,10 +615,14 @@ function temPermissao() {
                                         'estado_civil' => $paciente['estado_civil'],
                                         'profissao' => $paciente['profissao']
                                     ]), ENT_QUOTES); 
-                                ?>)" class="btn btn-secondary">Editar</a>
+                                ?>)" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                                </a>
                             <?php else: ?>
                                 <a href="cadastro_pacientes_doenca.php?id=<?php echo $paciente['usuario_id']; ?>" 
-                                class="btn btn-primary">Cadastrar</a>
+                                class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i>
+                                </a>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -557,8 +714,8 @@ function temPermissao() {
                             <?php if ($paciente['nome_profissional'] !== 'Não atribuído'): ?>
                                 <?php if (temPermissao()): ?>
                                     <div class="section-actions">
-                                        <button onclick="abrirModalMedico(<?php echo $paciente_id; ?>)" class="btn btn-secondary">
-                                            Trocar Médico
+                                        <button onclick="abrirModalMedico(<?php echo $paciente_id; ?>)" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
                                         </button>
                                     </div>
                                 <?php endif; ?>
@@ -567,7 +724,7 @@ function temPermissao() {
                                     <button onclick="abrirModalAtribuirMedico(<?php echo $paciente_id; ?>)" 
                                             class="btn btn-primary"
                                             <?php echo empty($paciente['tipo_doenca']) ? 'disabled' : ''; ?>>
-                                        Atribuir Médico
+                                        <i class="fas fa-plus"></i>
                                     </button>
                                 <?php endif; ?>
                             <?php endif; ?>
@@ -579,11 +736,11 @@ function temPermissao() {
 
         <!-- Seção de Consultas e Acompanhamento -->
         <div class="section-card">
-            <h2 class="section-header">Consultas e Acompanhamento</h2>
+            <h2 class="section-header">Histórico de Consultas e Acompanhamento</h2>
             <?php if (temPermissao()): ?>
                 <div class="section-actions">
                     <button onclick="abrirModalConsulta(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        Nova Consulta
+                        <i class="fas fa-plus"></i>
                     </button>
                 </div>
             <?php endif; ?>
@@ -630,7 +787,7 @@ function temPermissao() {
                             <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
                             <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
                             <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
-                            <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 2) . ' kg' : '-'; ?></td>
+                            <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
                             <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
                             <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
                             <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
@@ -641,12 +798,12 @@ function temPermissao() {
                                 <td>
                                     <div class="btn-group">
                                         <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
-                                                class="btn btn-primary btn-sm me-2">
-                                            <i class="fas fa-edit"></i> Editar
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
                                         </button>
                                         <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
-                                                class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash"></i> Excluir
+                                            class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -663,7 +820,7 @@ function temPermissao() {
             <?php if (temPermissao()): ?>
                 <div class="section-actions">
                     <button onclick="abrirModalMedicamento(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        Novo Medicamento
+                        <i class="fas fa-plus"></i>
                     </button>
                 </div>
             <?php endif; ?>
@@ -703,78 +860,12 @@ function temPermissao() {
                                 <td>
                                     <div class="btn-group">
                                         <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
-                                                class="btn btn-primary btn-sm me-2">
-                                            <i class="fas fa-edit"></i> Editar
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
                                         </button>
                                         <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
-                                                class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash"></i> Excluir
-                                        </button>
-                                    </div>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Seção de Histórico de Acompanhamento -->
-        <div class="section-card">
-            <h2 class="section-header">Histórico de Acompanhamento</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
-                    <button onclick="abrirModalAcompanhamento(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        Novo Acompanhamento
-                    </button>
-                </div>
-            <?php endif; ?>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Pressão Arterial</th>
-                        <th>Glicemia</th>
-                        <th>Peso</th>
-                        <th>IMC</th>
-                        <th>Hábitos de Vida</th>
-                        <th>Estado Emocional</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query_hist = "SELECT * FROM historico_acompanhamento 
-                                  WHERE paciente_id = ? 
-                                  ORDER BY data_acompanhamento DESC";
-                    $stmt_hist = $conn->prepare($query_hist);
-                    $stmt_hist->bind_param('i', $paciente_id);
-                    $stmt_hist->execute();
-                    $result_hist = $stmt_hist->get_result();
-
-                    while ($historico = $result_hist->fetch_assoc()):
-                    ?>
-                        <tr>
-                            <td><?php echo date('d/m/Y', strtotime($historico['data_acompanhamento'])); ?></td>
-                            <td><?php echo htmlspecialchars($historico['pressao_arterial']); ?></td>
-                            <td><?php echo htmlspecialchars($historico['glicemia']); ?></td>
-                            <td><?php echo $historico['peso'] ? number_format($historico['peso'], 2) . ' kg' : '-'; ?></td>
-                            <td><?php echo $historico['imc'] ? number_format($historico['imc'], 1) : '-'; ?></td>
-                            <td><?php echo nl2br(htmlspecialchars($historico['habitos_de_vida'])); ?></td>
-                            <td><?php echo htmlspecialchars($historico['emocao']); ?></td>
-                            <?php if (temPermissao()): ?>
-                                <td>
-                                    <div class="btn-group">
-                                        <button onclick='editarAcompanhamento(<?php echo json_encode($historico); ?>)' 
-                                                class="btn btn-primary btn-sm me-2">
-                                            <i class="fas fa-edit"></i> Editar
-                                        </button>
-                                        <button onclick="excluirAcompanhamento(<?php echo $historico['id']; ?>)" 
-                                                class="btn btn-danger btn-sm">
-                                            <i class="fas fa-trash"></i> Excluir
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -791,7 +882,7 @@ function temPermissao() {
             <?php if (temPermissao()): ?>
                 <div class="section-actions">
                     <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        Novo Exame
+                    <i class="fas fa-plus"></i>
                     </button>
                 </div>
             <?php endif; ?>
@@ -853,7 +944,7 @@ function temPermissao() {
             <?php if (temPermissao()): ?>
                 <div class="section-actions">
                     <button onclick="abrirModalAnalise(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        Nova Análise
+                    <i class="fas fa-plus"></i>
                     </button>
                 </div>
             <?php endif; ?>
@@ -1013,78 +1104,6 @@ function temPermissao() {
             </div>
         </div>
 
-        <!-- Modal de Acompanhamento -->
-        <div class="modal fade" id="modalAcompanhamento" tabindex="-1" aria-labelledby="modalAcompanhamentoLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalAcompanhamentoLabel">Novo Acompanhamento</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="formAcompanhamento" method="POST">
-                        <div class="modal-body">
-                            <input type="hidden" name="acompanhamento_id" id="acompanhamento_id">
-                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label>Data:</label>
-                                    <input type="date" name="data_acompanhamento" id="data_acompanhamento" class="form-control" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label>Pressão Arterial:</label>
-                                    <input type="text" name="pressao_arterial" id="pressao_arterial" 
-                                           class="form-control pressao-arterial" placeholder="Ex: 120/80">
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label>Glicemia (mg/dL):</label>
-                                    <input type="text" name="glicemia" id="glicemia" 
-                                           class="form-control glicemia" placeholder="Ex: 99">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label>Peso (kg):</label>
-                                    <input type="text" name="peso" id="peso" 
-                                           class="form-control peso" placeholder="Ex: 70.5">
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label>Altura (cm):</label>
-                                    <input type="text" name="altura" id="altura" 
-                                           class="form-control altura" placeholder="Ex: 170">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label>Estado Emocional:</label>
-                                    <select name="emocao" id="emocao" class="form-control">
-                                        <option value="">Selecione...</option>
-                                        <option value="Calmo">Calmo</option>
-                                        <option value="Ansioso">Ansioso</option>
-                                        <option value="Estressado">Estressado</option>
-                                        <option value="Deprimido">Deprimido</option>
-                                        <option value="Irritado">Irritado</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label>Hábitos de Vida:</label>
-                                <textarea name="habitos_de_vida" id="habitos_de_vida" class="form-control" rows="4"
-                                          placeholder="Descreva os hábitos de vida (exercícios, alimentação, uso de álcool/tabaco, etc)"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
         <!-- Modal de Exame -->
         <div class="modal fade" id="modalExame" tabindex="-1" aria-labelledby="modalExameLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -1128,7 +1147,6 @@ function temPermissao() {
                 </div>
             </div>
         </div>
-
     </div>
 
     <!-- Modal de Nova Consulta -->
@@ -1205,16 +1223,6 @@ function temPermissao() {
                                        title="Valor entre 10 e 250 cm">
                                 <small class="form-text text-muted">Valor entre 10 e 250 cm</small>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label>IMC:</label>
-                                <input type="text" 
-                                    name="imc" 
-                                    class="form-control" 
-                                    id="imc" 
-                                    placeholder="" 
-                                    readonly>
-                                <small class="form-text text-muted" id="classificacao_imc"></small>
-                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -1287,75 +1295,93 @@ function temPermissao() {
         </div>
     </div>
 
-    <!-- Adicione o Modal de Edição -->
-    <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="formEditarConsulta" method="POST">
-                    <div class="modal-body">
-                        <input type="hidden" name="consulta_id" id="edit_consulta_id">
-                        <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                        
-                        <div class="form-group mb-3">
-                            <label>Profissional:</label>
-                            <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
-                                <option value="">Selecione o profissional</option>
-                                <?php
-                                $query_prof = "SELECT p.id, u.nome 
-                                             FROM profissionais p 
-                                             JOIN usuarios u ON p.usuario_id = u.id 
-                                             ORDER BY u.nome";
-                                $result_prof = $conn->query($query_prof);
-                                while($row = $result_prof->fetch_assoc()) {
-                                    echo "<option value='{$row['id']}'>{$row['nome']}</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Data da Consulta:</label>
-                                <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Pressão Arterial:</label>
-                                <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80">
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label>Glicemia:</label>
-                                <input type="text" name="glicemia" id="edit_glicemia" class="form-control glicemia" placeholder="Ex: 99">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Peso (kg):</label>
-                                <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Altura (cm):</label>
-                                <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170">
-                            </div>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label>Observações:</label>
-                            <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="4"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                    </div>
-                </form>
+    <!-- Adicione o Modal de Edição de Consulta-->
+<div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form id="formEditarConsulta" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="consulta_id" id="edit_consulta_id">
+                    <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                    
+                    <div class="form-group mb-3">
+                        <label>Profissional:</label>
+                        <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
+                            <option value="">Selecione o profissional</option>
+                            <?php
+                            $query_prof = "SELECT p.id, u.nome 
+                                           FROM profissionais p 
+                                           JOIN usuarios u ON p.usuario_id = u.id 
+                                           ORDER BY u.nome";
+                            $result_prof = $conn->query($query_prof);
+                            while($row = $result_prof->fetch_assoc()) {
+                                echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Data da Consulta:</label>
+                            <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Pressão Arterial:</label>
+                            <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label>Glicemia:</label>
+                            <input type="text" name="glicemia" id="edit_glicemia" class="form-control glicemia" placeholder="Ex: 99">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Peso (kg):</label>
+                            <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Altura (cm):</label>
+                            <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170">
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Estado Emocional:</label>
+                        <select class="form-select" id="edit_estado_emocional" name="estado_emocional">
+                            <option value="">Selecione...</option>
+                            <option value="Calmo">Calmo</option>
+                            <option value="Ansioso">Ansioso</option>
+                            <option value="Deprimido">Deprimido</option>
+                            <option value="Estressado">Estressado</option>
+                            <option value="Irritado">Irritado</option>
+                            <option value="Alegre">Alegre</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                        <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Observações:</label>
+                        <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <!-- Modal para atribuir médico -->
     <div class="modal fade" id="modalAtribuirMedico" tabindex="-1" aria-labelledby="modalAtribuirMedicoLabel" aria-hidden="true">
@@ -1798,6 +1824,12 @@ function temPermissao() {
             $('#edit_peso').val(consulta.peso);
             $('#edit_altura').val(consulta.altura);
             $('#edit_observacoes').val(consulta.observacoes);
+            // Preencher Estado Emocional
+            $('#edit_estado_emocional').val(consulta.estado_emocional);
+
+            // Preencher Hábitos de Vida
+            $('#edit_habitos_vida').val(consulta.habitos_vida);
+
 
             // Abre o modal
             var myModal = new bootstrap.Modal(document.getElementById('modalEditarConsulta'));
@@ -2004,57 +2036,6 @@ function temPermissao() {
             });
         });
 
-        function abrirModalAcompanhamento(pacienteId) {
-            // Limpar o formulário
-            $('#formAcompanhamento')[0].reset();
-            // Definir o ID do paciente
-            $('input[name="paciente_id"]').val(pacienteId);
-            // Limpar o ID do acompanhamento (é um novo registro)
-            $('#acompanhamento_id').val('');
-            // Abrir o modal
-            $('#modalAcompanhamento').modal('show');
-        }
-
-        function editarAcompanhamento(historico) {
-            // Preencher o formulário com os dados existentes
-            $('#acompanhamento_id').val(historico.id);
-            $('#data_acompanhamento').val(historico.data_acompanhamento);
-            $('#pressao_arterial').val(historico.pressao_arterial);
-            $('#glicemia').val(historico.glicemia);
-            $('#peso').val(historico.peso);
-            $('#altura').val(historico.altura);
-            $('#emocao').val(historico.emocao);
-            $('#habitos_de_vida').val(historico.habitos_de_vida);
-            
-            // Atualizar o título do modal
-            $('#modalAcompanhamentoLabel').text('Editar Acompanhamento');
-            
-            // Abrir o modal
-            $('#modalAcompanhamento').modal('show');
-        }
-
-        function excluirAcompanhamento(acompanhamentoId) {
-            if (confirm('Tem certeza que deseja excluir este acompanhamento?')) {
-                $.ajax({
-                    url: 'excluir_acompanhamento.php',
-                    type: 'POST',
-                    data: { acompanhamento_id: acompanhamentoId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Acompanhamento excluído com sucesso!');
-                            location.reload();
-                        } else {
-                            alert(response.message || 'Erro ao excluir acompanhamento');
-                        }
-                    },
-                    error: function() {
-                        alert('Erro ao processar a requisição');
-                    }
-                });
-            }
-        }
-
         $(document).ready(function() {
             // Máscaras
             $('.pressao-arterial').mask('000/000');
@@ -2146,52 +2127,6 @@ function temPermissao() {
                 $('#classificacao_imc').text(''); // Corrigido para usar .text()
             }
         }
-
-        $(document).ready(function() {
-            // Manipular o envio do formulário de acompanhamento
-            $('#formAcompanhamento').on('submit', function(e) {
-                e.preventDefault();
-                
-                console.log('Formulário submetido');
-                
-                // Coletar os dados do formulário
-                let formData = new FormData(this);
-                
-                // Debug dos dados
-                for (let pair of formData.entries()) {
-                    console.log(pair[0] + ': ' + pair[1]);
-                }
-
-                $.ajax({
-                    url: 'salvar_acompanhamento.php',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    dataType: 'json',
-                    success: function(response) {
-                        console.log('Resposta:', response);
-                        if (response.success) {
-                            alert('Acompanhamento salvo com sucesso!');
-                            $('#modalAcompanhamento').modal('hide');
-                            location.reload();
-                        } else {
-                            alert('Erro ao salvar: ' + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro detalhado:', {
-                            status: status,
-                            error: error,
-                            responseText: xhr.responseText,
-                            readyState: xhr.readyState,
-                            statusText: xhr.statusText
-                        });
-                        alert('Erro ao processar a requisição. Verifique o console para mais detalhes.');
-                    }
-                });
-            });
-        });
 
         function abrirModalExame(pacienteId) {
             console.log('Abrindo modal para paciente:', pacienteId);
@@ -2360,6 +2295,134 @@ function temPermissao() {
                     }
                 });
             }
+        }
+
+        $(document).ready(function() {
+            // Quando o formulário de acompanhamento for enviado
+            $('#formAcompanhamento').on('submit', function(event) {
+                event.preventDefault(); // Impede o envio padrão do formulário
+
+                // Coleta os dados do formulário
+                var formData = $(this).serialize();
+
+                // Envia os dados via AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: 'salvar_acompanhamento.php',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            // Atualiza a tabela de acompanhamento
+                            adicionarLinhaTabela(response.dados_acompanhamento);
+                            // Fecha o modal
+                            $('#modalAcompanhamento').modal('hide');
+                            // Limpa o formulário
+                            $('#formAcompanhamento')[0].reset();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao salvar acompanhamento. Tente novamente.');
+                    }
+                });
+            });
+        });
+
+        // Função para adicionar uma nova linha na tabela de acompanhamento
+        function adicionarLinhaTabela(acompanhamento) {
+            var novaLinha = `
+                <tr>
+                    <td>${acompanhamento.data_acompanhamento}</td>
+                    <td>${acompanhamento.glicemia}</td>
+                    <td>${acompanhamento.hipertensao}</td>
+                    <td>${acompanhamento.observacoes}</td>
+                    <td>
+                        <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-secondary">Editar</a>
+                        <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-danger">Excluir</a>
+                    </td>
+                </tr>
+            `;
+            $('.data-table tbody').append(novaLinha); // Adiciona a nova linha à tabela
+        }
+
+        function excluirAcompanhamento(id) {
+            if (confirm('Tem certeza que deseja excluir este acompanhamento?')) {
+                $.ajax({
+                    type: 'POST',
+                    url: 'excluir_acompanhamento.php',
+                    data: { id: id },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            // Remove a linha da tabela
+                            $('tr[data-id="' + id + '"]').remove();
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao excluir acompanhamento. Tente novamente.');
+                    }
+                });
+            }
+        }
+
+        function editarAcompanhamento(acompanhamento) {
+            // Preencher os campos do modal de edição com os dados do acompanhamento
+            $('#edit_acompanhamento_id').val(acompanhamento.id);
+            $('#edit_data_acompanhamento').val(acompanhamento.data_acompanhamento);
+            $('#edit_glicemia').val(acompanhamento.glicemia);
+            $('#edit_hipertensao').val(acompanhamento.hipertensao);
+            $('#edit_observacoes').val(acompanhamento.observacoes);
+
+            // Abre o modal
+            var myModal = new bootstrap.Modal(document.getElementById('modalEditarAcompanhamento'));
+            myModal.show();
+        }
+
+        $(document).ready(function() {
+            // Quando o formulário de edição de acompanhamento for enviado
+            $('#formEditarAcompanhamento').on('submit', function(event) {
+                event.preventDefault(); // Impede o envio padrão do formulário
+
+                // Coleta os dados do formulário
+                var formData = $(this).serialize();
+
+                // Envia os dados via AJAX
+                $.ajax({
+                    type: 'POST',
+                    url: 'atualizar_acompanhamento.php',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            // Atualiza a linha correspondente na tabela
+                            atualizarLinhaTabela(response.dados_acompanhamento);
+                            // Fecha o modal
+                            $('#modalEditarAcompanhamento').modal('hide');
+                            alert(response.message);
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao atualizar acompanhamento. Tente novamente.');
+                    }
+                });
+            });
+        });
+
+        // Função para atualizar a linha na tabela de acompanhamento
+        function atualizarLinhaTabela(acompanhamento) {
+            var linha = $('tr[data-id="' + acompanhamento.id + '"]');
+            linha.find('td:eq(0)').text(acompanhamento.data_acompanhamento);
+            linha.find('td:eq(1)').text(acompanhamento.glicemia);
+            linha.find('td:eq(2)').text(acompanhamento.hipertensao);
+            linha.find('td:eq(3)').text(acompanhamento.observacoes);
         }
     </script>
 
