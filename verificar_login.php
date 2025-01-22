@@ -1,5 +1,8 @@
 <?php
-session_start();
+// Verifica se a sessão já está iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Verifica se o usuário é Admin
 function estaLogado() {

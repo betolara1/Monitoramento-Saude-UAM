@@ -5,7 +5,7 @@ include 'sidebar.php';
 
 $tem_permissao = false;
 if (isset($_SESSION['tipo_usuario']) && 
-    ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Profissional')) {
+    ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro')) {
     $tem_permissao = true;
 }
 ?>

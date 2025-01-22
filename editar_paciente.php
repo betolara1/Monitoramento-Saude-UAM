@@ -1,6 +1,12 @@
 <?php
 session_start();
 
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: index.php"); // Redireciona para a página de login
+    exit();
+}
+
 include "conexao.php";
 include "sidebar.php";
 
@@ -424,13 +430,16 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         </div>
         <input type="hidden" id="p_id" value="<?php echo $paciente_id; ?>">
 
-                <!-- Seção de Acompanhamento em Casa -->
-                <div class="section-card">
-            <!-- Tabela de Acompanhamento em Casa -->
+            <!-- Seção de Acompanhamento em Casa -->
+            <div class="section-card">
             <h2 class="section-header">Acompanhamento em Casa</h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAcompanhamento">
-                <i class="fas fa-plus"></i> Adicionar
-            </button>
+            
+            <?php if ($_SESSION['tipo_usuario'] === 'ACS' || $_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro' || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAcompanhamento">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
+            <?php endif; ?>
+
             <table class="data-table">
                 <thead>
                     <tr>
@@ -449,12 +458,16 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <td><?php echo htmlspecialchars($acompanhamento['hipertensao']) ?: 'Não informado'; ?></td>
                             <td><?php echo htmlspecialchars($acompanhamento['observacoes']) ?: 'Não informado'; ?></td>
                             <td>
-                                <a href="#" onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, ENT_QUOTES)); ?>)" class="btn btn-sm btn-warning">
-                                    <i class="fas fa-edit"></i> Editar
-                                </a>
-                                <a href="#" onclick="excluirAcompanhamento(<?php echo $acompanhamento['id']; ?>)" class="btn btn-sm btn-danger">
-                                    <i class="fas fa-trash"></i> Excluir
-                                </a>
+                                <?php if ($_SESSION['tipo_usuario'] === 'ACS' || $_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro' || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
+                                    <a href="#" onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, ENT_QUOTES)); ?>)" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <a href="#" onclick="excluirAcompanhamento(<?php echo $acompanhamento['id']; ?>)" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-muted">Acesso restrito</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endwhile; ?>

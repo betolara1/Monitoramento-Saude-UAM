@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: index.php"); // Redireciona para a página de login
+    exit();
+}
+
 include "conexao.php";
 include 'verificar_login.php';
 include "sidebar.php";
@@ -279,10 +287,7 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
                         </td>
                         <td>
                             <?php if ($profissional['especialidade']): ?>
-                                <button onclick="abrirModalEditar(<?php 
-                                    echo $profissional['profissional_id']; ?>, 
-                                    <?php echo $profissional['usuario_id']; ?>)" 
-                                    class="btn btn-primary">Editar</button>
+                                <button onclick="abrirModalEditar(<?php echo $profissional['profissional_id']; ?>, <?php echo $profissional['usuario_id']; ?>)" class="btn btn-primary">Editar</button>
                             <?php else: ?>
                                 <button onclick="abrirModalCadastro(<?php 
                                     echo $profissional['usuario_id']; ?>)" 
@@ -306,17 +311,18 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
                 <div class="modal-body">
                     <form id="formCadastro" method="POST">
                         <input type="hidden" id="usuario_id" name="usuario_id">
-                        
+                        <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
                         <div class="mb-3">
                             <label for="especialidade" class="form-label">Especialidade</label>
                             <select class="form-select" id="especialidade" name="especialidade" required>
                                 <option value="">Selecione uma especialidade</option>
                             </select>
                         </div>
+                        <?php endif; ?>
 
-                        <?php if ($tipo_usuario !== 'ACS'): ?>
+                        <?php if ($tipo_usuario === 'Enfermeiro' || $tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
                         <div class="mb-3">
-                            <label for="registro_profissional" class="form-label">CRM/Registro Profissional</label>
+                            <label for="registro_profissional" class="form-label">CRM/COREN</label>
                             <input type="text" class="form-control" id="registro_profissional" name="registro_profissional" required>
                         </div>
                         <?php endif; ?>
@@ -347,17 +353,18 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
                     <form id="formEditar" method="POST">
                         <input type="hidden" id="edit_profissional_id" name="profissional_id">
                         <input type="hidden" id="edit_usuario_id" name="usuario_id">
-
+                        <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
                         <div class="mb-3">
                             <label for="edit_especialidade" class="form-label">Especialidade</label>
                             <select class="form-select" id="edit_especialidade" name="especialidade" required>
                                 <option value="">Selecione uma especialidade</option>
                             </select>
                         </div>
+                        <?php endif; ?>
 
-                        <?php if ($tipo_usuario !== 'ACS'): ?>
+                        <?php if ($tipo_usuario === 'Enfermeiro' || $tipo_usuario === 'Medico' || $tipo_usuario === 'Admin'): ?>
                         <div class="mb-3">
-                            <label for="edit_registro_profissional" class="form-label">CRM/Registro Profissional</label>
+                            <label for="edit_registro_profissional" class="form-label">CRM/COREN</label>
                             <input type="text" class="form-control" id="edit_registro_profissional" name="registro_profissional" required>
                         </div>
                         <?php endif; ?>
@@ -533,7 +540,7 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
 
         // Validação dos formulários
         ['#formCadastro', '#formEditar'].forEach(formSelector => {
-            $(formSelector).on('submit', function(e) {
+            $(formSelector).off('submit').on('submit', function(e) {
                 e.preventDefault();
                 
                 let isValid = true;
@@ -542,20 +549,25 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
                 // Criar FormData
                 const formData = new FormData(this);
 
+                const registro = $(this).find('[name="registro_profissional"]').val();
+                
                 // Se for ACS, adicionar registro_profissional como null
                 if (tipoUsuario.toLowerCase() === 'acs') {
+                    formData.set('especialidade', 'ACS');
                     formData.set('registro_profissional', null);
-                } else {
-                    // Validação para médicos e enfermeiros
-                    const registro = $(this).find('[name="registro_profissional"]').val();
-                    
-                    if (tipoUsuario.toLowerCase() === 'enfermeiro') {
-                        const corenRegex = /^\d{3}\.\d{3}-[A-Z]{2}\/[A-Z]{2}$/;
+                } 
+                else if (tipoUsuario.toLowerCase() === 'enfermeiro') {
+                    // Se for enfermeiro, definir especialidade como "Enfermeiro"
+                    formData.set('especialidade', 'Enfermeiro');
+                    const corenRegex = /^\d{3}\.\d{3}-[A-Z]{2}\/[A-Z]{2}$/;
                         if (!corenRegex.test(registro)) {
                             isValid = false;
                             mensagem = 'COREN inválido. Use o formato: 000.000-XX/UF';
                         }
-                    } else if (tipoUsuario.toLowerCase() === 'medico') {
+                }
+                else {
+                    // Validação para médicos e enfermeiros
+                    if (tipoUsuario.toLowerCase() === 'medico') {
                         const crmRegex = /^\d{6}\/[A-Z]{2}$/;
                         if (!crmRegex.test(registro)) {
                             isValid = false;
@@ -570,6 +582,12 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
                     return false;
                 }
 
+                // Desabilitar o botão de envio para evitar múltiplos envios
+                const submitButton = $(this).find('button[type="submit"]');
+                submitButton.prop('disabled', true);
+
+                console.log("Enviando formulário..."); // Para depuração
+
                 const url = $(this).attr('id') === 'formCadastro' ? 
                            'salvar_profissional.php' : 
                            'atualizar_profissional.php';
@@ -580,12 +598,26 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if(data.success) {
-                        $(this).closest('.modal').modal('hide');
-                        location.reload();
+                    if (data.success) {
+                        // Atualiza a linha da tabela dinamicamente
+                        const linha = document.querySelector(`tr[data-id="${profissionalId}"]`);
+                        if (linha) {
+                            linha.querySelector('.especialidade').textContent = $('#edit_especialidade').val();
+                            linha.querySelector('.registro_profissional').textContent = $('#edit_registro_profissional').val();
+                            linha.querySelector('.unidade_saude').textContent = $('#edit_unidade_saude').val();
+                        }
+                        alert(data.message);
+                        $('#modalEditar').modal('hide'); // Fecha o modal
                     } else {
-                        alert('Erro ao salvar: ' + data.message);
+                        alert('Erro: ' + data.message);
                     }
+                })
+                .catch(error => {
+                    console.error('Erro ao atualizar profissional:', error);
+                })
+                .finally(() => {
+                    // Reabilitar o botão de envio após a operação
+                    submitButton.prop('disabled', false);
                 });
             });
         });
@@ -656,12 +688,38 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
         document.getElementById('edit_usuario_id').value = usuarioId;
         
         fetch(`buscar_profissional.php?id=${profissionalId}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
-                $('#edit_especialidade').val(data.especialidade).trigger('change');
-                $('#edit_registro_profissional').val(data.registro_profissional);
-                $('#edit_unidade_saude').val(data.unidade_saude).trigger('change');
-                modalEditar.show();
+                console.log(data); // For debugging
+                let profissional = null;
+
+                // Check if the professional is a doctor or nurse
+                if (data.Medico && data.Medico.length > 0) {
+                    profissional = data.Medico[0];
+                } else if (data.Enfermeiro && data.Enfermeiro.length > 0) {
+                    profissional = data.Enfermeiro[0];
+                }
+
+                // Check if the professional was found
+                if (profissional) {
+                    // Access the professional's properties
+                    $('#edit_especialidade').val(profissional.especialidade || '').trigger('change');
+                    $('#edit_registro_profissional').val(profissional.registro_profissional || '');
+                    $('#edit_unidade_saude').val(profissional.unidade_saude || '').trigger('change');
+                    console.log('Registro Profissional:', profissional.registro_profissional); // Add this line for debugging
+                    modalEditar.show();
+                } else {
+                    alert('Profissional não encontrado.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar profissional:', error);
+                alert('Erro ao carregar os dados do profissional.');
             });
     }
     </script>

@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: index.php"); // Redireciona para a página de login
+    exit();
+}
+
 include "conexao.php";
 include 'verificar_login.php';
 include "sidebar.php";
