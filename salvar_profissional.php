@@ -29,6 +29,8 @@ try {
         
         if($stmt->execute()) {
             $response['success'] = true;
+            $response['profissional_id'] = $conn->insert_id;
+            $response['message'] = "Profissional cadastrado com sucesso!";
         } else {
             $response['message'] = "Erro ao salvar no banco de dados";
         }

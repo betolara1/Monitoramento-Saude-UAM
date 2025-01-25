@@ -98,7 +98,6 @@ $especialidades = [
     "Medicina Legal e Perícia Médica",
     "Medicina Nuclear",
     "Medicina Preventiva e Social",
-    "Médico de Família",
     "Nefrologia",
     "Neurocirurgia",
     "Neurologia",
@@ -547,7 +546,7 @@ $unidades = [
             </thead>
             <tbody id="profissionais-tbody">
                 <?php foreach ($profissionais as $profissional): ?>
-                    <tr>
+                    <tr data-usuario-id="<?php echo $profissional['usuario_id']; ?>">
                         <td><?php echo htmlspecialchars($profissional['nome']); ?></td>
                         <td><?php echo htmlspecialchars($profissional['email']); ?></td>
                         <td><?php echo htmlspecialchars($profissional['telefone']); ?></td>
@@ -589,27 +588,36 @@ $unidades = [
                     <form id="formCadastro" method="POST">
                         <input type="hidden" id="usuario_id" name="usuario_id">
                         <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
-                        <div class="mb-3">
-                            <label for="especialidade" class="form-label">Especialidade</label>
-                            <select class="form-select select2" id="especialidade" name="especialidade" required>
-                                <option value="">Selecione uma especialidade</option>
-                                <?php foreach ($especialidades as $esp): ?>
-                                    <option value="<?php echo htmlspecialchars($esp); ?>"><?php echo htmlspecialchars($esp); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
+                            <div class="mb-3">
+                                <label for="especialidade" class="form-label">Especialidade</label>
+                                <select class="form-select" id="especialidade" name="especialidade" required>
+                                    <option value="">Selecione uma especialidade</option>
+                                    <?php foreach ($especialidades as $esp): ?>
+                                        <option value="<?php echo htmlspecialchars($esp); ?>"><?php echo htmlspecialchars($esp); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         <?php endif; ?>
 
-                        <?php if ($tipo_usuario === 'Enfermeiro' || $tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
-                        <div class="mb-3">
-                            <label for="registro_profissional" class="form-label">CRM/COREN</label>
-                            <input type="text" class="form-control" id="registro_profissional" name="registro_profissional" required>
-                        </div>
+                        <?php if ($tipo_usuario !== 'ACS'): ?>
+                            <div class="mb-3">
+                                <label for="registro_profissional" class="form-label">
+                                    <?php echo ($tipo_usuario === 'Enfermeiro') ? 'COREN' : 
+                                          ($tipo_usuario === 'Medico' ? 'CRM' : 'CRM/COREN'); ?>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="registro_profissional" 
+                                       name="registro_profissional" 
+                                       required
+                                       data-tipo-usuario="<?php echo strtolower($tipo_usuario); ?>"
+                                       placeholder="<?php echo ($tipo_usuario === 'Enfermeiro') ? '000.000-XX/UF' : '000000/UF'; ?>">
+                            </div>
                         <?php endif; ?>
 
                         <div class="mb-3">
                             <label for="unidade_saude" class="form-label">Unidade de Saúde</label>
-                            <select class="form-select select2" id="unidade_saude" name="unidade_saude" required>
+                            <select class="form-select" id="unidade_saude" name="unidade_saude" required>
                                 <option value="">Selecione uma unidade</option>
                                 <?php foreach ($unidades as $uni): ?>
                                     <option value="<?php echo htmlspecialchars($uni); ?>"><?php echo htmlspecialchars($uni); ?></option>
@@ -645,25 +653,20 @@ $unidades = [
                         </div>
                         <?php endif; ?>
 
-                        <?php if ($tipo_usuario === 'Enfermeiro' || $tipo_usuario === 'Medico' || $tipo_usuario === 'Admin'): ?>
-                        <div class="col-md-6 mb-4">
-                            <div class="form-floating">
+                        <?php if ($tipo_usuario !== 'ACS'): ?>
+                            <div class="mb-3">
+                                <label for="edit_registro_profissional" class="form-label">
+                                    <?php echo ($tipo_usuario === 'Enfermeiro') ? 'COREN' : 
+                                          ($tipo_usuario === 'Medico' ? 'CRM' : 'CRM/COREN'); ?>
+                                </label>
                                 <input type="text" 
                                        class="form-control" 
                                        id="edit_registro_profissional" 
                                        name="registro_profissional" 
-                                       required 
-                                       placeholder="<?php echo ($tipo_usuario === 'Enfermeiro') ? '000.000-XX/UF' : '000000/UF'; ?>"
-                                       data-tipo-usuario="<?php echo strtolower($tipo_usuario); ?>">
-                                <label for="edit_registro_profissional">
-                                    <i class="fas fa-id-card me-2"></i>
-                                    <?php echo ($tipo_usuario === 'Enfermeiro') ? 'COREN' : 'CRM'; ?>
-                                </label>
-                                <div class="invalid-feedback">
-                                    Por favor, insira o número de registro válido.
-                                </div>
+                                       required
+                                       data-tipo-usuario="<?php echo strtolower($tipo_usuario); ?>"
+                                       placeholder="<?php echo ($tipo_usuario === 'Enfermeiro') ? '000.000-XX/UF' : '000000/UF'; ?>">
                             </div>
-                        </div>
                         <?php endif; ?>
 
                         <div class="mb-3">
@@ -690,6 +693,10 @@ $unidades = [
     // Adicionar o tipo de usuário como variável JavaScript
     const tipoUsuario = <?php echo json_encode($tipo_usuario); ?>;
 
+    // Disponibilizar os arrays para JavaScript
+    const especialidades = <?php echo json_encode($especialidades); ?>;
+    const unidades = <?php echo json_encode($unidades); ?>;
+
     $(document).ready(function() {
         modalCadastro = new bootstrap.Modal(document.getElementById('modalCadastro'));
         modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
@@ -703,7 +710,7 @@ $unidades = [
             $registro.unmask();
             
             // Aplica a máscara apropriada baseada no tipo de usuário
-            if ($tipoUsuario.toLowerCase() === 'enfermeiro') {
+            if (tipoUsuario.toLowerCase() === 'enfermeiro') {
                 // COREN: 000.000-AA/UF
                 $registro.mask('000.000-AA/AA', {
                     translation: {
@@ -715,7 +722,10 @@ $unidades = [
                     }
                 });
                 $registro.attr('placeholder', '000.000-XX/UF');
-            } else if ($tipoUsuario.toLowerCase() === 'medico') {
+                // Atualiza a label dinamicamente
+                $registro.closest('.mb-3').find('label').text('COREN');
+            } 
+            else if (tipoUsuario.toLowerCase() === 'medico') {
                 // CRM: 000000/UF
                 $registro.mask('000000/AA', {
                     translation: {
@@ -727,14 +737,16 @@ $unidades = [
                     }
                 });
                 $registro.attr('placeholder', '000000/UF');
+                // Atualiza a label dinamicamente
+                $registro.closest('.mb-3').find('label').text('CRM');
             }
         }
 
-        // Aplicar as máscaras para ambos os formulários
-        aplicarMascaraRegistro('#registro_profissional');
-        aplicarMascaraRegistro('#edit_registro_profissional');
+        // Aplicar as máscaras quando os modais são abertos
+        $('#modalCadastro').on('shown.bs.modal', function () {
+            aplicarMascaraRegistro('#registro_profissional');
+        });
 
-        // Reaplica a máscara quando o modal de edição é aberto
         $('#modalEditar').on('shown.bs.modal', function () {
             aplicarMascaraRegistro('#edit_registro_profissional');
         });
@@ -789,9 +801,8 @@ $unidades = [
 
                 console.log("Enviando formulário..."); // Para depuração
 
-                const url = $(this).attr('id') === 'formCadastro' ? 
-                           'salvar_profissional.php' : 
-                           'atualizar_profissional.php';
+                const isEditForm = formSelector === '#formEditar';
+                const url = isEditForm ? 'atualizar_profissional.php' : 'salvar_profissional.php';
 
                 fetch(url, {
                     method: 'POST',
@@ -800,37 +811,116 @@ $unidades = [
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Atualiza a linha da tabela dinamicamente
-                        const linha = document.querySelector(`tr[data-id="${profissionalId}"]`);
-                        if (linha) {
-                            linha.querySelector('.especialidade').textContent = $('#edit_especialidade').val();
-                            linha.querySelector('.registro_profissional').textContent = $('#edit_registro_profissional').val();
-                            linha.querySelector('.unidade_saude').textContent = $('#edit_unidade_saude').val();
+                        // Atualizar a tabela dinamicamente
+                        const usuarioId = formData.get('usuario_id');
+                        const row = $(`tr[data-usuario-id="${usuarioId}"]`);
+                        
+                        // Criar objeto com os novos dados
+                        const novosDados = {
+                            especialidade: formData.get('especialidade'),
+                            registro_profissional: formData.get('registro_profissional'),
+                            unidade_saude: formData.get('unidade_saude')
+                        };
+
+                        // Atualizar a linha existente ou criar uma nova
+                        if (row.length) {
+                            // Atualizar células existentes
+                            row.find('td:eq(4)').text(novosDados.especialidade);
+                            row.find('td:eq(5)').text(novosDados.registro_profissional || '');
+                            row.find('td:eq(6)').text(novosDados.unidade_saude);
+                            row.find('td:eq(7)').html('<span class="status-badge status-completo">Cadastro Completo</span>');
+                            row.find('td:eq(8)').html(`<button onclick="abrirModalEditar(${data.profissional_id}, ${usuarioId})" class="btn btn-primary">Editar</button>`);
                         }
+
+                        // Fechar o modal
+                        if (isEditForm) {
+                            modalEditar.hide();
+                        } else {
+                            modalCadastro.hide();
+                        }
+
+                        // Mostrar mensagem de sucesso
                         alert(data.message);
-                        modalEditar.hide(); // Fecha o modal
+                        
+                        // Recarregar a página para atualizar a tabela
+                        location.reload();
                     } else {
                         alert('Erro: ' + data.message);
                     }
                 })
                 .catch(error => {
-                    console.error('Erro ao atualizar profissional:', error);
+                    console.error('Erro ao salvar/atualizar profissional:', error);
+                    alert('Erro ao processar a requisição.');
                 })
                 .finally(() => {
-                    // Reabilitar o botão de envio após a operação
                     submitButton.prop('disabled', false);
                 });
             });
         });
 
-        // Inicializar Select2 para todos os selects com a classe select2
-        $('.select2').select2({
+        // Inicializar Select2 para especialidades
+        $('#especialidade, #edit_especialidade').select2({
             theme: 'bootstrap-5',
             width: '100%',
-            dropdownParent: $('.modal-body'), // Isso garante que o dropdown apareça dentro do modal
-            placeholder: 'Selecione ou digite para buscar',
+            dropdownParent: $('#modalCadastro .modal-body'),
+            placeholder: 'Selecione uma especialidade',
             allowClear: true
         });
+
+        // Inicializar Select2 para unidades
+        $('#unidade_saude, #edit_unidade_saude').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#modalCadastro .modal-body'),
+            placeholder: 'Selecione uma unidade',
+            allowClear: true
+        });
+
+        // Configuração específica para o modal de edição
+        $('#edit_especialidade').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#modalEditar .modal-body'),
+            placeholder: 'Selecione uma especialidade',
+            allowClear: true
+        });
+
+        $('#edit_unidade_saude').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $('#modalEditar .modal-body'),
+            placeholder: 'Selecione uma unidade',
+            allowClear: true
+        });
+
+        // Ajustar z-index dos dropdowns
+        $(document).on('select2:open', () => {
+            document.querySelector('.select2-container--open .select2-search__field').focus();
+        });
+
+        // Recarregar Select2 quando o modal for aberto
+        $('#modalCadastro').on('shown.bs.modal', function () {
+            $('#especialidade').select2('destroy').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#modalCadastro .modal-body'),
+                placeholder: 'Selecione uma especialidade',
+                allowClear: true
+            });
+        });
+
+        $('#modalEditar').on('shown.bs.modal', function () {
+            $('#edit_especialidade').select2('destroy').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#modalEditar .modal-body'),
+                placeholder: 'Selecione uma especialidade',
+                allowClear: true
+            });
+        });
+
+        // Ajusta a altura do container do Select2
+        $('.select2-container--bootstrap-5 .select2-selection').css('height', '60px');
 
         // Ajustar z-index do dropdown do Select2
         $('.select2-dropdown').css('z-index', 9999);

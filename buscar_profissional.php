@@ -2,36 +2,29 @@
 include 'conexao.php';
 include 'verificar_login.php';
 
+$response = ['success' => false, 'message' => '', 'profissional' => null];
+
 if (isset($_GET['id'])) {
-    $profissional_id = $_GET['id'];
-
-    $sql = "SELECT p.id, p.usuario_id, p.especialidade, p.registro_profissional, p.unidade_saude, u.tipo_usuario
-            FROM profissionais p
-            JOIN usuarios u ON p.usuario_id = u.id
-            WHERE p.id = ?";
+    $id = $_GET['id'];
     
+    $sql = "SELECT * FROM profissionais WHERE id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $profissional_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $profissional = $result->fetch_assoc();
-        $response = [
-            $profissional['tipo_usuario'] => [
-                [
-                    'id' => $profissional['id'],
-                    'especialidade' => $profissional['especialidade'],
-                    'registro_profissional' => $profissional['registro_profissional'],
-                    'unidade_saude' => $profissional['unidade_saude']
-                ]
-            ]
-        ];
-        echo json_encode($response);
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        if ($profissional = $result->fetch_assoc()) {
+            $response['success'] = true;
+            $response['profissional'] = $profissional;
+        } else {
+            $response['message'] = "Profissional não encontrado";
+        }
     } else {
-        echo json_encode(['error' => 'Profissional não encontrado']);
+        $response['message'] = "Erro ao buscar profissional";
     }
 } else {
-    echo json_encode(['error' => 'ID não fornecido']);
+    $response['message'] = "ID não fornecido";
 }
+
+echo json_encode($response);
 
