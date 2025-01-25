@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 
 // Verifica permissão
 if (!isset($_SESSION['tipo_usuario']) || 
-    ($_SESSION['tipo_usuario'] !== 'Admin' && $_SESSION['tipo_usuario'] !== 'Profissional')) {
+    ($_SESSION['tipo_usuario'] !== 'Admin' && $_SESSION['tipo_usuario'] !== 'Medico' && $_SESSION['tipo_usuario'] !== 'Profissional')) {
     echo json_encode([
         'success' => false,
         'message' => 'Acesso não autorizado'

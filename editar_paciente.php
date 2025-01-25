@@ -416,6 +416,44 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         .btn-edit:hover {
             background-color: #1976D2;
         }
+
+        .risk-calculator {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .risk-calculator .form-group {
+            margin-bottom: 15px;
+        }
+
+        .risk-calculator label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .risk-calculator .alert {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        #resultado {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #resultado h4 {
+            margin-bottom: 15px;
+        }
+
+        #probabilidade {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -903,7 +941,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         </div>
 
         <!-- Seção de Exames -->
-        <div class="section-card">
+        <div class="section-card"> 
             <h2 class="section-header">Exames</h2>
             <?php if (temPermissao()): ?>
                 <div class="section-actions">
@@ -1173,6 +1211,80 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 </div>
             </div>
         </div>
+
+        <!-- Seção de Risco Cardiovascular -->
+        <div class="section-card">
+            <h2 class="section-header">Risco Cardiovascular</h2>
+            <div class="risk-calculator">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label>Sexo:</label>
+                            <select id="sexo" class="form-control">
+                                <option value="">Selecione...</option>
+                                <option value="Homem">Homem</option>
+                                <option value="Mulher">Mulher</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Idade:</label>
+                            <select id="idade" class="form-control">
+                                <option value="">Selecione...</option>
+                                <option value="20-34">20-34 anos</option>
+                                <option value="35-39">35-39 anos</option>
+                                <option value="40-44">40-44 anos</option>
+                                <option value="45-49">45-49 anos</option>
+                                <option value="50-54">50-54 anos</option>
+                                <option value="55-59">55-59 anos</option>
+                                <option value="60-64">60-64 anos</option>
+                                <option value="65-69">65-69 anos</option>
+                                <option value="70-74">70-74 anos</option>
+                                <option value="75-79">75-79 anos</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Colesterol Total (mg/dL):</label>
+                            <input type="number" id="colesterol_total" class="form-control" placeholder="Ex: 180">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Colesterol HDL (mg/dL):</label>
+                            <input type="number" id="colesterol_hdl" class="form-control" placeholder="Ex: 45">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label>Pressão Sistólica (mmHg):</label>
+                            <input type="number" id="pressao_sistolica" class="form-control" placeholder="Ex: 120">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Fumante:</label>
+                            <select id="fumante" class="form-control">
+                                <option value="">Selecione...</option>
+                                <option value="Sim">Sim</option>
+                                <option value="Não">Não</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Toma remédios para hipertensão:</label>
+                            <select id="remedios_hipertensao" class="form-control">
+                                <option value="">Selecione...</option>
+                                <option value="Sim">Sim</option>
+                                <option value="Não">Não</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button onclick="calcularRisco()" class="btn btn-primary">Calcular Risco</button>
+                </div>
+                <div id="resultado" class="mt-4" style="display: none;">
+                    <h4>Resultado:</h4>
+                    <div class="alert alert-info">
+                        <p>Probabilidade de doença cardiovascular em 10 anos: <span id="probabilidade"></span>%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de Nova Consulta -->
@@ -1323,93 +1435,93 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
     </div>
 
     <!-- Adicione o Modal de Edição de Consulta-->
-<div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formEditarConsulta" method="POST">
+                    <div class="modal-body">
+                        <input type="hidden" name="consulta_id" id="edit_consulta_id">
+                        <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                        
+                        <div class="form-group mb-3">
+                            <label>Profissional:</label>
+                            <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
+                                <option value="">Selecione o profissional</option>
+                                <?php
+                                $query_prof = "SELECT p.id, u.nome 
+                                            FROM profissionais p 
+                                            JOIN usuarios u ON p.usuario_id = u.id 
+                                            WHERE u.tipo_usuario = 'Medico'
+                                            ORDER BY u.nome";
+                                $result_prof = $conn->query($query_prof);
+                                while($row = $result_prof->fetch_assoc()) {
+                                    echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Data da Consulta:</label>
+                                <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Pressão Arterial:</label>
+                                <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label>Glicemia:</label>
+                                <input type="text" name="glicemia" id="edit_glicemia" class="form-control glicemia" placeholder="Ex: 99">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>Peso (kg):</label>
+                                <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label>Altura (cm):</label>
+                                <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170">
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Estado Emocional:</label>
+                            <select class="form-select" id="edit_estado_emocional" name="estado_emocional">
+                                <option value="">Selecione...</option>
+                                <option value="Calmo">Calmo</option>
+                                <option value="Ansioso">Ansioso</option>
+                                <option value="Deprimido">Deprimido</option>
+                                <option value="Estressado">Estressado</option>
+                                <option value="Irritado">Irritado</option>
+                                <option value="Alegre">Alegre</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                            <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Observações:</label>
+                            <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="4"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
             </div>
-            <form id="formEditarConsulta" method="POST">
-                <div class="modal-body">
-                    <input type="hidden" name="consulta_id" id="edit_consulta_id">
-                    <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                    
-                    <div class="form-group mb-3">
-                        <label>Profissional:</label>
-                        <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
-                            <option value="">Selecione o profissional</option>
-                            <?php
-                            $query_prof = "SELECT p.id, u.nome 
-                                           FROM profissionais p 
-                                           JOIN usuarios u ON p.usuario_id = u.id 
-                                           WHERE u.tipo_usuario = 'Medico'
-                                           ORDER BY u.nome";
-                            $result_prof = $conn->query($query_prof);
-                            while($row = $result_prof->fetch_assoc()) {
-                                echo "<option value='{$row['id']}'>{$row['nome']}</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label>Data da Consulta:</label>
-                            <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label>Pressão Arterial:</label>
-                            <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label>Glicemia:</label>
-                            <input type="text" name="glicemia" id="edit_glicemia" class="form-control glicemia" placeholder="Ex: 99">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Peso (kg):</label>
-                            <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label>Altura (cm):</label>
-                            <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170">
-                        </div>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label>Estado Emocional:</label>
-                        <select class="form-select" id="edit_estado_emocional" name="estado_emocional">
-                            <option value="">Selecione...</option>
-                            <option value="Calmo">Calmo</option>
-                            <option value="Ansioso">Ansioso</option>
-                            <option value="Deprimido">Deprimido</option>
-                            <option value="Estressado">Estressado</option>
-                            <option value="Irritado">Irritado</option>
-                            <option value="Alegre">Alegre</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
-                        <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label>Observações:</label>
-                        <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="4"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
     <!-- Modal para atribuir médico -->
     <div class="modal fade" id="modalAtribuirMedico" tabindex="-1" aria-labelledby="modalAtribuirMedicoLabel" aria-hidden="true">
@@ -1422,7 +1534,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 <form id="formAtribuirMedico" method="POST">
                     <div class="modal-body">
                         <input type="hidden" name="paciente_id" id="atribuir_paciente_id">
-                        
+                        <input type="hidden" name="tipo_profissional" value="<?php echo $tipo_profissional; ?>">
                         <div class="form-group mb-3">
                             <label>Selecione o Médico:</label>
                             <select name="profissional_id" class="form-control" required>
@@ -1431,6 +1543,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 $query_medicos = "SELECT p.id, u.nome, p.especialidade 
                                                 FROM profissionais p 
                                                 JOIN usuarios u ON p.usuario_id = u.id 
+                                                WHERE u.tipo_usuario = 'Medico'
                                                 ORDER BY u.nome";
                                 $result_medicos = $conn->query($query_medicos);
                                 while($medico = $result_medicos->fetch_assoc()) {
@@ -2451,6 +2564,60 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             linha.find('td:eq(1)').text(acompanhamento.glicemia);
             linha.find('td:eq(2)').text(acompanhamento.hipertensao);
             linha.find('td:eq(3)').text(acompanhamento.observacoes);
+        }
+
+        function calcularRisco() {
+            // Obter valores dos campos
+            const sexo = document.getElementById('sexo').value;
+            const idade = document.getElementById('idade').value;
+            const colesterolTotal = parseFloat(document.getElementById('colesterol_total').value);
+            const colesterolHDL = parseFloat(document.getElementById('colesterol_hdl').value);
+            const pressaoSistolica = parseFloat(document.getElementById('pressao_sistolica').value);
+            const fumante = document.getElementById('fumante').value === 'Sim';
+            const remediosHipertensao = document.getElementById('remedios_hipertensao').value === 'Sim';
+
+            // Validar campos
+            if (!sexo || !idade || !colesterolTotal || !colesterolHDL || !pressaoSistolica || !fumante || !remediosHipertensao) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            // Cálculo do risco cardiovascular (usando as fórmulas da imagem)
+            let probabilidade;
+            if (sexo === 'Homem') {
+                // Fórmula para homens
+                const ln_idade = Math.log(parseInt(idade));
+                const ln_colesterol = Math.log(colesterolTotal);
+                const ln_hdl = Math.log(colesterolHDL);
+                const ln_pressao = Math.log(pressaoSistolica);
+
+                const S0 = 0.88936; // Valor base para homens
+                const beta = [
+                    52.00961231,
+                    20.014077,
+                    -0.905964,
+                    1.305784,
+                    0.241549,
+                    12.096316,
+                    2.84367
+                ];
+
+                const soma = beta[0] * ln_idade +
+                            beta[1] * ln_colesterol +
+                            beta[2] * ln_hdl +
+                            beta[3] * ln_pressao +
+                            beta[4] * (remediosHipertensao ? 1 : 0) +
+                            beta[5] * (fumante ? 1 : 0);
+
+                probabilidade = (1 - Math.pow(S0, Math.exp(soma))) * 100;
+            } else {
+                // Fórmula para mulheres (similar à dos homens, mas com coeficientes diferentes)
+                // Implementar cálculo para mulheres aqui
+            }
+
+            // Exibir resultado
+            document.getElementById('probabilidade').textContent = probabilidade.toFixed(2);
+            document.getElementById('resultado').style.display = 'block';
         }
     </script>
 
