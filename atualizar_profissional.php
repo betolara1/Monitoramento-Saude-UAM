@@ -30,19 +30,23 @@ try {
     $usuario_id = intval($_POST['usuario_id']);
     $unidade_saude = $_POST['unidade_saude'] ?? '';
 
-    // Definir especialidade e registro profissional baseado no tipo de usuário
+    // Buscar o tipo de usuário do banco de dados
+    $sql_tipo = "SELECT tipo_usuario FROM usuarios WHERE id = ?";
+    $stmt_tipo = $conn->prepare($sql_tipo);
+    $stmt_tipo->bind_param("i", $usuario_id);
+    $stmt_tipo->execute();
+    $result_tipo = $stmt_tipo->get_result();
+    $tipo_usuario = $result_tipo->fetch_assoc()['tipo_usuario'];
 
+    // Definir especialidade e registro profissional baseado no tipo de usuário
     if ($tipo_usuario === 'ACS') {
         $especialidade = 'ACS';
         $registro_profissional = null;
-    }
-        
-    if ($tipo_usuario === 'Enfermeiro') {
+    } elseif ($tipo_usuario === 'Enfermeiro') {
         $especialidade = 'Enfermeiro';
         $registro_profissional = $_POST['registro_profissional'] ?? null;
-    }
-        
-    if ($tipo_usuario === 'Medico' || $tipo_usuario === 'Admin') {
+    } else {
+        // Para Médico ou Admin
         $especialidade = $_POST['especialidade'] ?? '';
         $registro_profissional = $_POST['registro_profissional'] ?? null;
     }

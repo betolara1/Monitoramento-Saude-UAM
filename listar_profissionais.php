@@ -775,8 +775,6 @@ $unidades = [
                 if (tipoUsuario.toLowerCase() === 'acs') {
                     formData.set('especialidade', 'ACS');
                     formData.set('registro_profissional', null);
-                    formData.set('edit_especialidade', 'ACS');
-                    formData.set('edit_registro_profissional', null);
                 } 
                 else if (tipoUsuario.toLowerCase() === 'enfermeiro') {
                     // Se for enfermeiro, definir especialidade como "Enfermeiro"
