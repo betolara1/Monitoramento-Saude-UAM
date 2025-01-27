@@ -132,3 +132,18 @@ CREATE TABLE logs_acesso (
  endereco_ip VARCHAR(50),
  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
+
+CREATE TABLE riscos_saude (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NOT NULL,
+    data_calculo DATE NOT NULL,
+    sexo ENUM('Homem', 'Mulher') NOT NULL,
+    idade VARCHAR(10) NOT NULL,
+    colesterol_total INT NOT NULL,
+    colesterol_hdl INT NOT NULL,
+    pressao_sistolica INT NOT NULL,
+    fumante ENUM('Sim', 'Não') NOT NULL,
+    remedios_hipertensao ENUM('Sim', 'Não') NOT NULL,
+    probabilidade DECIMAL(5,2) NOT NULL,
+    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+);

@@ -459,6 +459,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -1479,7 +1480,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label>Glicemia:</label>
-                                <input type="text" name="glicemia" id="edit_glicemia" class="form-control glicemia" placeholder="Ex: 99">
+                                <input type="text" 
+                                    name="glicemia" 
+                                    id="edit_glicemia"
+                                    class="form-control glicemia" 
+                                    placeholder="Ex: 99"
+                                    title="Valor entre 20 e 600 mg/dL" required>
+                                <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>Peso (kg):</label>
@@ -1509,10 +1516,10 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label>Observações:</label>
-                            <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="4"></textarea>
-                        </div>
+                        <div class="mb-3">
+                                    <label>Observações:</label>
+                                    <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                                </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -1758,20 +1765,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             myModal.show();
         }
 
-        function verDetalhesConsulta(consultaId) {
-            // Fazer uma requisição AJAX para buscar os detalhes da consulta
-            $.ajax({
-                url: 'buscar_consulta.php',
-                type: 'GET',
-                data: { id: consultaId },
-                success: function(response) {
-                    // Aqui você pode criar outro modal para mostrar os detalhes completos
-                    // incluindo as observações
-                    $('#modalDetalhesConsulta').html(response).modal('show');
-                }
-            });
-        }
-
         // Adicione este código para fechar o modal após submeter o formulário com sucesso
         $(document).ready(function() {
             $('#formConsulta').on('submit', function(e) {
@@ -1937,44 +1930,52 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         });
 
         function editarConsulta(consulta) {
-            // Converte a data para o formato correto
-            let dataConsulta = consulta.data_consulta;
-            if (dataConsulta) {
-                // Garante que a data esteja no formato YYYY-MM-DD
-                dataConsulta = dataConsulta.split('T')[0];
-            }
+            var modalEditarConsulta = new bootstrap.Modal(document.getElementById('modalEditarConsulta'));
+            
+            // Log para debug
+            console.log('Dados da consulta:', consulta);
+            console.log('Observações:', consulta.observacoes);
+            
+            modalEditarConsulta.show();
+            
+            // Pequeno delay para garantir que o modal esteja carregado
+            setTimeout(() => {
+                // Preenche todos os campos
+                document.getElementById('edit_consulta_id').value = consulta.id;
+                document.getElementById('edit_profissional_id').value = consulta.profissional_id;
+                document.getElementById('edit_data_consulta').value = consulta.data_consulta;
+                document.getElementById('edit_pressao_arterial').value = consulta.pressao_arterial;
+                document.getElementById('edit_glicemia').value = consulta.glicemia;
+                document.getElementById('edit_peso').value = consulta.peso;
+                document.getElementById('edit_altura').value = consulta.altura;
+                document.getElementById('edit_estado_emocional').value = consulta.estado_emocional;
+                document.getElementById('edit_habitos_vida').value = consulta.habitos_vida;
+                
+                // Garante que o campo de observações existe e tem um valor
+                const observacoesField = document.getElementById('edit_observacoes');
+                if (observacoesField) {
+                    observacoesField.value = consulta.observacoes || '';
+                }
+            }, 100);
+        }
 
-            // Debug
-            console.log('Dados recebidos:', {
-                id: consulta.id,
-                profissional_id: consulta.profissional_id,
-                data: dataConsulta,
-                pressao: consulta.pressao_arterial,
-                glicemia: consulta.glicemia,
-                peso: consulta.peso,
-                altura: consulta.altura,
-                obs: consulta.observacoes
-            });
-
-            // Preenche os campos do modal
-            $('#edit_consulta_id').val(consulta.id);
-            $('#edit_profissional_id').val(consulta.profissional_id);
-            $('#edit_data_consulta').val(dataConsulta);
-            $('#edit_pressao_arterial').val(consulta.pressao_arterial);
-            $('#edit_glicemia').val(consulta.glicemia);
-            $('#edit_peso').val(consulta.peso);
-            $('#edit_altura').val(consulta.altura);
-            $('#edit_observacoes').val(consulta.observacoes);
-            // Preencher Estado Emocional
-            $('#edit_estado_emocional').val(consulta.estado_emocional);
-
-            // Preencher Hábitos de Vida
-            $('#edit_habitos_vida').val(consulta.habitos_vida);
-
-
-            // Abre o modal
-            var myModal = new bootstrap.Modal(document.getElementById('modalEditarConsulta'));
-            myModal.show();
+        // Função para buscar os dados da consulta
+        function buscarConsulta(consultaId) {
+            fetch(`buscar_consulta.php?id=${consultaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Dados completos recebidos:', data.consulta);
+                        console.log('Observações:', data.consulta.observacoes);
+                        editarConsulta(data.consulta);
+                    } else {
+                        alert('Erro ao buscar dados da consulta: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao buscar dados da consulta');
+                });
         }
 
         // Manipula o envio do formulário de edição
@@ -2020,10 +2021,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 }
             });
         });
-
-        function verDetalhesConsulta(consultaId) {
-            // Implementação existente...
-        }
 
         function excluirConsulta(consultaId) {
             if (confirm('Tem certeza que deseja excluir esta consulta?')) {
@@ -2475,18 +2472,22 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         // Função para adicionar uma nova linha na tabela de acompanhamento
         function adicionarLinhaTabela(acompanhamento) {
             var novaLinha = `
-                <tr>
+                <tr data-id="${acompanhamento.id}">
                     <td>${acompanhamento.data_acompanhamento}</td>
-                    <td>${acompanhamento.glicemia}</td>
-                    <td>${acompanhamento.hipertensao}</td>
-                    <td>${acompanhamento.observacoes}</td>
+                    <td>${acompanhamento.glicemia || 'Não informado'}</td>
+                    <td>${acompanhamento.hipertensao || 'Não informado'}</td>
+                    <td>${acompanhamento.observacoes || 'Não informado'}</td>
                     <td>
-                        <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-secondary">Editar</a>
-                        <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-danger">Excluir</a>
+                        <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Excluir
+                        </a>
                     </td>
                 </tr>
             `;
-            $('.data-table tbody').append(novaLinha); // Adiciona a nova linha à tabela
+            $('.data-table tbody').append(novaLinha);
         }
 
         function excluirAcompanhamento(id) {
