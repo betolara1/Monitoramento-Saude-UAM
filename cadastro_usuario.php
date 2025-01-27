@@ -168,6 +168,7 @@ if (isset($_SESSION['tipo_usuario']) &&
                                 <option value="Medico">Médico</option>
                                 <option value="Enfermeira">Enfermeira</option>
                                 <option value="ACS">ACS</option>
+                                <option value="Paciente">Paciente</option>
                             <?php endif; ?>
                         </select>
                     </div>

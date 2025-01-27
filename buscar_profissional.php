@@ -2,29 +2,51 @@
 include 'conexao.php';
 include 'verificar_login.php';
 
-$response = ['success' => false, 'message' => '', 'profissional' => null];
+header('Content-Type: application/json');
 
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     
-    $sql = "SELECT * FROM profissionais WHERE id = ?";
+    // Modificar a query para buscar todos os dados necessários
+    $sql = "SELECT p.*, u.tipo_usuario 
+            FROM profissionais p 
+            JOIN usuarios u ON p.usuario_id = u.id 
+            WHERE p.id = ?";
+            
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {
         $result = $stmt->get_result();
         if ($profissional = $result->fetch_assoc()) {
-            $response['success'] = true;
-            $response['profissional'] = $profissional;
+            // Retornar os dados em um formato mais simples
+            echo json_encode([
+                'success' => true,
+                'profissional' => [
+                    'id' => $profissional['id'],
+                    'usuario_id' => $profissional['usuario_id'],
+                    'especialidade' => $profissional['especialidade'],
+                    'registro_profissional' => $profissional['registro_profissional'],
+                    'unidade_saude' => $profissional['unidade_saude'],
+                    'tipo_usuario' => $profissional['tipo_usuario']
+                ]
+            ]);
         } else {
-            $response['message'] = "Profissional não encontrado";
+            echo json_encode([
+                'success' => false,
+                'message' => "Profissional não encontrado"
+            ]);
         }
     } else {
-        $response['message'] = "Erro ao buscar profissional";
+        echo json_encode([
+            'success' => false,
+            'message' => "Erro ao buscar profissional"
+        ]);
     }
 } else {
-    $response['message'] = "ID não fornecido";
+    echo json_encode([
+        'success' => false,
+        'message' => "ID não fornecido"
+    ]);
 }
-
-echo json_encode($response);
 

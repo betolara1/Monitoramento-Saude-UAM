@@ -644,13 +644,17 @@ $unidades = [
                     <form id="formEditar" method="POST">
                         <input type="hidden" id="edit_profissional_id" name="profissional_id">
                         <input type="hidden" id="edit_usuario_id" name="usuario_id">
+
                         <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
-                        <div class="mb-3">
-                            <label for="edit_especialidade" class="form-label">Especialidade</label>
-                            <select class="form-select" id="edit_especialidade" name="especialidade" required>
-                                <option value="">Selecione uma especialidade</option>
-                            </select>
-                        </div>
+                            <div class="mb-3">
+                                <label for="edit_especialidade" class="form-label">Especialidade</label>
+                                <select class="form-select" id="edit_especialidade" name="especialidade" required>
+                                    <option value="">Selecione uma especialidade</option>
+                                    <?php foreach ($especialidades as $esp): ?>
+                                        <option value="<?php echo htmlspecialchars($esp); ?>"><?php echo htmlspecialchars($esp); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         <?php endif; ?>
 
                         <?php if ($tipo_usuario !== 'ACS'): ?>
@@ -673,6 +677,9 @@ $unidades = [
                             <label for="edit_unidade_saude" class="form-label">Unidade de Saúde</label>
                             <select class="form-select" id="edit_unidade_saude" name="unidade_saude" required>
                                 <option value="">Selecione uma unidade</option>
+                                <?php foreach ($unidades as $uni): ?>
+                                    <option value="<?php echo htmlspecialchars($uni); ?>"><?php echo htmlspecialchars($uni); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
 
@@ -768,6 +775,8 @@ $unidades = [
                 if (tipoUsuario.toLowerCase() === 'acs') {
                     formData.set('especialidade', 'ACS');
                     formData.set('registro_profissional', null);
+                    formData.set('edit_especialidade', 'ACS');
+                    formData.set('edit_registro_profissional', null);
                 } 
                 else if (tipoUsuario.toLowerCase() === 'enfermeiro') {
                     // Se for enfermeiro, definir especialidade como "Enfermeiro"
@@ -974,26 +983,27 @@ $unidades = [
                 return response.json();
             })
             .then(data => {
-                console.log(data); // For debugging
-                let profissional = null;
-
-                // Check if the professional is a doctor or nurse
-                if (data.Medico && data.Medico.length > 0) {
-                    profissional = data.Medico[0];
-                } else if (data.Enfermeiro && data.Enfermeiro.length > 0) {
-                    profissional = data.Enfermeiro[0];
-                }
-
-                // Check if the professional was found
-                if (profissional) {
-                    // Access the professional's properties
-                    $('#edit_especialidade').val(profissional.especialidade || '').trigger('change');
-                    $('#edit_registro_profissional').val(profissional.registro_profissional || '');
-                    $('#edit_unidade_saude').val(profissional.unidade_saude || '').trigger('change');
-                    console.log('Registro Profissional:', profissional.registro_profissional); // Add this line for debugging
+                console.log('Dados recebidos:', data); // Para debug
+                
+                if (data.success && data.profissional) {
+                    const profissional = data.profissional;
+                    
+                    // Preencher os campos do formulário
+                    if ($('#edit_especialidade').length) {
+                        $('#edit_especialidade').val(profissional.especialidade).trigger('change');
+                    }
+                    
+                    if ($('#edit_registro_profissional').length) {
+                        $('#edit_registro_profissional').val(profissional.registro_profissional);
+                    }
+                    
+                    if ($('#edit_unidade_saude').length) {
+                        $('#edit_unidade_saude').val(profissional.unidade_saude).trigger('change');
+                    }
+                    
                     modalEditar.show();
                 } else {
-                    alert('Profissional não encontrado.');
+                    alert(data.message || 'Profissional não encontrado.');
                 }
             })
             .catch(error => {
