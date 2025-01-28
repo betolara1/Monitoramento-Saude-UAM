@@ -70,18 +70,22 @@ try {
     }
 
     if ($exame_id) {
-        // Se há um novo arquivo e existe um arquivo antigo, excluir o antigo
+        // Se há um novo arquivo, buscar e excluir o arquivo antigo
         if (!empty($_FILES['arquivo_exame']['name'])) {
             $query_arquivo_antigo = "SELECT arquivo_exame FROM exames WHERE id = ? AND paciente_id = ?";
             $stmt = $conn->prepare($query_arquivo_antigo);
             $stmt->bind_param("ii", $exame_id, $paciente_id);
             $stmt->execute();
             $result = $stmt->get_result();
-            if ($row = $result->fetch_assoc() && !empty($row['arquivo_exame'])) {
-                if (file_exists($row['arquivo_exame'])) {
-                    unlink($row['arquivo_exame']);
+            
+            if ($row = $result->fetch_assoc()) {
+                $arquivo_antigo = $row['arquivo_exame'];
+                // Verifica se existe um arquivo antigo e o exclui
+                if (!empty($arquivo_antigo) && file_exists($arquivo_antigo)) {
+                    unlink($arquivo_antigo); // Remove o arquivo físico
                 }
             }
+            $stmt->close();
         }
 
         // UPDATE

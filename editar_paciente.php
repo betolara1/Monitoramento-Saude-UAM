@@ -1233,8 +1233,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th>Probabilidade</th>
                                 <th>Pontuação</th>
+                                <th>Probabilidade de Risco</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -2632,11 +2632,89 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             linha.find('td:eq(3)').text(acompanhamento.observacoes);
         }
 
+        // Função auxiliar para converter valores em números
+        function getNumericValue(value) {
+            const num = parseFloat(value);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function getProbabilidadeByPontos(pontos, sexo) {
+            if (sexo === 'Homem') {
+                if (pontos < 0) return 1;
+                switch (pontos) {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                        return 1;
+                    case 5:
+                    case 6:
+                        return 2;
+                    case 7:
+                        return 3;
+                    case 8:
+                        return 4;
+                    case 9:
+                        return 5;
+                    case 10:
+                        return 6;
+                    case 11:
+                        return 8;
+                    case 12:
+                        return 10;
+                    case 13:
+                        return 12;
+                    case 14:
+                        return 16;
+                    case 15:
+                        return 20;
+                    case 16:
+                        return 25;
+                    default:
+                        return 30;
+                }
+            } else { // Mulher
+                if (pontos < 9) return 1;
+                switch (pontos) {
+                    case 9:
+                    case 10:
+                    case 11:
+                    case 12:
+                        return 1;
+                    case 13:
+                    case 14:
+                        return 2;
+                    case 15:
+                        return 3;
+                    case 16:
+                        return 4;
+                    case 17:
+                        return 5;
+                    case 18:
+                        return 6;
+                    case 19:
+                        return 8;
+                    case 20:
+                        return 11;
+                    case 21:
+                        return 14;
+                    case 22:
+                        return 17;
+                    case 23:
+                        return 22;
+                    case 24:
+                        return 27;
+                    default:
+                        return 30;
+                }
+            }
+        }
+
         function calcularRisco() {
             const form = document.getElementById('formRiscoCardiovascular');
             const formData = new FormData(form);
             
-            // Validar campos
             if (!validarCamposRisco()) {
                 return false;
             }
@@ -2644,41 +2722,12 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             try {
                 // Obter valores dos campos
                 const sexo = formData.get('sexo');
-                const idade = formData.get('idade').split('-')[0];
-                const colesterolTotal = formData.get('colesterol_total');
-                const colesterolHDL = formData.get('colesterol_hdl');
-                const pressaoSistolica = formData.get('pressao_sistolica');
-                const fumante = formData.get('fumante') === 'Sim' ? 1 : 0;
-                const remediosHipertensao = formData.get('remedios_hipertensao') === 'Sim' ? 1 : 0;
-
-                let probabilidade;
-                if (sexo === 'Homem') {
-                    // Fórmula para homens
-                    probabilidade = 1 - Math.pow(0.90015, Math.exp(
-                        (3.06117 * Math.log(idade)) +
-                        (1.12370 * Math.log(getNumericValue(colesterolTotal))) -
-                        (0.93263 * Math.log(getNumericValue(colesterolHDL))) +
-                        (1.93303 * Math.log(getNumericValue(pressaoSistolica))) +
-                        (0.65451 * remediosHipertensao) +
-                        (0.57367 * fumante) -
-                        23.9802
-                    ));
-                } else {
-                    // Fórmula para mulheres
-                    probabilidade = 1 - Math.pow(0.96246, Math.exp(
-                        (2.32888 * Math.log(idade)) +
-                        (1.20904 * Math.log(getNumericValue(colesterolTotal))) -
-                        (0.70833 * Math.log(getNumericValue(colesterolHDL))) +
-                        (2.76157 * Math.log(getNumericValue(pressaoSistolica))) +
-                        (0.52873 * remediosHipertensao) +
-                        (0.69154 * fumante) -
-                        26.1931
-                    ));
-                }
-
-                // Calcular e exibir resultados
+                
+                // Calcular pontuação
                 const pontuacao = calcularPontuacao(formData);
-                probabilidade = (probabilidade * 100).toFixed(2);
+                
+                // Obter probabilidade baseada na pontuação
+                const probabilidade = getProbabilidadeByPontos(pontuacao, sexo);
 
                 // Atualizar campos de resultado
                 const pontuacaoInput = document.getElementById('pontuacao');
@@ -2688,9 +2737,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     pontuacaoInput.value = pontuacao;
                     probabilidadeInput.value = probabilidade;
                     
-                    // Mostrar div de resultados
+                    // Mostrar div de resultados e botão de salvar
                     document.getElementById('resultadosCalculo').style.display = 'flex';
-                    // Mostrar botão de salvar
                     document.getElementById('btnSalvar').style.display = 'inline-block';
                 } else {
                     throw new Error('Elementos de resultado não encontrados');
@@ -2701,7 +2749,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 Swal.fire({
                     icon: 'error',
                     title: 'Erro no cálculo',
-                    text: 'Ocorreu um erro ao calcular o risco: ' + error.message
+                    text: error.message
                 });
             }
         }
@@ -2776,23 +2824,87 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         // Função auxiliar para calcular pontuação
         function calcularPontuacao(formData) {
-            // Por enquanto, retorna um valor fixo
-            return 1;
-        }
+            const sexo = formData.get('sexo');
+            const idade = parseInt(formData.get('idade').split('-')[0]);
+            const colesterolTotal = parseFloat(formData.get('colesterol_total'));
+            const colesterolHDL = parseFloat(formData.get('colesterol_hdl'));
+            const pressaoSistolica = parseFloat(formData.get('pressao_sistolica'));
+            const remediosHipertensao = formData.get('remedios_hipertensao') === 'Sim' ? 1 : 0;
+            const fumante = formData.get('fumante') === 'Sim' ? 1 : 0;
 
-        // Função auxiliar para converter valores
-        function getNumericValue(value) {
-            if (typeof value === 'string') {
-                if (value.includes('<')) {
-                    return parseInt(value.replace('<', '')) - 1;
-                } else if (value.includes('>=')) {
-                    return parseInt(value.replace('>=', ''));
-                } else if (value.includes('-')) {
-                    const [min, max] = value.split('-').map(Number);
-                    return Math.floor((min + max) / 2);
-                }
+            // Cálculo do logaritmo natural dos valores
+            const lnIdade = Math.log(idade);
+            const lnColTotal = Math.log(colesterolTotal);
+            const lnHDL = Math.log(colesterolHDL);
+            const lnPressao = Math.log(pressaoSistolica);
+
+            let L, P;
+
+            if (sexo === 'Homem') {
+                // Ajuste para idade > 70 em homens
+                const lnIdadeFumante = idade > 70 ? Math.log(70) * fumante : lnIdade * fumante;
+
+                L = (52.00961 * lnIdade) +
+                    (20.014077 * lnColTotal) +
+                    (-0.905964 * lnHDL) +
+                    (1.305784 * lnPressao) +
+                    (0.241549 * remediosHipertensao) +
+                    (12.096316 * fumante) +
+                    (-4.605038 * lnIdade * lnColTotal) +
+                    (-2.84367 * lnIdadeFumante) +
+                    (-2.93323 * lnIdade * lnIdade) -
+                    172.300168;
+
+                P = 1 - Math.pow(0.9402, Math.exp(L));
+
+                // Converter probabilidade em pontos para homens
+                const probabilidade = P * 100;
+                if (probabilidade < 1) return 0;
+                else if (probabilidade < 2) return 5;
+                else if (probabilidade < 3) return 7;
+                else if (probabilidade < 4) return 8;
+                else if (probabilidade < 5) return 9;
+                else if (probabilidade < 6) return 10;
+                else if (probabilidade < 8) return 11;
+                else if (probabilidade < 10) return 12;
+                else if (probabilidade < 12) return 13;
+                else if (probabilidade < 16) return 14;
+                else if (probabilidade < 20) return 15;
+                else if (probabilidade < 25) return 16;
+                else return 17;
+
+            } else {
+                // Ajuste para idade > 78 em mulheres
+                const lnIdadeFumante = idade > 78 ? Math.log(78) * fumante : lnIdade * fumante;
+
+                L = (31.764001 * lnIdade) +
+                    (22.465206 * lnColTotal) +
+                    (-1.187731 * lnHDL) +
+                    (2.552905 * lnPressao) +
+                    (0.420251 * remediosHipertensao) +
+                    (13.07543 * fumante) +
+                    (-5.060998 * lnIdade * lnColTotal) +
+                    (-2.996945 * lnIdadeFumante) -
+                    146.5933061;
+
+                P = 1 - Math.pow(0.98767, Math.exp(L));
+
+                // Converter probabilidade em pontos para mulheres
+                const probabilidade = P * 100;
+                if (probabilidade < 1) return 9;
+                else if (probabilidade < 2) return 13;
+                else if (probabilidade < 3) return 15;
+                else if (probabilidade < 4) return 16;
+                else if (probabilidade < 5) return 17;
+                else if (probabilidade < 6) return 18;
+                else if (probabilidade < 8) return 19;
+                else if (probabilidade < 11) return 20;
+                else if (probabilidade < 14) return 21;
+                else if (probabilidade < 17) return 22;
+                else if (probabilidade < 22) return 23;
+                else if (probabilidade < 27) return 24;
+                else return 25;
             }
-            return parseInt(value) || 0;
         }
 
         // Adicione este evento quando o documento estiver pronto
@@ -2831,20 +2943,26 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     tbody.empty();
                     
                     riscos.forEach(function(risco) {
-                        const data = new Date(risco.data_calculo).toLocaleDateString('pt-BR');
+                        // Formatar a data no padrão brasileiro
+                        const dataObj = new Date(risco.data_calculo);
+                        const data = dataObj.toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                        });
+
                         const row = `
                             <tr>
                                 <td>${data}</td>
-                                <td>${risco.probabilidade}%</td>
                                 <td>${risco.pontuacao}</td>
+                                <td>${risco.probabilidade}%</td>
+                                <?php if (temPermissao()): ?>
                                 <td>
-                                    <button class='btn btn-sm btn-info' onclick='verDetalhesRisco(${JSON.stringify(risco)})'>
-                                        <i class='fas fa-eye'></i> Ver Detalhes
-                                    </button>
                                     <button class='btn btn-sm btn-danger' onclick='excluirRisco(${risco.id})'>
                                         <i class='fas fa-trash'></i>
                                     </button>
                                 </td>
+                                <?php endif; ?>
                             </tr>
                         `;
                         tbody.append(row);
