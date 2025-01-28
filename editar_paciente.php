@@ -460,6 +460,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.18/dist/sweetalert2.all.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -1213,75 +1215,138 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </div>
         </div>
 
-        <!-- Seção de Risco Cardiovascular -->
+        <!-- Seção de Riscos para Saúde -->
         <div class="section-card">
-            <h2 class="section-header">Risco Cardiovascular</h2>
-            <div class="risk-calculator">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Sexo:</label>
-                            <select id="sexo" class="form-control">
-                                <option value="">Selecione...</option>
-                                <option value="Homem">Homem</option>
-                                <option value="Mulher">Mulher</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label>Idade:</label>
-                            <select id="idade" class="form-control">
-                                <option value="">Selecione...</option>
-                                <option value="20-34">20-34 anos</option>
-                                <option value="35-39">35-39 anos</option>
-                                <option value="40-44">40-44 anos</option>
-                                <option value="45-49">45-49 anos</option>
-                                <option value="50-54">50-54 anos</option>
-                                <option value="55-59">55-59 anos</option>
-                                <option value="60-64">60-64 anos</option>
-                                <option value="65-69">65-69 anos</option>
-                                <option value="70-74">70-74 anos</option>
-                                <option value="75-79">75-79 anos</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label>Colesterol Total (mg/dL):</label>
-                            <input type="number" id="colesterol_total" class="form-control" placeholder="Ex: 180">
-                        </div>
-                        <div class="form-group mb-3">
-                            <label>Colesterol HDL (mg/dL):</label>
-                            <input type="number" id="colesterol_hdl" class="form-control" placeholder="Ex: 45">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Pressão Sistólica (mmHg):</label>
-                            <input type="number" id="pressao_sistolica" class="form-control" placeholder="Ex: 120">
-                        </div>
-                        <div class="form-group mb-3">
-                            <label>Fumante:</label>
-                            <select id="fumante" class="form-control">
-                                <option value="">Selecione...</option>
-                                <option value="Sim">Sim</option>
-                                <option value="Não">Não</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label>Toma remédios para hipertensão:</label>
-                            <select id="remedios_hipertensao" class="form-control">
-                                <option value="">Selecione...</option>
-                                <option value="Sim">Sim</option>
-                                <option value="Não">Não</option>
-                            </select>
-                        </div>
-                    </div>
+            <h2 class="section-header">Riscos CardioVasculares</h2>
+
+            <?php if (temPermissao()): ?>
+                <div class="section-actions">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRiscoCardiovascular">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
-                <div class="text-center mt-3">
-                    <button onclick="calcularRisco()" class="btn btn-primary">Calcular Risco</button>
+            <?php endif; ?>
+
+            <div id="historico-riscos">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Probabilidade</th>
+                                <th>Pontuação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-riscos">
+                        </tbody>
+                    </table>
                 </div>
-                <div id="resultado" class="mt-4" style="display: none;">
-                    <h4>Resultado:</h4>
-                    <div class="alert alert-info">
-                        <p>Probabilidade de doença cardiovascular em 10 anos: <span id="probabilidade"></span>%</p>
+            </div>
+        </div>
+        
+        <!-- Modal de Risco Cardiovascular -->
+        <div class="modal fade" id="modalRiscoCardiovascular" tabindex="-1" aria-labelledby="modalRiscoCardiovascularLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalRiscoCardiovascularLabel">Calculadora de Risco Cardiovascular</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formRiscoCardiovascular">
+                            <!-- Campo oculto para o sexo do paciente -->
+                            <?php
+                            $query_sexo = "SELECT u.sexo FROM usuarios u 
+                                          INNER JOIN pacientes p ON u.id = p.usuario_id 
+                                          WHERE p.id = ?";
+                            $stmt = $conn->prepare($query_sexo);
+                            $stmt->bind_param("i", $paciente_id);
+                            $stmt->execute();
+                            $result_sexo = $stmt->get_result();
+                            $paciente_sexo = $result_sexo->fetch_assoc();
+                            $sexo_valor = ($paciente_sexo['sexo'] == 'M') ? 'Homem' : 'Mulher';
+                            ?>
+                            <input type="hidden" name="sexo" value="<?php echo htmlspecialchars($sexo_valor); ?>">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label>Idade:</label>
+                                        <select name="idade" class="form-control" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="20-34">20-34</option>
+                                            <option value="35-39">35-39</option>
+                                            <option value="40-44">40-44</option>
+                                            <option value="45-49">45-49</option>
+                                            <option value="50-54">50-54</option>
+                                            <option value="55-59">55-59</option>
+                                            <option value="60-64">60-64</option>
+                                            <option value="65-69">65-69</option>
+                                            <option value="70-74">70-74</option>
+                                            <option value="75-79">75-79</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Colesterol Total (mg/dL):</label>
+                                        <input type="number" name="colesterol_total" class="form-control" placeholder="Ex: 180" required min="0" max="999" oninput="this.value = Math.min(this.value, 999)">
+                                        <small class="form-text text-muted">Insira um valor entre 0 e 999 mg/dL.</small>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Colesterol HDL (mg/dL):</label>
+                                        <input type="number" name="colesterol_hdl" class="form-control" placeholder="Ex: 45" required min="0" max="999" oninput="this.value = Math.min(this.value, 999)">
+                                        <small class="form-text text-muted">Insira um valor entre 0 e 999 mg/dL.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label>Pressão Sistólica (mmHg):</label>
+                                        <input type="number" name="pressao_sistolica" class="form-control" placeholder="Ex: 120" required min="0" max="999" oninput="this.value = Math.min(this.value, 999)">
+                                        <small class="form-text text-muted">Insira um valor entre 0 e 999 mmHg.</small>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Fumante:</label>
+                                        <select name="fumante" class="form-control" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="Sim">Sim</option>
+                                            <option value="Não">Não</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Toma remédios para hipertensão:</label>
+                                        <select name="remedios_hipertensao" class="form-control" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="Sim">Sim</option>
+                                            <option value="Não">Não</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Adicionar div para resultados -->
+                            <div class="row mb-3" id="resultadosCalculo" style="display: none;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Pontuação:</label>
+                                        <input type="text" id="pontuacao" name="pontuacao" class="form-control" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Probabilidade (%):</label>
+                                        <input type="text" id="probabilidade" name="probabilidade" class="form-control" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botões do modal -->
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="button" class="btn btn-primary" onclick="calcularRisco()">Calcular</button>
+                                <button type="button" id="btnSalvar" class="btn btn-success" onclick="salvarRiscoCardiovascular()" style="display: none;">Salvar</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -1566,10 +1631,10 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     </div>
                 </form>
             </div>
+            </div>
         </div>
-    </div>
 
-    <script>
+        <script>
         function editarDoenca(dados) {
             // Preenche os campos do modal com os dados recebidos
             document.getElementById('edit_doenca_id').value = dados.id;
@@ -2568,58 +2633,281 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         }
 
         function calcularRisco() {
-            // Obter valores dos campos
-            const sexo = document.getElementById('sexo').value;
-            const idade = document.getElementById('idade').value;
-            const colesterolTotal = parseFloat(document.getElementById('colesterol_total').value);
-            const colesterolHDL = parseFloat(document.getElementById('colesterol_hdl').value);
-            const pressaoSistolica = parseFloat(document.getElementById('pressao_sistolica').value);
-            const fumante = document.getElementById('fumante').value === 'Sim';
-            const remediosHipertensao = document.getElementById('remedios_hipertensao').value === 'Sim';
-
+            const form = document.getElementById('formRiscoCardiovascular');
+            const formData = new FormData(form);
+            
             // Validar campos
-            if (!sexo || !idade || !colesterolTotal || !colesterolHDL || !pressaoSistolica || !fumante || !remediosHipertensao) {
-                alert('Por favor, preencha todos os campos.');
-                return;
+            if (!validarCamposRisco()) {
+                return false;
             }
 
-            // Cálculo do risco cardiovascular (usando as fórmulas da imagem)
-            let probabilidade;
-            if (sexo === 'Homem') {
-                // Fórmula para homens
-                const ln_idade = Math.log(parseInt(idade));
-                const ln_colesterol = Math.log(colesterolTotal);
-                const ln_hdl = Math.log(colesterolHDL);
-                const ln_pressao = Math.log(pressaoSistolica);
+            try {
+                // Obter valores dos campos
+                const sexo = formData.get('sexo');
+                const idade = formData.get('idade').split('-')[0];
+                const colesterolTotal = formData.get('colesterol_total');
+                const colesterolHDL = formData.get('colesterol_hdl');
+                const pressaoSistolica = formData.get('pressao_sistolica');
+                const fumante = formData.get('fumante') === 'Sim' ? 1 : 0;
+                const remediosHipertensao = formData.get('remedios_hipertensao') === 'Sim' ? 1 : 0;
 
-                const S0 = 0.88936; // Valor base para homens
-                const beta = [
-                    52.00961231,
-                    20.014077,
-                    -0.905964,
-                    1.305784,
-                    0.241549,
-                    12.096316,
-                    2.84367
-                ];
+                let probabilidade;
+                if (sexo === 'Homem') {
+                    // Fórmula para homens
+                    probabilidade = 1 - Math.pow(0.90015, Math.exp(
+                        (3.06117 * Math.log(idade)) +
+                        (1.12370 * Math.log(getNumericValue(colesterolTotal))) -
+                        (0.93263 * Math.log(getNumericValue(colesterolHDL))) +
+                        (1.93303 * Math.log(getNumericValue(pressaoSistolica))) +
+                        (0.65451 * remediosHipertensao) +
+                        (0.57367 * fumante) -
+                        23.9802
+                    ));
+                } else {
+                    // Fórmula para mulheres
+                    probabilidade = 1 - Math.pow(0.96246, Math.exp(
+                        (2.32888 * Math.log(idade)) +
+                        (1.20904 * Math.log(getNumericValue(colesterolTotal))) -
+                        (0.70833 * Math.log(getNumericValue(colesterolHDL))) +
+                        (2.76157 * Math.log(getNumericValue(pressaoSistolica))) +
+                        (0.52873 * remediosHipertensao) +
+                        (0.69154 * fumante) -
+                        26.1931
+                    ));
+                }
 
-                const soma = beta[0] * ln_idade +
-                            beta[1] * ln_colesterol +
-                            beta[2] * ln_hdl +
-                            beta[3] * ln_pressao +
-                            beta[4] * (remediosHipertensao ? 1 : 0) +
-                            beta[5] * (fumante ? 1 : 0);
+                // Calcular e exibir resultados
+                const pontuacao = calcularPontuacao(formData);
+                probabilidade = (probabilidade * 100).toFixed(2);
 
-                probabilidade = (1 - Math.pow(S0, Math.exp(soma))) * 100;
-            } else {
-                // Fórmula para mulheres (similar à dos homens, mas com coeficientes diferentes)
-                // Implementar cálculo para mulheres aqui
+                // Atualizar campos de resultado
+                const pontuacaoInput = document.getElementById('pontuacao');
+                const probabilidadeInput = document.getElementById('probabilidade');
+                
+                if (pontuacaoInput && probabilidadeInput) {
+                    pontuacaoInput.value = pontuacao;
+                    probabilidadeInput.value = probabilidade;
+                    
+                    // Mostrar div de resultados
+                    document.getElementById('resultadosCalculo').style.display = 'flex';
+                    // Mostrar botão de salvar
+                    document.getElementById('btnSalvar').style.display = 'inline-block';
+                } else {
+                    throw new Error('Elementos de resultado não encontrados');
+                }
+
+            } catch (error) {
+                console.error('Erro no cálculo:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro no cálculo',
+                    text: 'Ocorreu um erro ao calcular o risco: ' + error.message
+                });
             }
-
-            // Exibir resultado
-            document.getElementById('probabilidade').textContent = probabilidade.toFixed(2);
-            document.getElementById('resultado').style.display = 'block';
         }
+
+        function salvarRiscoCardiovascular() {
+            const form = document.getElementById('formRiscoCardiovascular');
+            const formData = new FormData(form);
+
+            // Log para debug
+            console.log('Dados sendo enviados:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            $.ajax({
+                url: 'salvar_risco_cardiovascular.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    console.log('Resposta do servidor:', response);
+                    
+                    try {
+                        let jsonResponse = (typeof response === 'string') ? JSON.parse(response) : response;
+                        
+                        if (jsonResponse.success) {
+                            // Fechar o modal
+                            $('#modalRiscoCardiovascular').modal('hide');
+                            
+                            // Atualizar a seção de riscos
+                            atualizarSecaoRiscos();
+                            
+                            // Mostrar mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Risco cardiovascular salvo com sucesso!'
+                            });
+
+                            // Limpar o formulário
+                            form.reset();
+                            document.getElementById('btnSalvar').style.display = 'none';
+                            document.getElementById('resultadosCalculo').style.display = 'none';
+                        } else {
+                            throw new Error(jsonResponse.message || 'Erro ao salvar os dados');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', {
+                        status: status,
+                        error: error,
+                        response: xhr.responseText
+                    });
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição: ' + error
+                    });
+                }
+            });
+        }
+
+        // Função auxiliar para calcular pontuação
+        function calcularPontuacao(formData) {
+            // Por enquanto, retorna um valor fixo
+            return 1;
+        }
+
+        // Função auxiliar para converter valores
+        function getNumericValue(value) {
+            if (typeof value === 'string') {
+                if (value.includes('<')) {
+                    return parseInt(value.replace('<', '')) - 1;
+                } else if (value.includes('>=')) {
+                    return parseInt(value.replace('>=', ''));
+                } else if (value.includes('-')) {
+                    const [min, max] = value.split('-').map(Number);
+                    return Math.floor((min + max) / 2);
+                }
+            }
+            return parseInt(value) || 0;
+        }
+
+        // Adicione este evento quando o documento estiver pronto
+        $(document).ready(function() {
+            // Garantir que o botão de salvar está escondido inicialmente
+            document.getElementById('btnSalvar').style.display = 'none';
+            
+            // Atualizar a seção de riscos quando a página carregar
+            atualizarSecaoRiscos();
+        });
+
+        function validarCamposRisco() {
+            const form = document.getElementById('formRiscoCardiovascular');
+            const campos = form.querySelectorAll('select[required], input[required]');
+            
+            for (let campo of campos) {
+                if (!campo.value) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Por favor, preencha todos os campos obrigatórios.'
+                    });
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function atualizarSecaoRiscos() {
+            $.ajax({
+                url: 'buscar_riscos.php',
+                type: 'GET',
+                data: { paciente_id: <?php echo $paciente_id; ?> },
+                success: function(riscos) {
+                    const tbody = $('#tabela-riscos');
+                    tbody.empty();
+                    
+                    riscos.forEach(function(risco) {
+                        const data = new Date(risco.data_calculo).toLocaleDateString('pt-BR');
+                        const row = `
+                            <tr>
+                                <td>${data}</td>
+                                <td>${risco.probabilidade}%</td>
+                                <td>${risco.pontuacao}</td>
+                                <td>
+                                    <button class='btn btn-sm btn-info' onclick='verDetalhesRisco(${JSON.stringify(risco)})'>
+                                        <i class='fas fa-eye'></i> Ver Detalhes
+                                    </button>
+                                    <button class='btn btn-sm btn-danger' onclick='excluirRisco(${risco.id})'>
+                                        <i class='fas fa-trash'></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro ao buscar riscos:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Ocorreu um erro ao buscar os riscos.'
+                    });
+                }
+            });
+        }
+
+        function excluirRisco(id) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_risco.php',
+                        type: 'POST',
+                        data: { id: id }, // Mudança aqui: enviando como dados de formulário
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'O registro foi excluído com sucesso.'
+                                }).then(() => {
+                                    atualizarSecaoRiscos();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir o registro.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
     </script>
 
 </body>

@@ -145,5 +145,6 @@ CREATE TABLE riscos_saude (
     fumante ENUM('Sim', 'Não') NOT NULL,
     remedios_hipertensao ENUM('Sim', 'Não') NOT NULL,
     probabilidade DECIMAL(5,2) NOT NULL,
+    pontuacao INT NOT NULL,
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
