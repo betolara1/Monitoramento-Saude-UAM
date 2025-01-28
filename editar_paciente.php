@@ -801,6 +801,84 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </table>
         </div>
 
+        <!-- Modal para trocar médico -->
+        <div class="modal fade" id="modalMedico" tabindex="-1" aria-labelledby="modalMedicoLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalMedicoLabel">Trocar Médico Responsável</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formTrocarMedico" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="paciente_id" id="paciente_id">
+                            
+                            <div class="form-group mb-3">
+                                <label>Selecione o Médico:</label>
+                                <select name="profissional_id" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <?php
+                                    $query_medicos = "SELECT p.id, u.nome, p.especialidade 
+                                                    FROM profissionais p 
+                                                    JOIN usuarios u ON p.usuario_id = u.id 
+                                                    WHERE u.tipo_usuario = 'Medico'
+                                                    ORDER BY u.nome";
+                                    $result_medicos = $conn->query($query_medicos);
+                                    while($medico = $result_medicos->fetch_assoc()) {
+                                        echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para atribuir médico -->
+        <div class="modal fade" id="modalAtribuirMedico" tabindex="-1" aria-labelledby="modalAtribuirMedicoLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAtribuirMedicoLabel">Atribuir Médico</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formAtribuirMedico" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="paciente_id" id="atribuir_paciente_id">
+                            <input type="hidden" name="tipo_profissional" value="<?php echo $tipo_profissional; ?>">
+                            <div class="form-group mb-3">
+                                <label>Selecione o Médico:</label>
+                                <select name="profissional_id" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <?php
+                                    $query_medicos = "SELECT p.id, u.nome, p.especialidade 
+                                                    FROM profissionais p 
+                                                    JOIN usuarios u ON p.usuario_id = u.id 
+                                                    WHERE u.tipo_usuario = 'Medico'
+                                                    ORDER BY u.nome";
+                                    $result_medicos = $conn->query($query_medicos);
+                                    while($medico = $result_medicos->fetch_assoc()) {
+                                        echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Seção de Consultas e Acompanhamento -->
         <div class="section-card">
             <h2 class="section-header">Histórico de Consultas e Acompanhamento</h2>
@@ -881,334 +959,203 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </table>
         </div>
 
-        <!-- Seção de Medicamentos -->
-        <div class="section-card">
-            <h2 class="section-header">Medicamentos</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
-                    <button onclick="abrirModalMedicamento(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            <?php endif; ?>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Medicamento</th>
-                        <th>Dosagem</th>
-                        <th>Frequência</th>
-                        <th>Data Início</th>
-                        <th>Data Fim</th>
-                        <th>Observações</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query_med = "SELECT * FROM medicamentos WHERE paciente_id = ? ORDER BY data_inicio DESC";
-                    $stmt_med = $conn->prepare($query_med);
-                    $stmt_med->bind_param('i', $paciente_id);
-                    $stmt_med->execute();
-                    $result_med = $stmt_med->get_result();
-
-                    while ($medicamento = $result_med->fetch_assoc()):
-                    ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
-                            <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
-                            <?php if (temPermissao()): ?>
-                                <td>
-                                    <div class="btn-group">
-                                        <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Seção de Exames -->
-        <div class="section-card"> 
-            <h2 class="section-header">Exames</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
-                    <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            <?php endif; ?>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo de Exame</th>
-                        <th>Resultado</th>
-                        <th>Arquivo</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC";
-                    $stmt_exames = $conn->prepare($query_exames);
-                    $stmt_exames->bind_param('i', $paciente_id);
-                    $stmt_exames->execute();
-                    $result_exames = $stmt_exames->get_result();
-
-                    while ($exame = $result_exames->fetch_assoc()):
-                    ?>
-                        <tr>
-                            <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
-                            <td><?php echo $exame['tipo_exame']; ?></td>
-                            <td><?php echo nl2br($exame['resultado']); ?></td>
-                            <td>
-                                <?php if ($exame['arquivo_exame']): ?>
-                                    <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
-                                        <i class="fas fa-file-medical"></i> Ver Arquivo
-                                    </a>
-                                <?php endif; ?>
-                            </td>
-                            <?php if (temPermissao()): ?>
-                                <td>
-                                    <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Seção de Análises e Estatísticas -->
-        <div class="section-card">
-            <h2 class="section-header">Análises e Estatísticas</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
-                    <button onclick="abrirModalAnalise(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                    <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            <?php endif; ?>
-            
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Pressão Arterial</th>
-                        <th>Glicemia</th>
-                        <th>Risco Cardiovascular</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC";
-                    $stmt_analises = $conn->prepare($query_analises);
-                    $stmt_analises->bind_param('i', $paciente_id);
-                    $stmt_analises->execute();
-                    $result_analises = $stmt_analises->get_result();
-
-                    while ($analise = $result_analises->fetch_assoc()):
-                    ?>
-                        <tr>
-                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
-                            <td><?php echo $analise['comparativo_pa']; ?></td>
-                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
-                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
-                            <?php if (temPermissao()): ?>
-                                <td>
-                                    <button onclick='editarAnalise(<?php echo json_encode($analise); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            <?php endif; ?>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Modal de Análise -->
-        <div class="modal fade" id="modalAnalise" tabindex="-1" aria-labelledby="modalAnaliseLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalAnaliseLabel">Nova Análise</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="formAnalise" method="POST">
-                        <div class="modal-body">
-                            <input type="hidden" name="analise_id" id="analise_id">
-                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                            
-                            <div class="mb-3">
-                                <label>Data da Análise:</label>
-                                <input type="date" name="data_analise" id="data_analise" class="form-control" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Comparativo Pressão Arterial:</label>
-                                <select name="comparativo_pa" id="comparativo_pa" class="form-control" required>
-                                    <option value="">Selecione...</option>
-                                    <option value="Melhorou">Melhorou</option>
-                                    <option value="Estável">Estável</option>
-                                    <option value="Piorou">Piorou</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Comparativo Glicemia:</label>
-                                <select name="comparativo_glicemia" id="comparativo_glicemia" class="form-control" required>
-                                    <option value="">Selecione...</option>
-                                    <option value="Melhorou">Melhorou</option>
-                                    <option value="Estável">Estável</option>
-                                    <option value="Piorou">Piorou</option>
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label>Comparativo Risco Cardiovascular:</label>
-                                <select name="comparativo_risco_cardio" id="comparativo_risco_cardio" class="form-control" required>
-                                    <option value="">Selecione...</option>
-                                    <option value="Baixo">Baixo</option>
-                                    <option value="Moderado">Moderado</option>
-                                    <option value="Alto">Alto</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal de Medicamento -->
-        <div class="modal fade" id="modalMedicamento" tabindex="-1" aria-labelledby="modalMedicamentoLabel" aria-hidden="true">
+        <!-- Modal de Nova Consulta -->
+        <div class="modal fade" id="modalConsulta" tabindex="-1" aria-labelledby="modalConsultaLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalMedicamentoLabel">Novo Medicamento</h5>
+                        <h5 class="modal-title" id="modalConsultaLabel">Nova Consulta</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="formMedicamento" method="POST">
+                    <form id="formConsulta" method="POST">
                         <div class="modal-body">
-                            <input type="hidden" name="medicamento_id" id="medicamento_id">
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                             
+                            <div class="form-group mb-3">
+                                <label>Profissional:</label>
+                                <select name="profissional_id" class="form-control" required>
+                                    <option value="">Selecione o profissional</option>
+                                    <?php
+                                    $query_prof = "SELECT p.id, u.nome 
+                                                FROM profissionais p 
+                                                JOIN usuarios u ON p.usuario_id = u.id 
+                                                WHERE u.tipo_usuario = 'Medico'
+                                                ORDER BY u.nome";
+                                    $result_prof = $conn->query($query_prof);
+                                    while($row = $result_prof->fetch_assoc()) {
+                                        echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label>Nome do Medicamento:</label>
-                                    <input type="text" name="nome_medicamento" id="nome_medicamento" class="form-control" required>
+                                    <label>Data da Consulta:</label>
+                                    <input type="date" name="data_consulta" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label>Dosagem:</label>
-                                    <input type="text" name="dosagem" id="dosagem" class="form-control" required>
+                                    <label>Pressão Arterial:</label>
+                                    <input type="text" 
+                                        name="pressao_arterial" 
+                                        class="form-control pressao-arterial" 
+                                        placeholder="Ex: 120/80"
+                                        title="Formato: 120/80 (sistólica/diastólica)">
+                                    <small class="form-text text-muted">Sistólica: 70-200 / Diastólica: 40-130</small>
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label>Frequência:</label>
-                                    <input type="text" name="frequencia" id="frequencia" class="form-control" required>
+                                    <label>Glicemia:</label>
+                                    <input type="text" 
+                                        name="glicemia" 
+                                        class="form-control glicemia" 
+                                        placeholder="Ex: 99"
+                                        title="Valor entre 20 e 600 mg/dL">
+                                    <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Data Início:</label>
-                                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
+                                    <label>Peso (kg):</label>
+                                    <input type="text" 
+                                        name="peso" 
+                                        class="form-control peso" 
+                                        placeholder="Ex: 70.5"
+                                        title="Valor entre 0 e 300 kg">
+                                    <small class="form-text text-muted">Valor entre 0 e 300 kg</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Data Fim:</label>
-                                    <input type="date" name="data_fim" id="data_fim" class="form-control">
+                                    <label>Altura (cm):</label>
+                                    <input type="text" 
+                                        name="altura" 
+                                        class="form-control altura" 
+                                        placeholder="Ex: 170"
+                                        title="Valor entre 10 e 250 cm">
+                                    <small class="form-text text-muted">Valor entre 10 e 250 cm</small>
                                 </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="estado_emocional" class="form-label">Estado Emocional:</label>
+                                <select class="form-select" id="estado_emocional" name="estado_emocional">
+                                    <option value="">Selecione...</option>
+                                    <option value="Calmo">Calmo</option>
+                                    <option value="Ansioso">Ansioso</option>
+                                    <option value="Deprimido">Deprimido</option>
+                                    <option value="Estressado">Estressado</option>
+                                    <option value="Irritado">Irritado</option>
+                                    <option value="Alegre">Alegre</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                <textarea class="form-control" id="habitos_vida" name="habitos_vida" rows="3"></textarea>
                             </div>
 
                             <div class="form-group mb-3">
                                 <label>Observações:</label>
-                                <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
+                                <textarea name="observacoes" class="form-control" rows="4"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Consulta</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Modal de Exame -->
-        <div class="modal fade" id="modalExame" tabindex="-1" aria-labelledby="modalExameLabel" aria-hidden="true">
+            <!-- Adicione o Modal de Edição de Consulta-->
+            <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalExameLabel">Novo Exame</h5>
+                        <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="formExame" method="POST" enctype="multipart/form-data">
+                    <form id="formEditarConsulta" method="POST">
                         <div class="modal-body">
-                            <input type="hidden" name="exame_id" id="exame_id">
+                            <input type="hidden" name="consulta_id" id="edit_consulta_id">
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                             
+                            <div class="form-group mb-3">
+                                <label>Profissional:</label>
+                                <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
+                                    <option value="">Selecione o profissional</option>
+                                    <?php
+                                    $query_prof = "SELECT p.id, u.nome 
+                                                FROM profissionais p 
+                                                JOIN usuarios u ON p.usuario_id = u.id 
+                                                WHERE u.tipo_usuario = 'Medico'
+                                                ORDER BY u.nome";
+                                    $result_prof = $conn->query($query_prof);
+                                    while($row = $result_prof->fetch_assoc()) {
+                                        echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label>Data do Exame:</label>
-                                    <input type="date" name="data_exame" id="data_exame" class="form-control" required>
+                                    <label>Data da Consulta:</label>
+                                    <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label>Tipo de Exame:</label>
-                                    <input type="text" name="tipo_exame" id="tipo_exame" class="form-control" required>
+                                    <label>Pressão Arterial:</label>
+                                    <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Glicemia:</label>
+                                    <input type="text" 
+                                        name="glicemia" 
+                                        id="edit_glicemia"
+                                        class="form-control glicemia" 
+                                        placeholder="Ex: 99"
+                                        title="Valor entre 20 e 600 mg/dL" required>
+                                    <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Peso (kg):</label>
+                                    <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Altura (cm):</label>
+                                    <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170">
                                 </div>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Resultado:</label>
-                                <textarea name="resultado" id="resultado" class="form-control" rows="4"></textarea>
+                                <label>Estado Emocional:</label>
+                                <select class="form-select" id="edit_estado_emocional" name="estado_emocional">
+                                    <option value="">Selecione...</option>
+                                    <option value="Calmo">Calmo</option>
+                                    <option value="Ansioso">Ansioso</option>
+                                    <option value="Deprimido">Deprimido</option>
+                                    <option value="Estressado">Estressado</option>
+                                    <option value="Irritado">Irritado</option>
+                                    <option value="Alegre">Alegre</option>
+                                </select>
                             </div>
 
-                            <div class="form-group mb-3">
-                                <label>Arquivo do Exame:</label>
-                                <input type="file" name="arquivo_exame" id="arquivo_exame" class="form-control">
-                                <div id="arquivo_atual" class="mt-2"></div>
+                            <div class="mb-3">
+                                <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Observações:</label>
+                                <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                         </div>
                     </form>
                 </div>
@@ -1351,290 +1298,277 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal de Nova Consulta -->
-    <div class="modal fade" id="modalConsulta" tabindex="-1" aria-labelledby="modalConsultaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalConsultaLabel">Nova Consulta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Seção de Medicamentos -->
+        <div class="section-card">
+            <h2 class="section-header">Medicamentos</h2>
+            <?php if (temPermissao()): ?>
+                <div class="section-actions">
+                    <button onclick="abrirModalMedicamento(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
-                <form id="formConsulta" method="POST">
-                    <div class="modal-body">
-                        <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                        
-                        <div class="form-group mb-3">
-                            <label>Profissional:</label>
-                            <select name="profissional_id" class="form-control" required>
-                                <option value="">Selecione o profissional</option>
-                                <?php
-                                $query_prof = "SELECT p.id, u.nome 
-                                               FROM profissionais p 
-                                               JOIN usuarios u ON p.usuario_id = u.id 
-                                               WHERE u.tipo_usuario = 'Medico'
-                                               ORDER BY u.nome";
-                                $result_prof = $conn->query($query_prof);
-                                while($row = $result_prof->fetch_assoc()) {
-                                    echo "<option value='{$row['id']}'>{$row['nome']}</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
+            <?php endif; ?>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Medicamento</th>
+                        <th>Dosagem</th>
+                        <th>Frequência</th>
+                        <th>Data Início</th>
+                        <th>Data Fim</th>
+                        <th>Observações</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_med = "SELECT * FROM medicamentos WHERE paciente_id = ? ORDER BY data_inicio DESC";
+                    $stmt_med = $conn->prepare($query_med);
+                    $stmt_med->bind_param('i', $paciente_id);
+                    $stmt_med->execute();
+                    $result_med = $stmt_med->get_result();
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Data da Consulta:</label>
-                                <input type="date" name="data_consulta" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Pressão Arterial:</label>
-                                <input type="text" 
-                                       name="pressao_arterial" 
-                                       class="form-control pressao-arterial" 
-                                       placeholder="Ex: 120/80"
-                                       title="Formato: 120/80 (sistólica/diastólica)">
-                                <small class="form-text text-muted">Sistólica: 70-200 / Diastólica: 40-130</small>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label>Glicemia:</label>
-                                <input type="text" 
-                                       name="glicemia" 
-                                       class="form-control glicemia" 
-                                       placeholder="Ex: 99"
-                                       title="Valor entre 20 e 600 mg/dL">
-                                <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Peso (kg):</label>
-                                <input type="text" 
-                                       name="peso" 
-                                       class="form-control peso" 
-                                       placeholder="Ex: 70.5"
-                                       title="Valor entre 0 e 300 kg">
-                                <small class="form-text text-muted">Valor entre 0 e 300 kg</small>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Altura (cm):</label>
-                                <input type="text" 
-                                       name="altura" 
-                                       class="form-control altura" 
-                                       placeholder="Ex: 170"
-                                       title="Valor entre 10 e 250 cm">
-                                <small class="form-text text-muted">Valor entre 10 e 250 cm</small>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="estado_emocional" class="form-label">Estado Emocional:</label>
-                            <select class="form-select" id="estado_emocional" name="estado_emocional">
-                                <option value="">Selecione...</option>
-                                <option value="Calmo">Calmo</option>
-                                <option value="Ansioso">Ansioso</option>
-                                <option value="Deprimido">Deprimido</option>
-                                <option value="Estressado">Estressado</option>
-                                <option value="Irritado">Irritado</option>
-                                <option value="Alegre">Alegre</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
-                            <textarea class="form-control" id="habitos_vida" name="habitos_vida" rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label>Observações:</label>
-                            <textarea name="observacoes" class="form-control" rows="4"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Consulta</button>
-                    </div>
-                </form>
-            </div>
+                    while ($medicamento = $result_med->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
+                            <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
+                            <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
+                            <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
+                            <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
+                            <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <div class="btn-group">
+                                        <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
-    </div>
 
-    <!-- Modal para trocar médico -->
-    <div class="modal fade" id="modalMedico" tabindex="-1" aria-labelledby="modalMedicoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalMedicoLabel">Trocar Médico Responsável</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="formTrocarMedico" method="POST">
-                    <div class="modal-body">
-                        <input type="hidden" name="paciente_id" id="paciente_id">
-                        
-                        <div class="form-group mb-3">
-                            <label>Selecione o Médico:</label>
-                            <select name="profissional_id" class="form-control" required>
-                                <option value="">Selecione...</option>
-                                <?php
-                                $query_medicos = "SELECT p.id, u.nome, p.especialidade 
-                                                FROM profissionais p 
-                                                JOIN usuarios u ON p.usuario_id = u.id 
-                                                WHERE u.tipo_usuario = 'Medico'
-                                                ORDER BY u.nome";
-                                $result_medicos = $conn->query($query_medicos);
-                                while($medico = $result_medicos->fetch_assoc()) {
-                                    echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
+        <!-- Modal de Medicamento -->
+        <div class="modal fade" id="modalMedicamento" tabindex="-1" aria-labelledby="modalMedicamentoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalMedicamentoLabel">Novo Medicamento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Adicione o Modal de Edição de Consulta-->
-    <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="formEditarConsulta" method="POST">
-                    <div class="modal-body">
-                        <input type="hidden" name="consulta_id" id="edit_consulta_id">
-                        <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                        
-                        <div class="form-group mb-3">
-                            <label>Profissional:</label>
-                            <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
-                                <option value="">Selecione o profissional</option>
-                                <?php
-                                $query_prof = "SELECT p.id, u.nome 
-                                            FROM profissionais p 
-                                            JOIN usuarios u ON p.usuario_id = u.id 
-                                            WHERE u.tipo_usuario = 'Medico'
-                                            ORDER BY u.nome";
-                                $result_prof = $conn->query($query_prof);
-                                while($row = $result_prof->fetch_assoc()) {
-                                    echo "<option value='{$row['id']}'>{$row['nome']}</option>";
-                                }
-                                ?>
-                            </select>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Data da Consulta:</label>
-                                <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Pressão Arterial:</label>
-                                <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80">
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label>Glicemia:</label>
-                                <input type="text" 
-                                    name="glicemia" 
-                                    id="edit_glicemia"
-                                    class="form-control glicemia" 
-                                    placeholder="Ex: 99"
-                                    title="Valor entre 20 e 600 mg/dL" required>
-                                <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Peso (kg):</label>
-                                <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Altura (cm):</label>
-                                <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170">
-                            </div>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label>Estado Emocional:</label>
-                            <select class="form-select" id="edit_estado_emocional" name="estado_emocional">
-                                <option value="">Selecione...</option>
-                                <option value="Calmo">Calmo</option>
-                                <option value="Ansioso">Ansioso</option>
-                                <option value="Deprimido">Deprimido</option>
-                                <option value="Estressado">Estressado</option>
-                                <option value="Irritado">Irritado</option>
-                                <option value="Alegre">Alegre</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
-                            <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                                    <label>Observações:</label>
-                                    <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                    <form id="formMedicamento" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="medicamento_id" id="medicamento_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Nome do Medicamento:</label>
+                                    <input type="text" name="nome_medicamento" id="nome_medicamento" class="form-control" required>
                                 </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Dosagem:</label>
+                                    <input type="text" name="dosagem" id="dosagem" class="form-control" required>
+                                </div>
+                            </div>
 
-    <!-- Modal para atribuir médico -->
-    <div class="modal fade" id="modalAtribuirMedico" tabindex="-1" aria-labelledby="modalAtribuirMedicoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalAtribuirMedicoLabel">Atribuir Médico</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="formAtribuirMedico" method="POST">
-                    <div class="modal-body">
-                        <input type="hidden" name="paciente_id" id="atribuir_paciente_id">
-                        <input type="hidden" name="tipo_profissional" value="<?php echo $tipo_profissional; ?>">
-                        <div class="form-group mb-3">
-                            <label>Selecione o Médico:</label>
-                            <select name="profissional_id" class="form-control" required>
-                                <option value="">Selecione...</option>
-                                <?php
-                                $query_medicos = "SELECT p.id, u.nome, p.especialidade 
-                                                FROM profissionais p 
-                                                JOIN usuarios u ON p.usuario_id = u.id 
-                                                WHERE u.tipo_usuario = 'Medico'
-                                                ORDER BY u.nome";
-                                $result_medicos = $conn->query($query_medicos);
-                                while($medico = $result_medicos->fetch_assoc()) {
-                                    echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
-                                }
-                                ?>
-                            </select>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Frequência:</label>
+                                    <input type="text" name="frequencia" id="frequencia" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Data Início:</label>
+                                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Data Fim:</label>
+                                    <input type="date" name="data_fim" id="data_fim" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Observações:</label>
+                                <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
+                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                    </div>
-                </form>
-            </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <script>
+        <!-- Seção de Exames -->
+        <div class="section-card"> 
+            <h2 class="section-header">Exames</h2>
+            <?php if (temPermissao()): ?>
+                <div class="section-actions">
+                    <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            <?php endif; ?>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo de Exame</th>
+                        <th>Resultado</th>
+                        <th>Arquivo</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC";
+                    $stmt_exames = $conn->prepare($query_exames);
+                    $stmt_exames->bind_param('i', $paciente_id);
+                    $stmt_exames->execute();
+                    $result_exames = $stmt_exames->get_result();
+
+                    while ($exame = $result_exames->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
+                            <td><?php echo $exame['tipo_exame']; ?></td>
+                            <td><?php echo nl2br($exame['resultado']); ?></td>
+                            <td>
+                                <?php if ($exame['arquivo_exame']): ?>
+                                    <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fas fa-file-medical"></i> Ver Arquivo
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal de Exame -->
+        <div class="modal fade" id="modalExame" tabindex="-1" aria-labelledby="modalExameLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalExameLabel">Novo Exame</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formExame" method="POST" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <input type="hidden" name="exame_id" id="exame_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Data do Exame:</label>
+                                    <input type="date" name="data_exame" id="data_exame" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Tipo de Exame:</label>
+                                    <input type="text" name="tipo_exame" id="tipo_exame" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Resultado:</label>
+                                <textarea name="resultado" id="resultado" class="form-control" rows="4"></textarea>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Arquivo do Exame:</label>
+                                <input type="file" name="arquivo_exame" id="arquivo_exame" class="form-control">
+                                <div id="arquivo_atual" class="mt-2"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Análises e Estatísticas -->
+        <div class="section-card">
+            <h2 class="section-header">Análises e Estatísticas</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Pressão Arterial</th>
+                        <th>Glicemia</th>
+                        <th>Risco Cardiovascular</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC";
+                    $stmt_analises = $conn->prepare($query_analises);
+                    $stmt_analises->bind_param('i', $paciente_id);
+                    $stmt_analises->execute();
+                    $result_analises = $stmt_analises->get_result();
+
+                    while ($analise = $result_analises->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                            <td><?php echo $analise['comparativo_pa']; ?></td>
+                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <button onclick='editarAnalise(<?php echo json_encode($analise); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+    <script>
         function editarDoenca(dados) {
             // Preenche os campos do modal com os dados recebidos
             document.getElementById('edit_doenca_id').value = dados.id;
@@ -2088,25 +2022,50 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         });
 
         function excluirConsulta(consultaId) {
-            if (confirm('Tem certeza que deseja excluir esta consulta?')) {
-                $.ajax({
-                    url: 'excluir_consulta.php',
-                    type: 'POST',
-                    data: { consulta_id: consultaId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Consulta excluída com sucesso!');
-                            location.reload();
-                        } else {
-                            alert(response.message || 'Erro ao excluir consulta');
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_consulta.php',
+                        type: 'POST',
+                        data: { consulta_id: consultaId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'A consulta foi excluída com sucesso.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir a consulta.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
                         }
-                    },
-                    error: function() {
-                        alert('Erro ao processar a requisição');
-                    }
-                });
-            }
+                    });
+                }
+            });
         }
 
         function abrirModalMedico(pacienteId) {
@@ -2194,25 +2153,50 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         }
 
         function excluirMedicamento(medicamentoId) {
-            if (confirm('Tem certeza que deseja excluir este medicamento?')) {
-                $.ajax({
-                    url: 'excluir_medicamento.php',
-                    type: 'POST',
-                    data: { medicamento_id: medicamentoId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Medicamento excluído com sucesso!');
-                            location.reload();
-                        } else {
-                            alert(response.message || 'Erro ao excluir medicamento');
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_medicamento.php',
+                        type: 'POST',
+                        data: { medicamento_id: medicamentoId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'O medicamento foi excluído com sucesso.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir o medicamento.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
                         }
-                    },
-                    error: function() {
-                        alert('Erro ao processar a requisição');
-                    }
-                });
-            }
+                    });
+                }
+            });
         }
 
         $('#formMedicamento').on('submit', function(e) {
@@ -2361,25 +2345,50 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         }
 
         function excluirExame(exameId) {
-            if (confirm('Tem certeza que deseja excluir este exame?')) {
-                $.ajax({
-                    url: 'excluir_exame.php',
-                    type: 'POST',
-                    data: { exame_id: exameId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Exame excluído com sucesso!');
-                            location.reload();
-                        } else {
-                            alert(response.message || 'Erro ao excluir exame');
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_exame.php',
+                        type: 'POST',
+                        data: { exame_id: exameId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'O exame foi excluído com sucesso.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir o exame.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
                         }
-                    },
-                    error: function() {
-                        alert('Erro ao processar a requisição');
-                    }
-                });
-            }
+                    });
+                }
+            });
         }
 
         $(document).ready(function() {
@@ -2431,73 +2440,51 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             });
         });
 
-        $(document).ready(function() {
-            $('#formAnalise').on('submit', function(e) {
-                e.preventDefault();
-                
-                let formData = new FormData(this);
-                
-                $.ajax({
-                    url: 'salvar_analise.php',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Análise salva com sucesso!');
-                            $('#modalAnalise').modal('hide');
-                            location.reload();
-                        } else {
-                            alert('Erro ao salvar: ' + response.message);
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        alert('Erro ao processar a requisição');
-                        console.error(xhr, status, error);
-                    }
-                });
-            });
-        });
-
-        function abrirModalAnalise(pacienteId) {
-            $('#formAnalise')[0].reset();
-            $('#analise_id').val('');
-            $('#modalAnaliseLabel').text('Nova Análise');
-            $('#modalAnalise').modal('show');
-        }
-
-        function editarAnalise(analise) {
-            $('#analise_id').val(analise.id);
-            $('#data_analise').val(analise.data_analise);
-            $('#comparativo_pa').val(analise.comparativo_pa);
-            $('#comparativo_glicemia').val(analise.comparativo_glicemia);
-            $('#comparativo_risco_cardio').val(analise.comparativo_risco_cardio);
-            
-            $('#modalAnaliseLabel').text('Editar Análise');
-            $('#modalAnalise').modal('show');
-        }
-
         function excluirAnalise(analiseId) {
-            if (confirm('Tem certeza que deseja excluir esta análise?')) {
-                $.ajax({
-                    url: 'excluir_analise.php',
-                    type: 'POST',
-                    data: { analise_id: analiseId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Análise excluída com sucesso!');
-                            location.reload();
-                        } else {
-                            alert(response.message || 'Erro ao excluir análise');
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_analise.php',
+                        type: 'POST',
+                        data: { analise_id: analiseId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'A análise foi excluída com sucesso.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir a análise.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
                         }
-                    },
-                    error: function() {
-                        alert('Erro ao processar a requisição');
-                    }
-                });
-            }
+                    });
+                }
+            });
         }
 
         $(document).ready(function() {
@@ -2556,26 +2543,51 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         }
 
         function excluirAcompanhamento(id) {
-            if (confirm('Tem certeza que deseja excluir este acompanhamento?')) {
-                $.ajax({
-                    type: 'POST',
-                    url: 'excluir_acompanhamento.php',
-                    data: { id: id },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            // Remove a linha da tabela
-                            $('tr[data-id="' + id + '"]').remove();
-                            alert(response.message);
-                        } else {
-                            alert(response.message);
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_acompanhamento.php',
+                        type: 'POST',
+                        data: { id: id },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'O acompanhamento foi excluído com sucesso.'
+                                }).then(() => {
+                                    // Remove a linha da tabela
+                                    $('tr[data-id="' + id + '"]').remove();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir o acompanhamento.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
                         }
-                    },
-                    error: function() {
-                        alert('Erro ao excluir acompanhamento. Tente novamente.');
-                    }
-                });
-            }
+                    });
+                }
+            });
         }
 
         function editarAcompanhamento(acompanhamento) {
