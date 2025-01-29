@@ -1597,15 +1597,24 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Dados atualizados com sucesso!');
-                    location.reload(); // Recarrega a página para mostrar as alterações
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: 'Dados atualizados com sucesso!'
+                    }).then((result) => {
+                        location.reload(); // Recarrega a página após fechar o alerta
+                    });
                 } else {
-                    alert('Erro ao atualizar os dados: ' + data.message);
+                    throw new Error(data.message || 'Erro ao atualizar os dados');
                 }
             })
             .catch(error => {
                 console.error('Erro:', error);
-                alert('Erro ao atualizar os dados');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: error.message || 'Erro ao atualizar os dados'
+                });
             });
         });
 
@@ -1644,40 +1653,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             modal.classList.add('hidden');
         }
 
-        function atribuirMedico(pacienteId, medicoId) {
-            // Adicionar console.log para debug
-            console.log('Atribuindo médico:', { pacienteId, medicoId });
-            
-            fetch('atribuir_medico.php', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    // Adicionar header para prevenir cache
-                    'Cache-Control': 'no-cache'
-                },
-                body: JSON.stringify({ pacienteId, medicoId })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro na resposta do servidor');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    alert('Médico atribuído com sucesso!');
-                    fecharModal();
-                    location.reload();
-                } else {
-                    alert('Erro ao atribuir médico: ' + (data.message || 'Erro desconhecido'));
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao atribuir médico. Verifique o console para mais detalhes.');
-            });
-        }
-
         function atualizarListaMedicos(medicos, pacienteId) {
             const lista = document.getElementById('listaMedicos');
             lista.innerHTML = '';
@@ -1696,6 +1671,46 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     </button>
                 `;
                 lista.appendChild(li);
+            });
+        }
+
+        function atribuirMedico(pacienteId, medicoId) {
+            console.log('Atribuindo médico:', { pacienteId, medicoId });
+            
+            fetch('atribuir_medico.php', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({ pacienteId, medicoId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erro na resposta do servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: 'Médico atribuído com sucesso!'
+                    }).then((result) => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Erro desconhecido');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: error.message || 'Erro ao atribuir médico'
+                });
             });
         }
 
@@ -1750,12 +1765,25 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Médico atualizado com sucesso!');
-                    fecharModalEditar();
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: 'Médico atualizado com sucesso!'
+                    }).then((result) => {
+                        fecharModalEditar();
+                        location.reload();
+                    });
                 } else {
-                    alert('Erro ao atualizar médico.');
+                    throw new Error(data.message || 'Erro ao atualizar médico');
                 }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: error.message || 'Erro ao atualizar médico'
+                });
             });
         }
 
@@ -1805,34 +1833,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     alert('Valor de altura fora do intervalo aceitável (10-250 cm)');
                     return false;
                 }
-                
-                // Se todas as validações passarem, envia o formulário
-                $.ajax({
-                    url: 'salvar_consulta.php',
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Consulta cadastrada com sucesso!');
-                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalConsulta'));
-                            myModal.hide();
-                            location.reload();
-                        } else {
-                            alert(response.message || 'Erro ao cadastrar consulta');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro detalhado:', {
-                            status: status,
-                            error: error,
-                            responseText: xhr.responseText,
-                            readyState: xhr.readyState,
-                            statusText: xhr.statusText
-                        });
-                        alert('Erro ao processar a requisição. Verifique o console para mais detalhes.');
-                    }
-                });
             });
         });
 
@@ -1999,13 +1999,30 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 dataType: 'json',
                 success: function(response) {
                     console.log('Resposta do servidor:', response);
-                    if (response.success) {
-                        alert('Consulta atualizada com sucesso!');
-                        var myModal = bootstrap.Modal.getInstance(document.getElementById('modalEditarConsulta'));
-                        myModal.hide();
-                        location.reload();
-                    } else {
-                        alert(response.message || 'Erro ao atualizar consulta');
+                    try {
+                        if (response.success) {
+                            // Fecha o modal
+                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalEditarConsulta'));
+                            myModal.hide();
+                            
+                            // Mostra mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Consulta atualizada com sucesso!'
+                            }).then((result) => {
+                                location.reload();
+                            });
+                        } else {
+                            throw new Error(response.message || 'Erro ao atualizar consulta');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
                     }
                 },
                 error: function(xhr, status, error) {
@@ -2016,7 +2033,11 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         readyState: xhr.readyState,
                         statusText: xhr.statusText
                     });
-                    alert('Erro ao processar a requisição. Verifique o console para mais detalhes.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição. Verifique o console para mais detalhes.'
+                    });
                 }
             });
         });
@@ -2084,17 +2105,39 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 data: $(this).serialize(),
                 dataType: 'json',
                 success: function(response) {
-                    if (response.success) {
-                        alert('Médico responsável atualizado com sucesso!');
-                        var myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedico'));
-                        myModal.hide();
-                        location.reload();
-                    } else {
-                        alert(response.message || 'Erro ao atualizar médico responsável');
+                    try {
+                        if (response.success) {
+                            // Fecha o modal
+                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedico'));
+                            myModal.hide();
+                            
+                            // Mostra mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Médico responsável atualizado com sucesso!'
+                            }).then((result) => {
+                                location.reload();
+                            });
+                        } else {
+                            throw new Error(response.message || 'Erro ao atualizar médico responsável');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
                     }
                 },
-                error: function() {
-                    alert('Erro ao processar a requisição');
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição'
+                    });
                 }
             });
         });
@@ -2115,17 +2158,39 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 data: $(this).serialize(),
                 dataType: 'json',
                 success: function(response) {
-                    if (response.success) {
-                        alert('Médico atribuído com sucesso!');
-                        var myModal = bootstrap.Modal.getInstance(document.getElementById('modalAtribuirMedico'));
-                        myModal.hide();
-                        location.reload();
-                    } else {
-                        alert(response.message || 'Erro ao atribuir médico');
+                    try {
+                        if (response.success) {
+                            // Fecha o modal
+                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalAtribuirMedico'));
+                            myModal.hide();
+                            
+                            // Mostra mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Médico atribuído com sucesso!'
+                            }).then((result) => {
+                                location.reload();
+                            });
+                        } else {
+                            throw new Error(response.message || 'Erro ao atribuir médico');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
                     }
                 },
-                error: function() {
-                    alert('Erro ao processar a requisição');
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição'
+                    });
                 }
             });
         });
@@ -2208,17 +2273,40 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 data: $(this).serialize(),
                 dataType: 'json',
                 success: function(response) {
-                    if (response.success) {
-                        alert('Medicamento salvo com sucesso!');
-                        var myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedicamento'));
-                        myModal.hide();
-                        location.reload();
-                    } else {
-                        alert(response.message || 'Erro ao salvar medicamento');
+                    try {
+                        if (response.success) {
+                            // Fechar o modal
+                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedicamento'));
+                            myModal.hide();
+                            
+                            // Mostrar mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Medicamento salvo com sucesso!'
+                            }).then((result) => {
+                                // Recarrega a página após fechar o alerta
+                                location.reload();
+                            });
+                        } else {
+                            throw new Error(response.message || 'Erro ao salvar medicamento');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
                     }
                 },
-                error: function() {
-                    alert('Erro ao processar a requisição');
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição: ' + error
+                    });
                 }
             });
         });
@@ -2420,12 +2508,35 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     contentType: false,
                     success: function(response) {
                         console.log('Resposta do servidor:', response);
-                        if (response.success) {
-                            alert('Exame salvo com sucesso!');
-                            $('#modalExame').modal('hide');
-                            location.reload();
-                        } else {
-                            alert('Erro ao salvar: ' + response.message);
+                        try {
+                            let jsonResponse = (typeof response === 'string') ? JSON.parse(response) : response;
+                            
+                            if (jsonResponse.success) {
+                                // Fechar o modal
+                                $('#modalExame').modal('hide');
+                                
+                                // Mostrar mensagem de sucesso
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso!',
+                                    text: 'Exame salvo com sucesso!'
+                                }).then((result) => {
+                                    // Recarrega a página após fechar o alerta
+                                    location.reload();
+                                });
+                                
+                                // Limpar o formulário
+                                $('#formExame')[0].reset();
+                            } else {
+                                throw new Error(jsonResponse.message || 'Erro ao salvar o exame');
+                            }
+                        } catch (error) {
+                            console.error('Erro ao processar resposta:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: error.message
+                            });
                         }
                     },
                     error: function(xhr, status, error) {
@@ -2434,7 +2545,12 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             error: error,
                             response: xhr.responseText
                         });
-                        alert('Erro ao processar a requisição. Verifique o console.');
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao processar a requisição: ' + error
+                        });
                     }
                 });
             });
@@ -2502,20 +2618,42 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     data: formData,
                     dataType: 'json',
                     success: function(response) {
-                        if (response.success) {
-                            // Atualiza a tabela de acompanhamento
-                            adicionarLinhaTabela(response.dados_acompanhamento);
-                            // Fecha o modal
-                            $('#modalAcompanhamento').modal('hide');
-                            // Limpa o formulário
-                            $('#formAcompanhamento')[0].reset();
-                            alert(response.message);
-                        } else {
-                            alert(response.message);
+                        try {
+                            if (response.success) {
+                                // Atualiza a tabela de acompanhamento
+                                adicionarLinhaTabela(response.dados_acompanhamento);
+                                
+                                // Fecha o modal
+                                $('#modalAcompanhamento').modal('hide');
+                                
+                                // Limpa o formulário
+                                $('#formAcompanhamento')[0].reset();
+                                
+                                // Mostrar mensagem de sucesso
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso!',
+                                    text: response.message || 'Acompanhamento salvo com sucesso!'
+                                });
+                            } else {
+                                throw new Error(response.message || 'Erro ao salvar acompanhamento');
+                            }
+                        } catch (error) {
+                            console.error('Erro ao processar resposta:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: error.message
+                            });
                         }
                     },
-                    error: function() {
-                        alert('Erro ao salvar acompanhamento. Tente novamente.');
+                    error: function(xhr, status, error) {
+                        console.error('Erro na requisição:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao processar a requisição. Tente novamente.'
+                        });
                     }
                 });
             });
@@ -2618,18 +2756,39 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     data: formData,
                     dataType: 'json',
                     success: function(response) {
-                        if (response.success) {
-                            // Atualiza a linha correspondente na tabela
-                            atualizarLinhaTabela(response.dados_acompanhamento);
-                            // Fecha o modal
-                            $('#modalEditarAcompanhamento').modal('hide');
-                            alert(response.message);
-                        } else {
-                            alert(response.message);
+                        try {
+                            if (response.success) {
+                                // Atualiza a linha correspondente na tabela
+                                atualizarLinhaTabela(response.dados_acompanhamento);
+                                
+                                // Fecha o modal
+                                $('#modalEditarAcompanhamento').modal('hide');
+                                
+                                // Mostra mensagem de sucesso
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso!',
+                                    text: response.message || 'Acompanhamento atualizado com sucesso!'
+                                });
+                            } else {
+                                throw new Error(response.message || 'Erro ao atualizar acompanhamento');
+                            }
+                        } catch (error) {
+                            console.error('Erro ao processar resposta:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: error.message
+                            });
                         }
                     },
-                    error: function() {
-                        alert('Erro ao atualizar acompanhamento. Tente novamente.');
+                    error: function(xhr, status, error) {
+                        console.error('Erro na requisição:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao atualizar acompanhamento. Tente novamente.'
+                        });
                     }
                 });
             });
@@ -3037,6 +3196,66 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 }
             });
         }
+
+        // No evento de sucesso após salvar uma consulta
+        $('#formConsulta').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Desabilitar o botão de submit para evitar duplo clique
+            $(this).find('button[type="submit"]').prop('disabled', true);
+            
+            $.ajax({
+                url: 'salvar_consulta.php',
+                type: 'POST',
+                data: new FormData(this),
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    try {
+                        let jsonResponse = (typeof response === 'string') ? JSON.parse(response) : response;
+                        
+                        if (jsonResponse.success) {
+                            // Fechar o modal
+                            $('#modalConsulta').modal('hide');
+                            
+                            // Mostrar mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: jsonResponse.message
+                            }).then((result) => {
+                                // Só recarrega a página depois que o usuário fechar o alerta
+                                location.reload();
+                            });
+                            
+                            // Limpar o formulário
+                            $('#formConsulta')[0].reset();
+                        } else {
+                            throw new Error(jsonResponse.message || 'Erro ao salvar os dados');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição: ' + error
+                    });
+                },
+                complete: function() {
+                    // Reabilitar o botão de submit após a conclusão da requisição
+                    $('#formConsulta').find('button[type="submit"]').prop('disabled', false);
+                }
+            });
+        });
 
     </script>
 

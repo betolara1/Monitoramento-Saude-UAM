@@ -132,7 +132,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             executeQuery($conn, $query, $params);
         }
 
-        echo json_encode(['success' => true, 'message' => 'Consulta salva com sucesso!']);
+        // Após salvar a consulta com sucesso, gerar análise automaticamente
+        $query_ultimas_consultas = "SELECT pressao_arterial, glicemia, data_consulta 
+                                  FROM consultas 
+                                  WHERE paciente_id = ? 
+                                  ORDER BY data_consulta DESC 
+                                  LIMIT 2";
+        
+        $stmt = $conn->prepare($query_ultimas_consultas);
+        $stmt->bind_param("i", $paciente_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $consultas = $result->fetch_all(MYSQLI_ASSOC);
+
+        // Gerar comparativos
+        $comparativo_pa = "Primeira medição";
+        $comparativo_glicemia = "Primeira medição";
+        
+        if (count($consultas) >= 2) {
+            // Comparar Pressão Arterial
+            if ($consultas[0]['pressao_arterial'] && $consultas[1]['pressao_arterial']) {
+                $pa_atual = explode('/', $consultas[0]['pressao_arterial'])[0]; // Pega sistólica atual
+                $pa_anterior = explode('/', $consultas[1]['pressao_arterial'])[0]; // Pega sistólica anterior
+                
+                if ($pa_atual < $pa_anterior) {
+                    $comparativo_pa = "Melhorou";
+                } elseif ($pa_atual > $pa_anterior) {
+                    $comparativo_pa = "Piorou";
+                } else {
+                    $comparativo_pa = "Estável";
+                }
+            }
+
+            // Comparar Glicemia
+            if ($consultas[0]['glicemia'] && $consultas[1]['glicemia']) {
+                $glicemia_atual = intval($consultas[0]['glicemia']);
+                $glicemia_anterior = intval($consultas[1]['glicemia']);
+                
+                if ($glicemia_atual < $glicemia_anterior) {
+                    $comparativo_glicemia = "Melhorou";
+                } elseif ($glicemia_atual > $glicemia_anterior) {
+                    $comparativo_glicemia = "Piorou";
+                } else {
+                    $comparativo_glicemia = "Estável";
+                }
+            }
+        }
+
+        // Inserir nova análise
+        $data_analise = date('Y-m-d');
+        $query_analise = "INSERT INTO analises_estatisticas 
+                         (paciente_id, data_analise, comparativo_pa, 
+                          comparativo_glicemia, comparativo_risco_cardio) 
+                         VALUES (?, ?, ?, ?, NULL)";
+        
+        $stmt = $conn->prepare($query_analise);
+        $stmt->bind_param("isss", 
+            $paciente_id,
+            $data_analise,
+            $comparativo_pa,
+            $comparativo_glicemia
+        );
+        $stmt->execute();
+
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Consulta e análise salvas com sucesso!'
+        ]);
 
     } catch (Exception $e) {
         // Retorna erro como JSON
