@@ -454,6 +454,88 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             font-size: 1.5rem;
             font-weight: bold;
         }
+
+        /* Estilos para o modal */
+        #modalTodosAcompanhamentos .modal-dialog {
+            margin: 20px auto;
+        }
+
+        #modalTodosAcompanhamentos .modal-content {
+            
+        }
+
+        #modalTodosAcompanhamentos .table {
+            width: 100%;
+        }
+
+        #modalTodosAcompanhamentos .table th {
+            white-space: nowrap;
+            padding: 15px;
+        }
+
+        #modalTodosAcompanhamentos .table td {
+            padding: 12px 15px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 1200px) {
+            #modalTodosAcompanhamentos .modal-dialog {
+                max-width: 95%;
+                width: auto;
+                margin: 10px;
+            }
+        }
+
+        /* Estilos para o modal */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        #modalTodosAcompanhamentos {
+            padding: 0 !important;
+        }
+
+        #modalTodosAcompanhamentos .modal-dialog {
+            position: relative;
+            margin: 30px auto;
+            transform: none !important;
+        }
+
+        #modalTodosAcompanhamentos .modal-content {
+            min-height: 80vh;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.15);
+        }
+
+        #modalTodosAcompanhamentos .modal-body {
+            padding: 20px;
+        }
+
+        #modalTodosAcompanhamentos .table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        #modalTodosAcompanhamentos .table th,
+        #modalTodosAcompanhamentos .table td {
+            padding: 12px 15px;
+            white-space: nowrap;
+        }
+
+        #modalTodosAcompanhamentos .table td:nth-child(4) {
+            white-space: normal;
+            min-width: 200px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #modalTodosAcompanhamentos .modal-dialog {
+                width: 95vw;
+                margin: 10px auto;
+            }
+        }
+
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -475,12 +557,24 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             <div class="section-card">
             <h2 class="section-header">Acompanhamento em Casa</h2>
             
-            <?php if ($_SESSION['tipo_usuario'] === 'ACS' || $_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro' || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAcompanhamento">
-                    <i class="fas fa-plus"></i> Adicionar
-                </button>
-            <?php endif; ?>
+            <div class="d-flex justify-content-between mb-3">
+                <?php if ($_SESSION['tipo_usuario'] === 'ACS' || $_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro' || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAcompanhamento">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                <?php endif; ?>
+                
+                <?php
+                // Contar total de registros
+                $total_registros = $result_acompanhamento->num_rows;
+                if ($total_registros > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosAcompanhamentos">
+                        <i class="fas fa-list"></i> Ver Todos (<?php echo $total_registros; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
 
+            <!-- Tabela com os 3 últimos registros -->
             <table class="data-table">
                 <thead>
                     <tr>
@@ -492,7 +586,17 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($acompanhamento = $result_acompanhamento->fetch_assoc()): ?>
+                    <?php 
+                    // Armazenar todos os registros em um array
+                    $todos_acompanhamentos = [];
+                    while ($acompanhamento = $result_acompanhamento->fetch_assoc()) {
+                        $todos_acompanhamentos[] = $acompanhamento;
+                    }
+                    
+                    // Pegar apenas os 3 últimos registros
+                    $ultimos_tres = array_slice($todos_acompanhamentos, 0, 3);
+                    
+                    foreach ($ultimos_tres as $acompanhamento): ?>
                         <tr data-id="<?php echo $acompanhamento['id']; ?>">
                             <td><?php echo date('d/m/Y', strtotime($acompanhamento['data_acompanhamento'])); ?></td>
                             <td><?php echo htmlspecialchars($acompanhamento['glicemia']) ?: 'Não informado'; ?></td>
@@ -511,9 +615,62 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 <?php endif; ?>
                             </td>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Modal para todos os acompanhamentos -->
+        <div class="modal fade" id="modalTodosAcompanhamentos" tabindex="-1" aria-labelledby="modalTodosAcompanhamentosLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="min-width: 800px; width: 80vw;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTodosAcompanhamentosLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Acompanhamentos
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Glicemia</th>
+                                        <th>Hipertensão</th>
+                                        <th>Observações</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($todos_acompanhamentos as $acompanhamento): ?>
+                                        <tr data-id="<?php echo $acompanhamento['id']; ?>">
+                                            <td><?php echo date('d/m/Y', strtotime($acompanhamento['data_acompanhamento'])); ?></td>
+                                            <td><?php echo htmlspecialchars($acompanhamento['glicemia']) ?: 'Não informado'; ?></td>
+                                            <td><?php echo htmlspecialchars($acompanhamento['hipertensao']) ?: 'Não informado'; ?></td>
+                                            <td><?php echo htmlspecialchars($acompanhamento['observacoes']) ?: 'Não informado'; ?></td>
+                                            <td>
+                                                <?php if ($_SESSION['tipo_usuario'] === 'ACS' || $_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro' || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
+                                                    <div class="btn-group">
+                                                        <a href="#" onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, ENT_QUOTES)); ?>)" class="btn btn-sm btn-warning me-2">
+                                                            <i class="fas fa-edit"></i> Editar
+                                                        </a>
+                                                        <a href="#" onclick="excluirAcompanhamento(<?php echo $acompanhamento['id']; ?>)" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i> Excluir
+                                                        </a>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span class="text-muted">Acesso restrito</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal de Acompanhamento -->
@@ -572,58 +729,58 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         <!-- Modal de Edição de Acompanhamento -->
         <div class="modal fade" id="modalEditarAcompanhamento" tabindex="-1" aria-labelledby="modalEditarAcompanhamentoLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 1000px;">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalEditarAcompanhamentoLabel">Editar Acompanhamento em Casa</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="formEditarAcompanhamento" method="POST" action="atualizar_acompanhamento.php">
-                        <div class="modal-body">
+                        <div class="modal-body p-4">
                             <input type="hidden" name="id" id="edit_acompanhamento_id">
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                             
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label>Data:</label>
-                                    <input type="date" name="data_acompanhamento" id="edit_data_acompanhamento" class="form-control" required>
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">Data:</label>
+                                    <input type="date" name="data_acompanhamento" id="edit_data_acompanhamento" class="form-control form-control-lg" required>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label>Glicemia:</label>
+                                <div class="col-md-4">
+                                    <label class="form-label">Glicemia:</label>
                                     <input type="text" 
                                         name="glicemia" 
                                         id="edit_glicemia"
-                                        class="form-control glicemia" 
+                                        class="form-control form-control-lg glicemia" 
                                         placeholder="Ex: 99"
                                         title="Valor entre 20 e 600 mg/dL" required>
                                     <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label>Pressão Arterial:</label>
+                                <div class="col-md-4">
+                                    <label class="form-label">Pressão Arterial:</label>
                                     <input type="text" 
                                         name="hipertensao" 
                                         id="edit_hipertensao"
-                                        class="form-control pressao-arterial" 
+                                        class="form-control form-control-lg pressao-arterial" 
                                         placeholder="Ex: 120/80"
                                         title="Formato: 120/80 (sistólica/diastólica)" required>
                                     <small class="form-text text-muted">Sistólica: 70-200 / Diastólica: 40-130</small>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label>Observações:</label>
-                                <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                            <div class="mb-4">
+                                <label class="form-label">Observações:</label>
+                                <textarea name="observacoes" id="edit_observacoes" class="form-control form-control-lg" rows="5"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                            <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary btn-lg">Salvar Alterações</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        
+
         <!-- Seção de Doença -->
         <div class="section-card">
             <h2 class="section-header">Tipo de Doença</h2>
@@ -882,13 +1039,47 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         <!-- Seção de Consultas e Acompanhamento -->
         <div class="section-card">
             <h2 class="section-header">Histórico de Consultas e Acompanhamento</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
+            
+            <?php
+            // Executar a query para buscar as consultas
+            $query = "SELECT c.*, 
+                     COALESCE(u.nome, 'Não informado') as nome_profissional,
+                     p.especialidade,
+                     p.unidade_saude
+                     FROM consultas c 
+                     LEFT JOIN profissionais p ON c.profissional_id = p.id 
+                     LEFT JOIN usuarios u ON p.usuario_id = u.id
+                     WHERE c.paciente_id = ? 
+                     ORDER BY c.data_consulta DESC";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $paciente_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            // Armazenar todas as consultas em um array
+            $todas_consultas = [];
+            while ($consulta = $result->fetch_assoc()) {
+                $todas_consultas[] = $consulta;
+            }
+            $total_consultas = count($todas_consultas);
+            ?>
+
+            <div class="d-flex justify-content-between mb-3">
+                <?php if (temPermissao()): ?>
                     <button onclick="abrirModalConsulta(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
+                        <i class="fas fa-plus"></i> Adicionar
                     </button>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
+                
+                <?php if ($total_consultas > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasConsultas">
+                        <i class="fas fa-list"></i> Ver Todas (<?php echo $total_consultas; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <!-- Tabela com as 3 últimas consultas -->
             <table class="data-table">
                 <thead>
                     <tr>
@@ -897,11 +1088,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         <th>Pressão Arterial</th>
                         <th>Glicemia</th>
                         <th>Peso</th>
-                        <th>Altura</th>
                         <th>IMC</th>
-                        <th>Classificação IMC</th>
-                        <th>Estado Emocional</th> 
-                        <th>Hábitos de Vida</th>
+                        <th>Habitos de Vida</th>
                         <th>Observações</th>
                         <?php if (temPermissao()): ?>
                             <th>Ações</th>
@@ -910,41 +1098,25 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 </thead>
                 <tbody>
                     <?php
-                    $query = "SELECT c.*, 
-                             COALESCE(u.nome, 'Não informado') as nome_profissional,
-                             p.especialidade,
-                             p.unidade_saude
-                             FROM consultas c 
-                             LEFT JOIN profissionais p ON c.profissional_id = p.id 
-                             LEFT JOIN usuarios u ON p.usuario_id = u.id
-                             WHERE c.paciente_id = ? 
-                             ORDER BY c.data_consulta DESC";
+                    // Pegar apenas as 3 últimas consultas
+                    $ultimas_tres = array_slice($todas_consultas, 0, 3);
                     
-                    $stmt = $conn->prepare($query);
-                    $stmt->bind_param('i', $paciente_id);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-
-                    while ($consulta = mysqli_fetch_assoc($result)):
-                    ?>
+                    foreach ($ultimas_tres as $consulta): ?>
                         <tr>
                             <td><?php echo date('d/m/Y', strtotime($consulta['data_consulta'])); ?></td>
                             <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
                             <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
                             <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
                             <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
-                            <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
                             <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
-                            <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
-                            <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td> <!-- Novo campo -->
-                            <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td> <!-- Novo campo -->
-                            <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td> <!-- Novo campo -->
+                            <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
+                            <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td>
                             <?php if (temPermissao()): ?>
                                 <td>
                                     <div class="btn-group">
                                         <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
                                             class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
+                                            <i class="fas fa-edit"></i>
                                         </button>
                                         <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
                                             class="btn btn-sm btn-danger">
@@ -954,9 +1126,78 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 </td>
                             <?php endif; ?>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Modal para todas as consultas -->
+        <div class="modal fade" id="modalTodasConsultas" tabindex="-1" aria-labelledby="modalTodasConsultasLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="min-width: 800px; width: 80vw;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTodasConsultasLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Consultas
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Profissional</th>
+                                        <th>Pressão Arterial</th>
+                                        <th>Glicemia</th>
+                                        <th>Peso</th>
+                                        <th>Altura</th>
+                                        <th>IMC</th>
+                                        <th>Classificação IMC</th>
+                                        <th>Estado Emocional</th>
+                                        <th>Hábitos de Vida</th>
+                                        <th>Observações</th>
+                                        <?php if (temPermissao()): ?>
+                                            <th>Ações</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($todas_consultas as $consulta): ?>
+                                        <tr>
+                                            <td><?php echo date('d/m/Y', strtotime($consulta['data_consulta'])); ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
+                                            <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
+                                            <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
+                                            <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td>
+                                            <?php if (temPermissao()): ?>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
+                                                            class="btn btn-sm btn-warning me-2">
+                                                            <i class="fas fa-edit"></i> Editar
+                                                        </button>
+                                                        <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
+                                                            class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i> Excluir
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            <?php endif; ?>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Modal de Nova Consulta -->
@@ -1067,8 +1308,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </div>
         </div>
 
-            <!-- Adicione o Modal de Edição de Consulta-->
-            <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
+        <!-- Adicione o Modal de Edição de Consulta-->
+        <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
