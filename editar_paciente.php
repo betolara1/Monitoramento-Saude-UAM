@@ -1299,6 +1299,99 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </div>
         </div>
 
+                <!-- Modal de Edição de Risco Cardiovascular -->
+                <div class="modal fade" id="modalEditarRiscoCardiovascular" tabindex="-1" aria-labelledby="modalEditarRiscoCardiovascularLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarRiscoCardiovascularLabel">Editar Risco Cardiovascular</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formEditarRiscoCardiovascular">
+                            <input type="hidden" name="risco_id" id="editar_risco_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            <input type="hidden" name="sexo" id="editar_sexo">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label>Idade:</label>
+                                        <select name="idade" id="editar_idade" class="form-control" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="20-34">20-34</option>
+                                            <option value="35-39">35-39</option>
+                                            <option value="40-44">40-44</option>
+                                            <option value="45-49">45-49</option>
+                                            <option value="50-54">50-54</option>
+                                            <option value="55-59">55-59</option>
+                                            <option value="60-64">60-64</option>
+                                            <option value="65-69">65-69</option>
+                                            <option value="70-74">70-74</option>
+                                            <option value="75-79">75-79</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Colesterol Total (mg/dL):</label>
+                                        <input type="number" name="colesterol_total" id="editar_colesterol_total" class="form-control" required min="0" max="999">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Colesterol HDL (mg/dL):</label>
+                                        <input type="number" name="colesterol_hdl" id="editar_colesterol_hdl" class="form-control" required min="0" max="999">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label>Pressão Sistólica (mmHg):</label>
+                                        <input type="number" name="pressao_sistolica" id="editar_pressao_sistolica" class="form-control" required min="0" max="999">
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Fumante:</label>
+                                        <select name="fumante" id="editar_fumante" class="form-control" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="Sim">Sim</option>
+                                            <option value="Não">Não</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label>Toma remédios para hipertensão:</label>
+                                        <select name="remedios_hipertensao" id="editar_remedios_hipertensao" class="form-control" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="Sim">Sim</option>
+                                            <option value="Não">Não</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Campos de resultado -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Pontuação:</label>
+                                        <input type="text" id="editar_pontuacao" name="pontuacao" class="form-control" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label>Probabilidade (%):</label>
+                                        <input type="text" id="editar_probabilidade" name="probabilidade" class="form-control" readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botões do modal -->
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                <button type="button" class="btn btn-primary" onclick="recalcularRisco()">Recalcular</button>
+                                <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Seção de Medicamentos -->
         <div class="section-card">
             <h2 class="section-header">Medicamentos</h2>
@@ -1552,10 +1645,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
                             <?php if (temPermissao()): ?>
                                 <td>
-                                    <button onclick='editarAnalise(<?php echo json_encode($analise); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
                                     <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
                                             class="btn btn-sm btn-danger">
                                         <i class="fas fa-trash"></i>
@@ -3129,9 +3218,14 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 <td>${risco.probabilidade}%</td>
                                 <?php if (temPermissao()): ?>
                                 <td>
-                                    <button class='btn btn-sm btn-danger' onclick='excluirRisco(${risco.id})'>
-                                        <i class='fas fa-trash'></i>
-                                    </button>
+                                    <div class="btn-group">
+                                        <button class='btn btn-sm btn-primary me-2' onclick='editarRiscoCardiovascular(${risco.id})'>
+                                            <i class='fas fa-edit'></i>
+                                        </button>
+                                        <button class='btn btn-sm btn-danger' onclick='excluirRisco(${risco.id})'>
+                                            <i class='fas fa-trash'></i>
+                                        </button>
+                                    </div>
                                 </td>
                                 <?php endif; ?>
                             </tr>
@@ -3144,16 +3238,17 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     Swal.fire({
                         icon: 'error',
                         title: 'Erro',
-                        text: 'Ocorreu um erro ao buscar os riscos.'
+                        text: 'Não foi possível carregar os riscos cardiovasculares'
                     });
                 }
             });
         }
 
+        // Função para excluir risco
         function excluirRisco(id) {
             Swal.fire({
-                title: 'Tem certeza?',
-                text: "Esta ação não poderá ser revertida!",
+                title: 'Confirmar exclusão',
+                text: "Você tem certeza que deseja excluir este registro?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
@@ -3165,31 +3260,30 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     $.ajax({
                         url: 'excluir_risco.php',
                         type: 'POST',
-                        data: { id: id }, // Mudança aqui: enviando como dados de formulário
+                        data: { id: id },
                         dataType: 'json',
                         success: function(response) {
                             if (response.success) {
                                 Swal.fire({
                                     icon: 'success',
-                                    title: 'Excluído!',
-                                    text: 'O registro foi excluído com sucesso.'
+                                    title: 'Sucesso!',
+                                    text: 'Registro excluído com sucesso!'
                                 }).then(() => {
                                     atualizarSecaoRiscos();
                                 });
                             } else {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: 'Erro!',
-                                    text: response.message || 'Ocorreu um erro ao excluir o registro.'
+                                    title: 'Erro',
+                                    text: response.message || 'Erro ao excluir o registro'
                                 });
                             }
                         },
-                        error: function(xhr, status, error) {
-                            console.error('Erro:', xhr.responseText);
+                        error: function() {
                             Swal.fire({
                                 icon: 'error',
-                                title: 'Erro!',
-                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                                title: 'Erro',
+                                text: 'Erro ao processar a requisição'
                             });
                         }
                     });
@@ -3253,6 +3347,164 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 complete: function() {
                     // Reabilitar o botão de submit após a conclusão da requisição
                     $('#formConsulta').find('button[type="submit"]').prop('disabled', false);
+                }
+            });
+        });
+
+        // Função para abrir o modal de edição
+        function editarRiscoCardiovascular(id) {
+            // Mostrar loading
+            Swal.fire({
+                title: 'Carregando...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Buscar dados do risco cardiovascular
+            fetch(`buscar_risco.php?id=${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Erro ao buscar dados');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Preencher o formulário com os dados
+                        const risco = data.risco;
+                        document.getElementById('editar_risco_id').value = risco.id;
+                        document.getElementById('editar_sexo').value = risco.sexo;
+                        document.getElementById('editar_idade').value = risco.idade;
+                        document.getElementById('editar_colesterol_total').value = risco.colesterol_total;
+                        document.getElementById('editar_colesterol_hdl').value = risco.colesterol_hdl;
+                        document.getElementById('editar_pressao_sistolica').value = risco.pressao_sistolica;
+                        document.getElementById('editar_fumante').value = risco.fumante;
+                        document.getElementById('editar_remedios_hipertensao').value = risco.remedios_hipertensao;
+                        document.getElementById('editar_pontuacao').value = risco.pontuacao;
+                        document.getElementById('editar_probabilidade').value = risco.probabilidade;
+                        
+                        // Fechar o loading e abrir o modal
+                        Swal.close();
+                        new bootstrap.Modal(document.getElementById('modalEditarRiscoCardiovascular')).show();
+                    } else {
+                        throw new Error(data.message || 'Erro ao carregar os dados');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao carregar os dados do risco cardiovascular'
+                    });
+                });
+        }
+
+        // Função para recalcular o risco
+        function recalcularRisco() {
+            // Pegar os valores do formulário de edição
+            const formData = new FormData();
+            formData.append('sexo', document.getElementById('editar_sexo').value);
+            formData.append('idade', document.getElementById('editar_idade').value);
+            formData.append('colesterol_total', document.getElementById('editar_colesterol_total').value);
+            formData.append('colesterol_hdl', document.getElementById('editar_colesterol_hdl').value);
+            formData.append('pressao_sistolica', document.getElementById('editar_pressao_sistolica').value);
+            formData.append('fumante', document.getElementById('editar_fumante').value);
+            formData.append('remedios_hipertensao', document.getElementById('editar_remedios_hipertensao').value);
+
+            // Calcular a pontuação
+            const pontuacao = calcularPontuacao(formData);
+            
+            // Calcular a probabilidade baseada na pontuação
+            let probabilidade;
+            if (formData.get('sexo') === 'Homem') {
+                if (pontuacao <= 4) probabilidade = "<1";
+                else if (pontuacao === 5) probabilidade = 1;
+                else if (pontuacao === 6) probabilidade = 2;
+                else if (pontuacao === 7) probabilidade = 3;
+                else if (pontuacao === 8) probabilidade = 4;
+                else if (pontuacao === 9) probabilidade = 5;
+                else if (pontuacao === 10) probabilidade = 6;
+                else if (pontuacao === 11) probabilidade = 8;
+                else if (pontuacao === 12) probabilidade = 10;
+                else if (pontuacao === 13) probabilidade = 12;
+                else if (pontuacao === 14) probabilidade = 16;
+                else if (pontuacao === 15) probabilidade = 20;
+                else if (pontuacao === 16) probabilidade = 25;
+                else probabilidade = ">30";
+            } else {
+                if (pontuacao <= 12) probabilidade = "<1";
+                else if (pontuacao === 13) probabilidade = 1;
+                else if (pontuacao === 14) probabilidade = 2;
+                else if (pontuacao === 15) probabilidade = 3;
+                else if (pontuacao === 16) probabilidade = 4;
+                else if (pontuacao === 17) probabilidade = 5;
+                else if (pontuacao === 18) probabilidade = 6;
+                else if (pontuacao === 19) probabilidade = 8;
+                else if (pontuacao === 20) probabilidade = 11;
+                else if (pontuacao === 21) probabilidade = 14;
+                else if (pontuacao === 22) probabilidade = 17;
+                else if (pontuacao === 23) probabilidade = 22;
+                else if (pontuacao === 24) probabilidade = 27;
+                else probabilidade = ">30";
+            }
+
+            // Atualizar os campos de resultado
+            document.getElementById('editar_pontuacao').value = pontuacao;
+            document.getElementById('editar_probabilidade').value = probabilidade;
+
+            // Mostrar o botão de salvar
+            document.querySelector('#formEditarRiscoCardiovascular button[type="submit"]').style.display = 'block';
+
+            // Feedback visual do cálculo concluído
+            Swal.fire({
+                icon: 'success',
+                title: 'Cálculo concluído!',
+                text: 'Você já pode salvar as alterações.',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+
+        // Handler do formulário de edição
+        $('#formEditarRiscoCardiovascular').on('submit', function(e) {
+            e.preventDefault();
+            
+            $.ajax({
+                url: 'atualizar_risco.php',
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Fechar o modal
+                        bootstrap.Modal.getInstance(document.getElementById('modalEditarRiscoCardiovascular')).hide();
+                        
+                        // Mostrar mensagem de sucesso
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: 'Risco cardiovascular atualizado com sucesso!'
+                        }).then((result) => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: response.message || 'Erro ao atualizar o risco cardiovascular'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição'
+                    });
                 }
             });
         });
