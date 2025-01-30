@@ -4,7 +4,9 @@ require_once 'verificar_login.php';
 
 header('Content-Type: application/json');
 
-try {
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verificar se todos os campos necessários foram enviados
     $campos_requeridos = [
         'risco_id', 'paciente_id', 'sexo', 'idade', 
@@ -50,40 +52,30 @@ try {
         $_POST['paciente_id']
     );
 
-    if (!$stmt->execute()) {
-        throw new Exception('Erro ao atualizar o registro');
-    }
-
-    // Verificar se alguma linha foi afetada
-    if ($stmt->affected_rows === 0) {
-        throw new Exception('Nenhum registro foi atualizado');
+    if ($stmt->execute()) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Risco atualizado com sucesso'
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Erro ao atualizar risco'
+        ]);
     }
 
     // Commit da transação
     $conn->commit();
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Risco cardiovascular atualizado com sucesso'
-    ]);
-
-} catch (Exception $e) {
-    // Rollback em caso de erro
-    if ($conn->connect_errno == 0) {
-        $conn->rollback();
-    }
-
-    http_response_code(400);
+} else {
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => 'Método de requisição inválido'
     ]);
-
-} finally {
-    // Fechar conexões
-    if (isset($stmt)) {
-        $stmt->close();
-    }
-    $conn->close();
 }
+
+// Fechar conexões
+if (isset($stmt)) {
+    $stmt->close();
+}
+$conn->close();
 ?> 
