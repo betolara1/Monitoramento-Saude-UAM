@@ -29,7 +29,7 @@ CREATE TABLE usuarios (
 CREATE TABLE pacientes (
  id INT AUTO_INCREMENT PRIMARY KEY,
  usuario_id INT NOT NULL,
- tipo_doenca ENUM('Hipertensão', 'Diabetes') NOT NULL,
+ tipo_doenca VARCHAR(25) NOT NULL,
  historico_familiar TEXT,
  estado_civil VARCHAR(20),
  profissao VARCHAR(50),

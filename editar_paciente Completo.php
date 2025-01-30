@@ -44,6 +44,11 @@ function temPermissao() {
            ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro');
 }
 
+function podeEditarAcompanhamento() {
+    $tiposPermitidos = ['ACS', 'Admin', 'Medico', 'Enfermeiro', 'Paciente'];
+    return isset($_SESSION['tipo_usuario']) && in_array($_SESSION['tipo_usuario'], $tiposPermitidos);
+}
+
 // Consultar dados de acompanhamento em casa
 $query_acompanhamento = "SELECT * FROM acompanhamento_em_casa WHERE paciente_id = ? ORDER BY data_acompanhamento DESC";
 $stmt_acompanhamento = $conn->prepare($query_acompanhamento);
@@ -236,28 +241,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             font-weight: 600;
         }
 
-        /* Botão Fechar */
-        .close-button {
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            color: #666;
-            cursor: pointer;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-        }
-
-        .close-button:hover {
-            background-color: #eee;
-            color: #333;
-        }
-
         /* Corpo do Modal */
         .modal-body {
             padding: 25px;
@@ -265,46 +248,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             overflow-y: auto;
         }
 
-        /* Lista de Médicos */
-        .medicos-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .medicos-list li {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.2s;
-        }
-
-        .medicos-list li:last-child {
-            border-bottom: none;
-        }
-
-        .medicos-list li:hover {
-            background-color: #f8f9fa;
-        }
-
-        /* Botões na lista */
-        .medicos-list button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background-color 0.2s;
-        }
-
-        .medicos-list button:hover {
-            background-color: #45a049;
-        }
-
+        
         /* Rodapé do Modal */
         .modal-footer {
             padding: 20px 25px;
@@ -358,6 +302,68 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         .modal-body::-webkit-scrollbar-thumb:hover {
             background: #555;
+        }
+
+        /* Botão Fechar */
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .close-button:hover {
+            background-color: #eee;
+            color: #333;
+        }
+
+        /* Lista de Médicos */
+        .medicos-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .medicos-list li {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .medicos-list li:last-child {
+            border-bottom: none;
+        }
+
+        .medicos-list li:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Botões na lista */
+        .medicos-list button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        .medicos-list button:hover {
+            background-color: #45a049;
         }
 
         /* Estilo para o editar médico  */
@@ -453,87 +459,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         #probabilidade {
             font-size: 1.5rem;
             font-weight: bold;
-        }
-
-        /* Estilos para o modal */
-        #modalTodosAcompanhamentos .modal-dialog {
-            margin: 20px auto;
-        }
-
-        #modalTodosAcompanhamentos .modal-content {
-            
-        }
-
-        #modalTodosAcompanhamentos .table {
-            width: 100%;
-        }
-
-        #modalTodosAcompanhamentos .table th {
-            white-space: nowrap;
-            padding: 15px;
-        }
-
-        #modalTodosAcompanhamentos .table td {
-            padding: 12px 15px;
-        }
-
-        /* Responsividade */
-        @media (max-width: 1200px) {
-            #modalTodosAcompanhamentos .modal-dialog {
-                max-width: 95%;
-                width: auto;
-                margin: 10px;
-            }
-        }
-
-        /* Estilos para o modal */
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        #modalTodosAcompanhamentos {
-            padding: 0 !important;
-        }
-
-        #modalTodosAcompanhamentos .modal-dialog {
-            position: relative;
-            margin: 30px auto;
-            transform: none !important;
-        }
-
-        #modalTodosAcompanhamentos .modal-content {
-            min-height: 80vh;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.15);
-        }
-
-        #modalTodosAcompanhamentos .modal-body {
-            padding: 20px;
-        }
-
-        #modalTodosAcompanhamentos .table {
-            width: 100%;
-            margin-bottom: 0;
-        }
-
-        #modalTodosAcompanhamentos .table th,
-        #modalTodosAcompanhamentos .table td {
-            padding: 12px 15px;
-            white-space: nowrap;
-        }
-
-        #modalTodosAcompanhamentos .table td:nth-child(4) {
-            white-space: normal;
-            min-width: 200px;
-        }
-
-        /* Responsividade */
-        @media (max-width: 768px) {
-            #modalTodosAcompanhamentos .modal-dialog {
-                width: 95vw;
-                margin: 10px auto;
-            }
         }
 
     </style>
