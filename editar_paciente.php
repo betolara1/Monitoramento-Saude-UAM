@@ -547,7 +547,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         <!-- Modal para todos os acompanhamentos -->
         <div class="modal fade" id="modalTodosAcompanhamentos" tabindex="-1" aria-labelledby="modalTodosAcompanhamentosLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalTodosAcompanhamentosLabel">
@@ -832,12 +832,14 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     <td>${acompanhamento.hipertensao || 'Não informado'}</td>
                     <td>${acompanhamento.observacoes || 'Não informado'}</td>
                     <td>
-                        <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
+                        <div class="btn-group">
+                            <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
                         <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash"></i> Excluir
-                        </a>
+                                <i class="fas fa-trash"></i> Excluir
+                            </a>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -854,21 +856,67 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 const btnContainer = $('.d-flex.justify-content-between.mb-3');
                 let btnVerTodos = btnContainer.find('.btn-info');
                 
-                // Calcular novo total (linhas visíveis + 1 nova linha)
-                const novoTotal = 4; // 3 visíveis + 1 nova = 4
+                // Calcular novo total baseado no total atual + 1
+                const totalAtual = $('#modalTodosAcompanhamentos .table tbody tr').length;
+                const novoTotal = totalAtual + 1;
+                
+                // Adicionar a nova linha na tabela do modal também
+                $('#modalTodosAcompanhamentos .table tbody').prepend(novaLinha);
                 
                 if (!btnVerTodos.length) {
-                    // Se o botão não existe e agora temos 4 registros, criar o botão
                     btnContainer.append(`
                         <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosAcompanhamentos">
                             <i class="fas fa-list"></i> Ver Todos (${novoTotal})
                         </button>
                     `);
                 } else {
-                    // Se o botão já existe, apenas atualizar o número
                     btnVerTodos.html(`<i class="fas fa-list"></i> Ver Todos (${novoTotal})`);
                 }
             }
+        }
+
+        function atualizarTabelaAcompanhamentosModal() {
+            const paciente_id = <?php echo $paciente_id; ?>;
+            
+            $.ajax({
+                url: 'buscar_acompanhamentos.php',
+                type: 'GET',
+                data: { 
+                    paciente_id: paciente_id,
+                    get_all: 'true'
+                },
+                dataType: 'json',
+                success: function(response) {
+                    // Limpar a tabela do modal
+                    $('#modalTodosAcompanhamentos .table tbody').empty();
+                    
+                    // Adicionar os novos registros no modal
+                    response.registros.forEach(function(acompanhamento) {
+                        var linha = `
+                            <tr data-id="${acompanhamento.id}">
+                                <td>${acompanhamento.data_formatada}</td>
+                                <td>${acompanhamento.glicemia || 'Não informado'}</td>
+                                <td>${acompanhamento.hipertensao || 'Não informado'}</td>
+                                <td>${acompanhamento.observacoes || 'Não informado'}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning me-2">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Excluir
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        $('#modalTodosAcompanhamentos .table tbody').append(linha);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro ao atualizar tabela do modal:', error);
+                }
+            });
         }
 
         function excluirAcompanhamento(id) {
@@ -890,7 +938,10 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         dataType: 'json',
                         success: function(response) {
                             if (response.success) {
+                                // Atualiza ambas as tabelas
                                 atualizarTabelaAcompanhamentos();
+                                atualizarTabelaAcompanhamentosModal();
+                                
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Excluído!',
@@ -942,7 +993,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             linha.find('td:eq(3)').text(acompanhamento.observacoes);
         }
 
-        
         function atualizarTabelaAcompanhamentos() {
             const paciente_id = <?php echo $paciente_id; ?>;
             
@@ -962,7 +1012,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     response.registros.forEach(function(acompanhamento) {
                         var linha = `
                             <tr data-id="${acompanhamento.id}">
-                                <td>${acompanhamento.data_acompanhamento}</td>
+                                <td>${acompanhamento.data_formatada}</td>
                                 <td>${acompanhamento.glicemia || 'Não informado'}</td>
                                 <td>${acompanhamento.hipertensao || 'Não informado'}</td>
                                 <td>${acompanhamento.observacoes || 'Não informado'}</td>
