@@ -65,6 +65,17 @@ try {
     );
     $stmt_risco->execute();
 
+    // Após salvar o registro com sucesso, buscar o ID inserido
+    $novo_id = $stmt_risco->insert_id;
+
+    // Buscar os dados completos do novo registro
+    $query_novo = "SELECT * FROM riscos_saude WHERE id = ?";
+    $stmt_novo = $conn->prepare($query_novo);
+    $stmt_novo->bind_param("i", $novo_id);
+    $stmt_novo->execute();
+    $result_novo = $stmt_novo->get_result();
+    $novo_registro = $result_novo->fetch_assoc();
+
     // Verificar se existe um registro em analises_estatisticas
     $query_check = "SELECT id FROM analises_estatisticas 
                    WHERE paciente_id = ? 
@@ -106,7 +117,8 @@ try {
     echo json_encode([
         'success' => true, 
         'message' => 'Risco cardiovascular salvo com sucesso',
-        'comparativo' => $comparativo_risco
+        'comparativo' => $comparativo_risco,
+        'risco' => $novo_registro
     ]);
 
 } catch (Exception $e) {
@@ -122,6 +134,7 @@ try {
     if (isset($stmt_check)) $stmt_check->close();
     if (isset($stmt_update)) $stmt_update->close();
     if (isset($stmt_insert)) $stmt_insert->close();
+    if (isset($stmt_novo)) $stmt_novo->close();
     $conn->close();
 }
 ?> 

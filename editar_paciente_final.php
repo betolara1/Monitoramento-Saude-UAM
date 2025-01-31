@@ -838,6 +838,515 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
 
         <!---------------------------------------------------------------------------->
+        <!-- Seção de Médico Responsável -->
+        <div class="section-card">
+            <h2 class="section-header">Médico Responsável</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Nome do Médico</th>
+                        <th>Especialidade</th>
+                        <th>Unidade de Saúde</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <?php if (isset($paciente['nome_profissional']) && $paciente['nome_profissional'] !== 'Não atribuído'): ?>
+                                <span class="status-badge status-cadastrado">Atribuído</span>
+                            <?php else: ?>
+                                <span class="status-badge status-pendente">Não Atribuído</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><?php echo htmlspecialchars($paciente['nome_profissional']); ?></td>
+                        <td>
+                            <?php echo $paciente['especialidade'] ? htmlspecialchars($paciente['especialidade']) : 'Não informado'; ?>
+                        </td>
+                        <td>
+                            <?php echo $paciente['unidade_saude'] ? htmlspecialchars($paciente['unidade_saude']) : 'Não informado'; ?>
+                        </td>
+                        <td>
+                            <?php if ($paciente['nome_profissional'] !== 'Não atribuído'): ?>
+                                <?php if (temPermissao()): ?>
+                                    <div class="section-actions">
+                                        <button onclick="abrirModalMedico(<?php echo $paciente_id; ?>)" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <?php if (temPermissao()): ?>
+                                    <button onclick="abrirModalAtribuirMedico(<?php echo $paciente_id; ?>)" 
+                                            class="btn btn-primary"
+                                            <?php echo empty($paciente['tipo_doenca']) ? 'disabled' : ''; ?>>
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal para trocar médico -->
+        <div class="modal fade" id="modalMedico" tabindex="-1" aria-labelledby="modalMedicoLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalMedicoLabel">Trocar Médico Responsável</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formTrocarMedico" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="paciente_id" id="paciente_id">
+                            
+                            <div class="form-group mb-3">
+                                <label>Selecione o Médico:</label>
+                                <select name="profissional_id" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <?php
+                                    $query_medicos = "SELECT p.id, u.nome, p.especialidade 
+                                                    FROM profissionais p 
+                                                    JOIN usuarios u ON p.usuario_id = u.id 
+                                                    WHERE u.tipo_usuario = 'Medico'
+                                                    ORDER BY u.nome";
+                                    $result_medicos = $conn->query($query_medicos);
+                                    while($medico = $result_medicos->fetch_assoc()) {
+                                        echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para atribuir médico -->
+        <div class="modal fade" id="modalAtribuirMedico" tabindex="-1" aria-labelledby="modalAtribuirMedicoLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalAtribuirMedicoLabel">Atribuir Médico</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formAtribuirMedico" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="paciente_id" id="atribuir_paciente_id">
+                            <input type="hidden" name="tipo_profissional" value="<?php echo $tipo_profissional; ?>">
+                            <div class="form-group mb-3">
+                                <label>Selecione o Médico:</label>
+                                <select name="profissional_id" class="form-control" required>
+                                    <option value="">Selecione...</option>
+                                    <?php
+                                    $query_medicos = "SELECT p.id, u.nome, p.especialidade 
+                                                    FROM profissionais p 
+                                                    JOIN usuarios u ON p.usuario_id = u.id 
+                                                    WHERE u.tipo_usuario = 'Medico'
+                                                    ORDER BY u.nome";
+                                    $result_medicos = $conn->query($query_medicos);
+                                    while($medico = $result_medicos->fetch_assoc()) {
+                                        echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!---------------------------------------------------------------------------->
+                <!-- Seção de Consultas e Acompanhamento -->
+                <div class="section-card">
+            <h2 class="section-header">Histórico de Consultas e Acompanhamento</h2>
+            
+            <?php
+            // Executar a query para buscar as consultas
+            $query = "SELECT c.*, 
+                     COALESCE(u.nome, 'Não informado') as nome_profissional,
+                     p.especialidade,
+                     p.unidade_saude
+                     FROM consultas c 
+                     LEFT JOIN profissionais p ON c.profissional_id = p.id 
+                     LEFT JOIN usuarios u ON p.usuario_id = u.id
+                     WHERE c.paciente_id = ? 
+                     ORDER BY c.data_consulta DESC";
+            
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param('i', $paciente_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            // Armazenar todas as consultas em um array
+            $todas_consultas = [];
+            while ($consulta = $result->fetch_assoc()) {
+                $todas_consultas[] = $consulta;
+            }
+            $total_consultas = count($todas_consultas);
+            ?>
+
+            <div class="d-flex justify-content-between mb-3">
+                <?php if (temPermissao()): ?>
+                    <button onclick="abrirModalConsulta(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                <?php endif; ?>
+                
+                <?php if ($total_consultas > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasConsultas">
+                        <i class="fas fa-list"></i> Ver Todas (<?php echo $total_consultas; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <!-- Tabela com as 3 últimas consultas -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Profissional</th>
+                        <th>Pressão Arterial</th>
+                        <th>Glicemia</th>
+                        <th>Peso</th>
+                        <th>Altura</th>
+                        <th>IMC</th>
+                        <th>Classificação IMC</th>
+                        <th>Estado Emocional</th>
+                        <th>Habitos de Vida</th>
+                        <th>Observações</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    // Pegar apenas as 3 últimas consultas
+                    $ultimas_tres = array_slice($todas_consultas, 0, 3);
+                    
+                    foreach ($ultimas_tres as $consulta): ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($consulta['data_consulta'])); ?></td>
+                            <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
+                            <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
+                            <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
+                            <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
+                            <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
+                            <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
+                            <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
+                            <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td>
+                            <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
+                            <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <div class="btn-group">
+                                        <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal para todas as consultas -->
+        <div class="modal fade" id="modalTodasConsultas" tabindex="-1" aria-labelledby="modalTodasConsultasLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTodasConsultasLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Consultas
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Profissional</th>
+                                        <th>Pressão Arterial</th>
+                                        <th>Glicemia</th>
+                                        <th>Peso</th>
+                                        <th>Altura</th>
+                                        <th>IMC</th>
+                                        <th>Classificação IMC</th>
+                                        <th>Estado Emocional</th>
+                                        <th>Hábitos de Vida</th>
+                                        <th>Observações</th>
+                                        <?php if (temPermissao()): ?>
+                                            <th>Ações</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($todas_consultas as $consulta): ?>
+                                        <tr>
+                                            <td><?php echo date('d/m/Y', strtotime($consulta['data_consulta'])); ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
+                                            <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
+                                            <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
+                                            <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
+                                            <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td>
+                                            <?php if (temPermissao()): ?>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
+                                                            class="btn btn-sm btn-warning me-2">
+                                                            <i class="fas fa-edit"></i> Editar
+                                                        </button>
+                                                        <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
+                                                            class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i> Excluir
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            <?php endif; ?>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Nova Consulta -->
+        <div class="modal fade" id="modalConsulta" tabindex="-1" aria-labelledby="modalConsultaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalConsultaLabel">Nova Consulta</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formConsulta" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="form-group mb-3">
+                                <label>Profissional:</label>
+                                <select name="profissional_id" class="form-control" required>
+                                    <option value="">Selecione o profissional</option>
+                                    <?php
+                                    $query_prof = "SELECT p.id, u.nome 
+                                                FROM profissionais p 
+                                                JOIN usuarios u ON p.usuario_id = u.id 
+                                                WHERE u.tipo_usuario = 'Medico'
+                                                ORDER BY u.nome";
+                                    $result_prof = $conn->query($query_prof);
+                                    while($row = $result_prof->fetch_assoc()) {
+                                        echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Data da Consulta:</label>
+                                    <input type="date" name="data_consulta" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Pressão Arterial:</label>
+                                    <input type="text" 
+                                        name="pressao_arterial" 
+                                        class="form-control pressao-arterial" 
+                                        placeholder="Ex: 120/80"
+                                        title="Formato: 120/80 (sistólica/diastólica)">
+                                    <small class="form-text text-muted">Sistólica: 70-200 / Diastólica: 40-130</small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Glicemia:</label>
+                                    <input type="text" 
+                                        name="glicemia" 
+                                        class="form-control glicemia" 
+                                        placeholder="Ex: 99"
+                                        title="Valor entre 20 e 600 mg/dL" required>
+                                    <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Peso (kg):</label>
+                                    <input type="text" 
+                                        name="peso" 
+                                        class="form-control peso" 
+                                        placeholder="Ex: 70.5"
+                                        title="Valor entre 0 e 300 kg" required>
+                                    <small class="form-text text-muted">Valor entre 0 e 300 kg</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Altura (cm):</label>
+                                    <input type="text" 
+                                        name="altura" 
+                                        class="form-control altura" 
+                                        placeholder="Ex: 170"
+                                        title="Valor entre 10 e 250 cm" required>
+                                    <small class="form-text text-muted">Valor entre 10 e 250 cm</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="estado_emocional" class="form-label">Estado Emocional:</label>
+                                <select class="form-select" id="estado_emocional" name="estado_emocional" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Calmo">Calmo</option>
+                                    <option value="Ansioso">Ansioso</option>
+                                    <option value="Deprimido">Deprimido</option>
+                                    <option value="Estressado">Estressado</option>
+                                    <option value="Irritado">Irritado</option>
+                                    <option value="Alegre">Alegre</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                <textarea class="form-control" id="habitos_vida" name="habitos_vida" rows="3"></textarea>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Observações:</label>
+                                <textarea name="observacoes" class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Consulta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adicione o Modal de Edição de Consulta-->
+        <div class="modal fade" id="modalEditarConsulta" tabindex="-1" aria-labelledby="modalEditarConsultaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarConsultaLabel">Editar Consulta</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formEditarConsulta" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="consulta_id" id="edit_consulta_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="form-group mb-3">
+                                <label>Profissional:</label>
+                                <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
+                                    <option value="">Selecione o profissional</option>
+                                    <?php
+                                    $query_prof = "SELECT p.id, u.nome 
+                                                FROM profissionais p 
+                                                JOIN usuarios u ON p.usuario_id = u.id 
+                                                WHERE u.tipo_usuario = 'Medico'
+                                                ORDER BY u.nome";
+                                    $result_prof = $conn->query($query_prof);
+                                    while($row = $result_prof->fetch_assoc()) {
+                                        echo "<option value='{$row['id']}'>{$row['nome']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Data da Consulta:</label>
+                                    <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Pressão Arterial:</label>
+                                    <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Glicemia:</label>
+                                    <input type="text" 
+                                        name="glicemia" 
+                                        id="edit_glicemia"
+                                        class="form-control glicemia" 
+                                        placeholder="Ex: 99"
+                                        title="Valor entre 20 e 600 mg/dL" required>
+                                    <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Peso (kg):</label>
+                                    <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Altura (cm):</label>
+                                    <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Estado Emocional:</label>
+                                <select class="form-select" id="edit_estado_emocional" name="estado_emocional" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="Calmo">Calmo</option>
+                                    <option value="Ansioso">Ansioso</option>
+                                    <option value="Deprimido">Deprimido</option>
+                                    <option value="Estressado">Estressado</option>
+                                    <option value="Irritado">Irritado</option>
+                                    <option value="Alegre">Alegre</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Observações:</label>
+                                <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!---------------------------------------------------------------------------->
+        
+
+
 
     <script>
         <!-- Script para o modal de acompanhamento -->
@@ -1246,8 +1755,525 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         });
 
         <!---------------------------------------------------------------------------->
+        <!-- Script para o modal de médico -->
+        function abrirModalMedico(pacienteId) {
+            $('#paciente_id').val(pacienteId);
+            new bootstrap.Modal(document.getElementById('modalMedico')).show();
+        }
+
+        function abrirModalAtribuirMedico(pacienteId) {
+            $('#atribuir_paciente_id').val(pacienteId);
+            new bootstrap.Modal(document.getElementById('modalAtribuirMedico')).show();
+        }
+
+        function handleFormSubmit(formId, actionUrl, modalId) {
+            $(`#${formId}`).on('submit', function(e) {
+                e.preventDefault();
+                
+                $.ajax({
+                    url: actionUrl,
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: response.message || 'Operação realizada com sucesso!'
+                            }).then(() => location.reload());
+                        } else {
+                            throw new Error(response.message || 'Erro ao processar operação');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro na requisição:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao processar a requisição'
+                        });
+                    }
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            handleFormSubmit('formTrocarMedico', 'trocar_medico.php', 'modalMedico');
+            handleFormSubmit('formAtribuirMedico', 'atribuir_medico.php', 'modalAtribuirMedico');
+        });
+
+
+        <!---------------------------------------------------------------------------->
+        <!-- Script para o modal de consulta -->
+        function abrirModalConsulta(pacienteId) {
+            var myModal = new bootstrap.Modal(document.getElementById('modalConsulta'));
+            myModal.show();
+        }
+
+        // Adicione este código para fechar o modal após submeter o formulário com sucesso
+        $(document).ready(function() {
+            $('#formConsulta').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Validar pressão arterial
+                const pressaoArterial = $('input[name="pressao_arterial"]').val();
+                if (pressaoArterial) {
+                    const pattern = /^\d{2,3}\/\d{2,3}$/;
+                    if (!pattern.test(pressaoArterial)) {
+                        alert('Formato de pressão arterial inválido. Use o formato: 120/80');
+                        return false;
+                    }
+                    
+                    const [sistolica, diastolica] = pressaoArterial.split('/').map(Number);
+                    if (sistolica < 70 || sistolica > 200 || diastolica < 40 || diastolica > 130) {
+                        alert('Valores de pressão arterial fora do intervalo aceitável');
+                        return false;
+                    }
+                }
+                
+                // Validar glicemia
+                const glicemia = $('input[name="glicemia"]').val();
+                if (glicemia && (glicemia < 20 || glicemia > 600)) {
+                    alert('Valor de glicemia fora do intervalo aceitável (20-600 mg/dL)');
+                    return false;
+                }
+                
+                // Validar peso
+                const peso = $('input[name="peso"]').val();
+                if (peso && (peso < 20 || peso > 300)) {
+                    alert('Valor de peso fora do intervalo aceitável (20-300 kg)');
+                    return false;
+                }
+                
+                // Validar altura
+                const altura = $('input[name="altura"]').val();
+                if (altura && (altura < 10 || altura > 250)) {
+                    alert('Valor de altura fora do intervalo aceitável (10-250 cm)');
+                    return false;
+                }
+            });
+        });
+
+        function validarPressaoArterial(input) {
+            // Remove qualquer caractere que não seja número ou /
+            input.value = input.value.replace(/[^\d/]/g, '');
+            
+            if (input.value.includes('/')) {
+                let [sistolica, diastolica] = input.value.split('/').map(Number);
+                
+                // Limita sistólica entre 70 e 200
+                if (sistolica && !isNaN(sistolica)) {
+                    sistolica = Math.min(Math.max(parseInt(sistolica), 70), 200);
+                }
+                
+                // Limita diastólica entre 40 e 130
+                if (diastolica && !isNaN(diastolica)) {
+                    diastolica = Math.min(Math.max(parseInt(diastolica), 40), 130);
+                }
+                
+                // Atualiza o valor do input
+                if (sistolica && diastolica) {
+                    input.value = `${sistolica}/${diastolica}`;
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            // Máscara para pressão arterial (000/000)
+            $('.pressao-arterial').mask('000/000');
+            
+            // Máscara para glicemia (até 3 dígitos)
+            $('.glicemia').mask('000', {
+                reverse: true,
+                translation: {
+                    '0': {pattern: /[0-9]/}
+                }
+            });
+            
+            // Máscara para peso (000.0)
+            $('.peso').mask('000.0', {
+                reverse: true,
+                translation: {
+                    '0': {pattern: /[0-9]/}
+                }
+            });
+            
+            // Máscara para altura (000)
+            $('.altura').mask('000', {
+                reverse: true,
+                translation: {
+                    '0': {pattern: /[0-9]/}
+                }
+            });
+
+            // Validação adicional para pressão arterial
+            $('.pressao-arterial').on('blur', function() {
+                let valor = $(this).val();
+                if (valor) {
+                    let [sistolica, diastolica] = valor.split('/').map(Number);
+                    if (sistolica < 70 || sistolica > 200 || diastolica < 40 || diastolica > 130) {
+                        alert('Valores de pressão arterial fora do intervalo aceitável');
+                        $(this).val('');
+                    }
+                }
+            });
+
+            // Validação para glicemia
+            $('.glicemia').on('blur', function() {
+                let valor = parseInt($(this).val());
+                if (valor < 20 || valor > 600) {
+                    alert('Valor de glicemia fora do intervalo aceitável (20-600 mg/dL)');
+                    $(this).val('');
+                }
+            });
+
+            // Validação para peso
+            $('.peso').on('blur', function() {
+                let valor = parseFloat($(this).val());
+                if (valor < 0 || valor > 300) {
+                    alert('Valor de peso fora do intervalo aceitável (0-300 kg)');
+                    $(this).val('');
+                }
+            });
+
+            // Validação para altura
+            $('.altura').on('blur', function() {
+                let valor = parseInt($(this).val());
+                if (valor < 10 || valor > 250) {
+                    alert('Valor de altura fora do intervalo aceitável (10-250 cm)');
+                    $(this).val('');
+                }
+            });
+        });
+
+        function editarConsulta(consulta) {
+            var modalEditarConsulta = new bootstrap.Modal(document.getElementById('modalEditarConsulta'));
+            
+            // Log para debug
+            console.log('Dados da consulta:', consulta);
+            console.log('Observações:', consulta.observacoes);
+            
+            modalEditarConsulta.show();
+            
+            // Pequeno delay para garantir que o modal esteja carregado
+            setTimeout(() => {
+                // Preenche todos os campos
+                document.getElementById('edit_consulta_id').value = consulta.id;
+                document.getElementById('edit_profissional_id').value = consulta.profissional_id;
+                document.getElementById('edit_data_consulta').value = consulta.data_consulta;
+                document.getElementById('edit_pressao_arterial').value = consulta.pressao_arterial;
+                document.getElementById('edit_glicemia').value = consulta.glicemia;
+                document.getElementById('edit_peso').value = consulta.peso;
+                document.getElementById('edit_altura').value = consulta.altura;
+                document.getElementById('edit_estado_emocional').value = consulta.estado_emocional;
+                document.getElementById('edit_habitos_vida').value = consulta.habitos_vida;
+                
+                // Garante que o campo de observações existe e tem um valor
+                const observacoesField = document.getElementById('edit_observacoes');
+                if (observacoesField) {
+                    observacoesField.value = consulta.observacoes || '';
+                }
+            }, 100);
+        }
+
+        // Função para buscar os dados da consulta
+        function buscarConsulta(consultaId) {
+            fetch(`buscar_consulta.php?id=${consultaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Dados completos recebidos:', data.consulta);
+                        console.log('Observações:', data.consulta.observacoes);
+                        editarConsulta(data.consulta);
+                    } else {
+                        alert('Erro ao buscar dados da consulta: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao buscar dados da consulta');
+                });
+        }
+
+        // Manipula o envio do formulário de edição
+        $('#formEditarConsulta').on('submit', function(e) {
+            e.preventDefault();
+            
+            let formData = $(this).serializeArray();
+            let dados = {};
+            
+            // Converte os dados do formulário para um objeto
+            formData.forEach(function(item) {
+                dados[item.name] = item.value;
+            });
+
+            // Debug
+            console.log('Dados a serem enviados:', dados);
+            
+            $.ajax({
+                url: 'atualizar_consulta.php',
+                type: 'POST',
+                data: dados,
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Resposta do servidor:', response);
+                    try {
+                        if (response.success) {
+                            // Fecha o modal
+                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalEditarConsulta'));
+                            myModal.hide();
+                            
+                            // Mostra mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Consulta atualizada com sucesso!'
+                            }).then((result) => {
+                                location.reload();
+                            });
+                        } else {
+                            throw new Error(response.message || 'Erro ao atualizar consulta');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro detalhado:', {
+                        status: status,
+                        error: error,
+                        responseText: xhr.responseText,
+                        readyState: xhr.readyState,
+                        statusText: xhr.statusText
+                    });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição. Verifique o console para mais detalhes.'
+                    });
+                }
+            });
+        });
+
+        function excluirConsulta(consultaId) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_consulta.php',
+                        type: 'POST',
+                        data: { consulta_id: consultaId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'A consulta foi excluída com sucesso.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir a consulta.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
+                        }
+                    });
+                }
+            });
+        }
 
         
+        $(document).ready(function() {
+            // Configuração única das máscaras e validações
+            const mascaras = {
+                '.pressao-arterial': {
+                    mask: '000/000',
+                    validation: function(valor) {
+                        if (!valor) return true;
+                        const [sistolica, diastolica] = valor.split('/').map(Number);
+                        return validarCampo(sistolica, 70, 200, 'pressão sistólica') &&
+                               validarCampo(diastolica, 40, 130, 'pressão diastólica');
+                    }
+                },
+                '.glicemia': {
+                    mask: '000',
+                    reverse: true,
+                    validation: (valor) => validarCampo(parseInt(valor), 20, 600, 'glicemia')
+                },
+                '.peso': {
+                    mask: '000.0',
+                    reverse: true,
+                    validation: (valor) => validarCampo(parseFloat(valor), 0, 300, 'peso')
+                },
+                '.altura': {
+                    mask: '000',
+                    reverse: true,
+                    validation: (valor) => validarCampo(parseInt(valor), 10, 250, 'altura')
+                }
+            };
+
+            // Aplicar máscaras e validações
+            Object.entries(mascaras).forEach(([selector, config]) => {
+                $(selector).mask(config.mask, { reverse: config.reverse });
+                $(selector).on('blur', function() {
+                    const valor = $(this).val();
+                    if (valor && !config.validation(valor)) {
+                        $(this).val('');
+                    }
+                });
+            });
+
+            // Atualização automática do IMC
+            $('.peso, .altura').on('input', calcularIMC);
+
+            // Handlers de formulários
+            initFormHandlers();
+        });
+
+        // 3. Consolidar handlers de formulários em uma função
+        function initFormHandlers() {
+            // Handler para o formulário de consulta
+            $('#formConsulta').on('submit', handleFormSubmit);
+            
+            // Handler para o formulário de edição
+            $('#formEditarConsulta').on('submit', handleFormSubmit);
+        }
+
+        // 4. Função genérica para lidar com submissão de formulários
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const $form = $(this);
+            const $submitButton = $form.find('button[type="submit"]');
+            $submitButton.prop('disabled', true);
+
+            const formData = new FormData(this);
+            const isEditForm = $form.attr('id') === 'formEditarConsulta';
+            const url = isEditForm ? 'atualizar_consulta.php' : 'salvar_consulta.php';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    try {
+                        const jsonResponse = (typeof response === 'string') ? JSON.parse(response) : response;
+                        
+                        if (jsonResponse.success) {
+                            // Fechar o modal
+                            const modalId = isEditForm ? 'modalEditarConsulta' : 'modalConsulta';
+                            handleModal(modalId, 'hide');
+                            
+                            // Mostrar mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: jsonResponse.message || 'Operação realizada com sucesso!'
+                            }).then(() => location.reload());
+                            
+                            if (!isEditForm) {
+                                $form[0].reset();
+                            }
+                        } else {
+                            throw new Error(jsonResponse.message || 'Erro ao processar operação');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao processar resposta:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: error.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição: ' + error
+                    });
+                },
+                complete: function() {
+                    $submitButton.prop('disabled', false);
+                }
+            });
+        }
+
+        // 5. Consolidar funções de manipulação de modal
+        function handleModal(modalId, action = 'show') {
+            const modal = bootstrap.Modal.getInstance(document.getElementById(modalId)) || 
+                         new bootstrap.Modal(document.getElementById(modalId));
+            modal[action]();
+        }
+
+        // 1. Consolidar as validações de campos em uma única função
+        function validarCampo(valor, min, max, tipo) {
+            if (valor < min || valor > max) {
+                alert(`Valor de ${tipo} fora do intervalo aceitável (${min}-${max})`);
+                return false;
+            }
+            return true;
+        }
+
+        function calcularIMC() {
+            const peso = parseFloat($('.peso').val());
+            const altura = parseFloat($('.altura').val()) / 100; // Converter cm para metros
+            
+            if (peso && altura) {
+                const imc = peso / (altura * altura);
+                $('#imc').val(imc.toFixed(1));
+                
+                // Classificação do IMC
+                let classificacao = '';
+                if (imc < 18.5) classificacao = 'Abaixo do peso';
+                else if (imc < 25) classificacao = 'Peso normal';
+                else if (imc < 30) classificacao = 'Sobrepeso';
+                else if (imc < 35) classificacao = 'Obesidade Grau I';
+                else if (imc < 40) classificacao = 'Obesidade Grau II';
+                else classificacao = 'Obesidade Grau III';
+                
+                // Atualiza o texto da classificação do IMC
+                $('#classificacao_imc').text(classificacao); // Corrigido para usar .text()
+            } else {
+                $('#imc').val('');
+                $('#classificacao_imc').text(''); // Corrigido para usar .text()
+            }
+        }
+
+
+        <!---------------------------------------------------------------------------->
+        
+
 
     </script>
 
