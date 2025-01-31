@@ -710,8 +710,10 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </div>
         </div>
 
-                <!-- Seção de Doença -->
-                <div class="section-card">
+
+        <!---------------------------------------------------------------------------->
+        <!-- Seção de Doença -->
+        <div class="section-card">
             <h2 class="section-header">Tipo de Doença</h2>
             <table class="data-table">
                 <thead>
@@ -770,8 +772,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </table>
         </div>
 
-
-        <!---------------------------------------------------------------------------->
         <!-- Modal Editar Tipo de Doença -->
         <div class="modal fade" id="modalEditarDoenca" tabindex="-1" aria-labelledby="modalEditarDoencaLabel" aria-hidden="true">
             <div class="modal-dialog">
