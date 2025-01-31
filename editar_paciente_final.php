@@ -1344,10 +1344,486 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         </div>
         
         <!---------------------------------------------------------------------------->
-        
+        <!-- Seção de Medicamentos -->
+        <div class="section-card">
+            <h2 class="section-header">Medicamentos</h2>
+            
+            <div class="d-flex justify-content-between mb-3">
+                <?php if (temPermissao()): ?>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMedicamento">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                <?php endif; ?>
+                
+                <?php
+                // Contar total de registros de medicamentos
+                $query_total = "SELECT COUNT(*) as total FROM medicamentos WHERE paciente_id = ?";
+                $stmt_total = $conn->prepare($query_total);
+                $stmt_total->bind_param("i", $paciente_id);
+                $stmt_total->execute();
+                $total_medicamentos = $stmt_total->get_result()->fetch_assoc()['total'];
+                
+                if ($total_medicamentos > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosMedicamentos">
+                        <i class="fas fa-list"></i> Ver Todos (<?php echo $total_medicamentos; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <!-- Tabela com os 3 últimos registros -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Medicamento</th>
+                        <th>Dosagem</th>
+                        <th>Frequência</th>
+                        <th>Data Início</th>
+                        <th>Data Fim</th>
+                        <th>Observações</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $query_med = "SELECT * FROM medicamentos WHERE paciente_id = ? ORDER BY data_inicio DESC LIMIT 3";
+                    $stmt_med = $conn->prepare($query_med);
+                    $stmt_med->bind_param('i', $paciente_id);
+                    $stmt_med->execute();
+                    $result_med = $stmt_med->get_result();
+
+                    while ($medicamento = $result_med->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
+                            <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
+                            <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
+                            <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
+                            <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
+                            <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <div class="btn-group">
+                                        <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal para todos os medicamentos -->
+        <div class="modal fade" id="modalTodosMedicamentos" tabindex="-1" aria-labelledby="modalTodosMedicamentosLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTodosMedicamentosLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Medicamentos
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Medicamento</th>
+                                        <th>Dosagem</th>
+                                        <th>Frequência</th>
+                                        <th>Data Início</th>
+                                        <th>Data Fim</th>
+                                        <th>Observações</th>
+                                        <?php if (temPermissao()): ?>
+                                            <th>Ações</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Será preenchido via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Medicamento -->
+        <div class="modal fade" id="modalMedicamento" tabindex="-1" aria-labelledby="modalMedicamentoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalMedicamentoLabel">Novo Medicamento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formMedicamento" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="medicamento_id" id="medicamento_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Nome do Medicamento:</label>
+                                    <input type="text" name="nome_medicamento" id="nome_medicamento" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Dosagem:</label>
+                                    <input type="text" name="dosagem" id="dosagem" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label>Frequência:</label>
+                                    <input type="text" name="frequencia" id="frequencia" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Data Início:</label>
+                                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>Data Fim:</label>
+                                    <input type="date" name="data_fim" id="data_fim" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Observações:</label>
+                                <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <!---------------------------------------------------------------------------->
+        <!-- Seção de Exames -->
+        <div class="section-card"> 
+            <h2 class="section-header">Exames</h2>
+            
+            <div class="d-flex justify-content-between mb-3">
+                <?php if (temPermissao()): ?>
+                    <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                <?php endif; ?>
+                
+                <?php
+                // Contar total de registros
+                $query_total = "SELECT COUNT(*) as total FROM exames WHERE paciente_id = ?";
+                $stmt_total = $conn->prepare($query_total);
+                $stmt_total->bind_param("i", $paciente_id);
+                $stmt_total->execute();
+                $total_exames = $stmt_total->get_result()->fetch_assoc()['total'];
+                
+                if ($total_exames > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosExames">
+                        <i class="fas fa-list"></i> Ver Todos (<?php echo $total_exames; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
+            
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo de Exame</th>
+                        <th>Resultado</th>
+                        <th>Arquivo</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC LIMIT 3";
+                    $stmt_exames = $conn->prepare($query_exames);
+                    $stmt_exames->bind_param('i', $paciente_id);
+                    $stmt_exames->execute();
+                    $result_exames = $stmt_exames->get_result();
+
+                    while ($exame = $result_exames->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
+                            <td><?php echo $exame['tipo_exame']; ?></td>
+                            <td><?php echo nl2br($exame['resultado']); ?></td>
+                            <td>
+                                <?php if ($exame['arquivo_exame']): ?>
+                                    <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fas fa-file-medical"></i> Ver Arquivo
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
+                                            class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal de Exame -->
+        <div class="modal fade" id="modalExame" tabindex="-1" aria-labelledby="modalExameLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalExameLabel">Novo Exame</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formExame" method="POST" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <input type="hidden" name="exame_id" id="exame_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Data do Exame:</label>
+                                    <input type="date" name="data_exame" id="data_exame" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label>Tipo de Exame:</label>
+                                    <input type="text" name="tipo_exame" id="tipo_exame" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Resultado:</label>
+                                <textarea name="resultado" id="resultado" class="form-control" rows="4"></textarea>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label>Arquivo do Exame:</label>
+                                <input type="file" name="arquivo_exame" id="arquivo_exame" class="form-control">
+                                <div id="arquivo_atual" class="mt-2"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para todos os exames -->
+        <div class="modal fade" id="modalTodosExames" tabindex="-1" aria-labelledby="modalTodosExamesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTodosExamesLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Exames
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Tipo de Exame</th>
+                                        <th>Resultado</th>
+                                        <th>Arquivo</th>
+                                        <?php if (temPermissao()): ?>
+                                            <th>Ações</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $query_todos_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC";
+                                    $stmt_todos_exames = $conn->prepare($query_todos_exames);
+                                    $stmt_todos_exames->bind_param('i', $paciente_id);
+                                    $stmt_todos_exames->execute();
+                                    $result_todos_exames = $stmt_todos_exames->get_result();
+
+                                    while ($exame = $result_todos_exames->fetch_assoc()):
+                                    ?>
+                                        <tr>
+                                            <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
+                                            <td><?php echo $exame['tipo_exame']; ?></td>
+                                            <td><?php echo nl2br($exame['resultado']); ?></td>
+                                            <td>
+                                                <?php if ($exame['arquivo_exame']): ?>
+                                                    <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
+                                                        <i class="fas fa-file-medical"></i> Ver Arquivo
+                                                    </a>
+                                                <?php endif; ?>
+                                            </td>
+                                            <?php if (temPermissao()): ?>
+                                                <td>
+                                                    <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
+                                                            class="btn btn-sm btn-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
+                                                            class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            <?php endif; ?>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    
+        <!---------------------------------------------------------------------------->
+        <!-- Seção de Análises e Estatísticas -->
+        <div class="section-card">
+            <h2 class="section-header">Análises e Estatísticas</h2>
+            
+            <div class="d-flex justify-content-between mb-3">
+                <?php
+                // Contar total de registros
+                $query_total = "SELECT COUNT(*) as total FROM analises_estatisticas WHERE paciente_id = ?";
+                $stmt_total = $conn->prepare($query_total);
+                $stmt_total->bind_param("i", $paciente_id);
+                $stmt_total->execute();
+                $total_analises = $stmt_total->get_result()->fetch_assoc()['total'];
+                
+                if ($total_analises > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasAnalises">
+                        <i class="fas fa-list"></i> Ver Todos (<?php echo $total_analises; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Pressão Arterial</th>
+                        <th>Glicemia</th>
+                        <th>Risco Cardiovascular</th>
+                        <?php if (temPermissao()): ?>
+                            <th>Ações</th>
+                        <?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC LIMIT 3";
+                    $stmt_analises = $conn->prepare($query_analises);
+                    $stmt_analises->bind_param('i', $paciente_id);
+                    $stmt_analises->execute();
+                    $result_analises = $stmt_analises->get_result();
+
+                    while ($analise = $result_analises->fetch_assoc()):
+                    ?>
+                        <tr>
+                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                            <td><?php echo $analise['comparativo_pa']; ?></td>
+                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                            <?php if (temPermissao()): ?>
+                                <td>
+                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
+                                            class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal para todas as análises -->
+        <div class="modal fade" id="modalTodasAnalises" tabindex="-1" aria-labelledby="modalTodasAnalisesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTodasAnalisesLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Análises
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Pressão Arterial</th>
+                                        <th>Glicemia</th>
+                                        <th>Risco Cardiovascular</th>
+                                        <?php if (temPermissao()): ?>
+                                            <th>Ações</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $query_todas_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC";
+                                    $stmt_todas_analises = $conn->prepare($query_todas_analises);
+                                    $stmt_todas_analises->bind_param('i', $paciente_id);
+                                    $stmt_todas_analises->execute();
+                                    $result_todas_analises = $stmt_todas_analises->get_result();
+
+                                    while ($analise = $result_todas_analises->fetch_assoc()):
+                                    ?>
+                                        <tr>
+                                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                                            <td><?php echo $analise['comparativo_pa']; ?></td>
+                                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                                            <?php if (temPermissao()): ?>
+                                                <td>
+                                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
+                                                            class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            <?php endif; ?>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
 
+    </div>
     <script>
         <!-- Script para o modal de acompanhamento -->
         $(document).ready(function() {
@@ -2109,7 +2585,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 }
             });
         }
-
         
         $(document).ready(function() {
             // Configuração única das máscaras e validações
@@ -2272,8 +2747,443 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
 
         <!---------------------------------------------------------------------------->
-        
+        <!-- Script para o modal de medicamentos -->
 
+        // Adicionar variável global para permissão
+        const userHasPermission = <?php echo json_encode(temPermissao()); ?>;
+
+        function abrirModalMedicamento(pacienteId) {
+            $('#formMedicamento')[0].reset();
+            $('#medicamento_id').val('');
+            $('#modalMedicamentoLabel').text('Novo Medicamento');
+            var myModal = new bootstrap.Modal(document.getElementById('modalMedicamento'));
+            myModal.show();
+        }
+
+        function editarMedicamento(medicamento) {
+            $('#medicamento_id').val(medicamento.id);
+            $('#nome_medicamento').val(medicamento.nome_medicamento);
+            $('#dosagem').val(medicamento.dosagem);
+            $('#frequencia').val(medicamento.frequencia);
+            $('#data_inicio').val(medicamento.data_inicio);
+            $('#data_fim').val(medicamento.data_fim);
+            $('#observacoes').val(medicamento.observacoes);
+            
+            $('#modalMedicamentoLabel').text('Editar Medicamento');
+            var myModal = new bootstrap.Modal(document.getElementById('modalMedicamento'));
+            myModal.show();
+        }
+
+        function excluirMedicamento(medicamentoId) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_medicamento.php',
+                        type: 'POST',
+                        data: { medicamento_id: medicamentoId },
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('Response:', response);
+                            if (response.success) {
+                                console.log('Medicamentos:', response.medicamentos);
+                                // Atualizar ambas as tabelas
+                                atualizarTabelaMedicamentos('principal');
+                                if ($('#modalTodosMedicamentos').hasClass('show')) {
+                                    atualizarTabelaMedicamentos('todos');
+                                }
+                                
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'O medicamento foi excluído com sucesso.',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir o medicamento.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        $('#formMedicamento').on('submit', function(e) {
+            e.preventDefault();
+            
+            $.ajax({
+                url: 'salvar_medicamento.php',
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Response:', response);
+                    if (response.success) {
+                        // Fechar o modal e limpar o formulário
+                        const myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedicamento'));
+                        myModal.hide();
+                        $('#formMedicamento')[0].reset();
+                        
+                        // Primeiro mostrar o Swal.fire
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: 'Medicamento salvo com sucesso!',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            didOpen: () => {
+                                // Atualizar as tabelas enquanto o Swal está visível
+                                Promise.all([
+                                    atualizarTabelaMedicamentos('principal'),
+                                    $('#modalTodosMedicamentos').hasClass('show') ? 
+                                        atualizarTabelaMedicamentos('todos') : 
+                                        Promise.resolve()
+                                ]).catch(error => {
+                                    console.error('Erro ao atualizar tabelas:', error);
+                                });
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: response.message || 'Erro ao salvar medicamento'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar a requisição: ' + error
+                    });
+                }
+            });
+        });
+
+        // Função para atualizar tabelas (modificada para retornar Promise)
+        function atualizarTabelaMedicamentos(tipo = 'principal') {
+            const paciente_id = $('#p_id').val();
+            
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: 'buscar_medicamentos.php',
+                    type: 'GET',
+                    data: { 
+                        paciente_id: paciente_id,
+                        limit: tipo === 'principal' ? 3 : null
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log('Response:', response);
+                        if (response.success) {
+                            console.log('Medicamentos:', response.medicamentos);
+                            const tbody = tipo === 'principal' 
+                                ? $('.section-card .data-table tbody')
+                                : $('#modalTodosMedicamentos .table tbody');
+                            
+                            tbody.empty();
+                            
+                            if (response.medicamentos.length === 0) {
+                                const colSpan = userHasPermission ? 7 : 6;
+                                tbody.append(`
+                                    <tr>
+                                        <td colspan="${colSpan}" class="text-center">Nenhum registro encontrado</td>
+                                    </tr>
+                                `);
+                            } else {
+                                response.medicamentos.forEach(function(medicamento) {
+                                    const linha = `
+                                        <tr data-id="${medicamento.id}">
+                                            <td>${medicamento.nome_medicamento}</td>
+                                            <td>${medicamento.dosagem}</td>
+                                            <td>${medicamento.frequencia}</td>
+                                            <td>${medicamento.data_inicio_formatada}</td>
+                                            <td>${medicamento.data_fim_formatada || 'Em uso'}</td>
+                                            <td>${medicamento.observacoes || 'Não informado'}</td>
+                                            ${userHasPermission ? `
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button onclick='editarMedicamento(${JSON.stringify(medicamento)})' class="btn btn-sm btn-warning me-2">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button onclick="excluirMedicamento(${medicamento.id})" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            ` : ''}
+                                        </tr>
+                                    `;
+                                    tbody.append(linha);
+                                });
+                            }
+
+                            // Atualizar botão "Ver Todos" apenas para tabela principal
+                            if (tipo === 'principal') {
+                                const btnContainer = $('.d-flex.justify-content-between.mb-3');
+                                if (response.total > 3) {
+                                    let btnVerTodos = btnContainer.find('.btn-info');
+                                    if (btnVerTodos.length) {
+                                        btnVerTodos.html(`<i class="fas fa-list"></i> Ver Todos (${response.total})`);
+                                    } else {
+                                        btnContainer.append(`
+                                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosMedicamentos">
+                                                <i class="fas fa-list"></i> Ver Todos (${response.total})
+                                            </button>
+                                        `);
+                                    }
+                                } else {
+                                    btnContainer.find('.btn-info').remove();
+                                }
+                            }
+                            resolve();
+                        } else {
+                            reject(new Error(response.message));
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro ao atualizar tabela:', error);
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Atualizar tabelas quando o modal de todos os medicamentos for aberto
+        $('#modalTodosMedicamentos').on('show.bs.modal', function () {
+            atualizarTabelaMedicamentos('todos');
+        });
+
+        <!---------------------------------------------------------------------------->
+        <!-- Script para o modal de exames -->
+        function abrirModalExame(pacienteId) {
+            console.log('Abrindo modal para paciente:', pacienteId);
+            $('#formExame')[0].reset();
+            $('#exame_id').val('');
+            $('input[name="paciente_id"]').val(pacienteId);
+            $('#arquivo_atual').html('');
+            $('#modalExameLabel').text('Novo Exame');
+            $('#modalExame').modal('show');
+        }
+
+        function editarExame(exame) {
+            console.log('Editando exame:', exame);
+            $('#exame_id').val(exame.id);
+            $('#data_exame').val(exame.data_exame);
+            $('#tipo_exame').val(exame.tipo_exame);
+            $('#resultado').val(exame.resultado);
+            
+            if (exame.arquivo_exame) {
+                $('#arquivo_atual').html(
+                    `<p>Arquivo atual: <a href="${exame.arquivo_exame}" target="_blank">Ver arquivo</a></p>`
+                );
+            } else {
+                $('#arquivo_atual').html('');
+            }
+            
+            $('#modalExameLabel').text('Editar Exame');
+            $('#modalExame').modal('show');
+        }
+
+        function excluirExame(exameId) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_exame.php',
+                        type: 'POST',
+                        data: { exame_id: exameId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'O exame foi excluído com sucesso.'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir o exame.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            // Manipular o envio do formulário de exame
+            $('#formExame').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Debug - mostrar dados antes do envio
+                console.log('Dados do formulário:', {
+                    paciente_id: $('#formExame input[name="paciente_id"]').val(),
+                    exame_id: $('#exame_id').val(),
+                    data_exame: $('#data_exame').val(),
+                    tipo_exame: $('#tipo_exame').val(),
+                    resultado: $('#resultado').val()
+                });
+
+                let formData = new FormData(this);
+
+                // Debug - mostrar FormData
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+                
+                $.ajax({
+                    url: 'salvar_exame.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log('Resposta do servidor:', response);
+                        try {
+                            let jsonResponse = (typeof response === 'string') ? JSON.parse(response) : response;
+                            
+                            if (jsonResponse.success) {
+                                // Fechar o modal
+                                $('#modalExame').modal('hide');
+                                
+                                // Mostrar mensagem de sucesso
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso!',
+                                    text: 'Exame salvo com sucesso!'
+                                }).then((result) => {
+                                    // Recarrega a página após fechar o alerta
+                                    location.reload();
+                                });
+                                
+                                // Limpar o formulário
+                                $('#formExame')[0].reset();
+                            } else {
+                                throw new Error(jsonResponse.message || 'Erro ao salvar o exame');
+                            }
+                        } catch (error) {
+                            console.error('Erro ao processar resposta:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: error.message
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erro na requisição:', {
+                            status: status,
+                            error: error,
+                            response: xhr.responseText
+                        });
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao processar a requisição: ' + error
+                        });
+                    }
+                });
+            });
+        });
+
+        <!---------------------------------------------------------------------------->
+        <!-- Script para o modal de analises -->
+        function excluirAnalise(analiseId) {
+            Swal.fire({
+                title: 'Tem certeza?',
+                text: "Esta ação não poderá ser revertida!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, excluir!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'excluir_analise.php',
+                        type: 'POST',
+                        data: { analise_id: analiseId },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Excluído!',
+                                    text: 'A análise foi excluída com sucesso.'
+                                }).then(() => {
+                                    // Atualizar tanto a tabela principal quanto o modal
+                                    if ($('#modalTodasAnalises').hasClass('show')) {
+                                        $('#modalTodasAnalises').modal('hide');
+                                    }
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: response.message || 'Ocorreu um erro ao excluir a análise.'
+                                });
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Erro:', xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro na comunicação com o servidor.'
+                            });
+                        }
+                    });
+                }
+            });
+        }
 
     </script>
 

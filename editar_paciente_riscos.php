@@ -485,7 +485,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             <div class="d-flex justify-content-between mb-3">
                 <?php if (temPermissao()): ?>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRiscoCardiovascular">
-                        <i class="fas fa-plus"></i> Adicionar
+                        <i class="fas fa-plus"></i> 
                     </button>
                 <?php endif; ?>
                 
@@ -532,10 +532,10 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 <?php if (temPermissao()): ?>
                                     <div class="btn-group">
                                         <button onclick='editarRisco(<?php echo json_encode($risco); ?>)' class="btn btn-sm btn-warning me-2">
-                                            <i class="fas fa-edit"></i> Editar
+                                            <i class="fas fa-edit"></i>
                                         </button>
                                         <button onclick="excluirRisco(<?php echo $risco['id']; ?>)" class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash"></i> Excluir
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 <?php endif; ?>
@@ -779,6 +779,9 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
     </div>
 
     <script>
+        // Adicionar variável global para permissão
+        const userHasPermission = <?php echo json_encode(temPermissao()); ?>;
+
         // Função auxiliar para converter valores em números
         function getNumericValue(value) {
             const num = parseFloat(value);
@@ -1145,49 +1148,48 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     if (response.success) {
                         // Selecionar o tbody correto baseado no tipo
                         const tbody = tipo === 'principal' 
-                            ? $('.section-card .data-table tbody')  // Atualizado para selecionar a tabela correta
+                            ? $('.section-card .data-table tbody')
                             : $('#modalTodosRiscos .table tbody');
                         
                         tbody.empty();
                         
                         if (response.riscos.length === 0) {
+                            const colSpan = userHasPermission ? 4 : 3;
                             tbody.append(`
                                 <tr>
-                                    <td colspan="4" class="text-center">Nenhum registro encontrado</td>
+                                    <td colspan="${colSpan}" class="text-center">Nenhum registro encontrado</td>
                                 </tr>
                             `);
                         } else {
-                            // Adicionar os novos registros
                             response.riscos.forEach(function(risco) {
                                 const linha = `
                                     <tr data-id="${risco.id}">
                                         <td>${risco.data_formatada}</td>
                                         <td>${risco.pontuacao}</td>
-                                        <td>${risco.probabilidade}${risco.probabilidade.startsWith('<') || risco.probabilidade.startsWith('≥') ? '' : '%'}</td>
-                                        <td>
-                                            ${temPermissao() ? `
+                                        <td>${risco.probabilidade}%</td>
+                                        ${userHasPermission ? `
+                                            <td>
                                                 <div class="btn-group">
                                                     <button onclick='editarRisco(${JSON.stringify(risco)})' class="btn btn-sm btn-warning me-2">
-                                                        <i class="fas fa-edit"></i> Editar
+                                                        <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button onclick="excluirRisco(${risco.id})" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i> Excluir
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
-                                            ` : ''}
-                                        </td>
+                                            </td>
+                                        ` : ''}
                                     </tr>
                                 `;
                                 tbody.append(linha);
                             });
                         }
-                        
+
                         // Atualizar botão "Ver Todos" apenas para tabela principal
                         if (tipo === 'principal') {
                             const btnContainer = $('.d-flex.justify-content-between.mb-3');
-                            const btnVerTodos = btnContainer.find('.btn-info');
-                            
                             if (response.total > 3) {
+                                let btnVerTodos = btnContainer.find('.btn-info');
                                 if (btnVerTodos.length) {
                                     btnVerTodos.html(`<i class="fas fa-list"></i> Ver Todos (${response.total})`);
                                 } else {
@@ -1198,7 +1200,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     `);
                                 }
                             } else {
-                                btnVerTodos.remove();
+                                btnContainer.find('.btn-info').remove();
                             }
                         }
                     }

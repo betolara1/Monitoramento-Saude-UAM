@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         foreach ($campos_requeridos as $campo) {
-            if (!isset($_POST[$campo]) || empty($_POST[$campo])) {
+            if (!isset($_POST[$campo])) {
                 throw new Exception("Campo obrigatório não fornecido: $campo");
             }
         }
@@ -33,10 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         fumante = ?,
                         remedios_hipertensao = ?,
                         pontuacao = ?,
-                        probabilidade = ?
+                        probabilidade = ?,
+                        data_atualizacao = NOW()
                     WHERE id = ?";
 
             $stmt = $conn->prepare($query);
+            
+            // Tratar a probabilidade antes de salvar
+            $probabilidade = $_POST['probabilidade'];
+            if (strpos($probabilidade, '≥') !== false) {
+                $probabilidade = '≥30';
+            } elseif (strpos($probabilidade, '<') !== false) {
+                $probabilidade = '<1';
+            }
+
             $stmt->bind_param(
                 "ssiiissisi",
                 $_POST['sexo'],
@@ -47,15 +57,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['fumante'],
                 $_POST['remedios_hipertensao'],
                 $_POST['pontuacao'],
-                $_POST['probabilidade'],
+                $probabilidade,
                 $_POST['risco_id']
             );
 
             if ($stmt->execute()) {
+                // Buscar o registro atualizado para retornar
+                $query_select = "SELECT 
+                                    rs.*,
+                                    DATE_FORMAT(rs.data_calculo, '%d/%m/%Y') as data_formatada,
+                                    DATE_FORMAT(rs.data_calculo, '%Y-%m-%d') as data_calculo_iso
+                                FROM riscos_saude rs 
+                                WHERE rs.id = ?";
+                
+                $stmt_select = $conn->prepare($query_select);
+                $stmt_select->bind_param("i", $_POST['risco_id']);
+                $stmt_select->execute();
+                $resultado = $stmt_select->get_result()->fetch_assoc();
+
                 $conn->commit();
+                
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Risco atualizado com sucesso'
+                    'message' => 'Risco atualizado com sucesso',
+                    'risco' => [
+                        'id' => (int)$resultado['id'],
+                        'data_formatada' => $resultado['data_formatada'],
+                        'pontuacao' => (int)$resultado['pontuacao'],
+                        'probabilidade' => $resultado['probabilidade'],
+                        'sexo' => $resultado['sexo'],
+                        'idade' => $resultado['idade'],
+                        'colesterol_total' => (int)$resultado['colesterol_total'],
+                        'colesterol_hdl' => (int)$resultado['colesterol_hdl'],
+                        'pressao_sistolica' => (int)$resultado['pressao_sistolica'],
+                        'fumante' => $resultado['fumante'],
+                        'remedios_hipertensao' => $resultado['remedios_hipertensao']
+                    ]
                 ]);
             } else {
                 throw new Exception('Erro ao atualizar risco');
@@ -72,10 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'message' => 'Erro: ' . $e->getMessage()
         ]);
     } finally {
-        // Fechar conexões
-        if (isset($stmt)) {
-            $stmt->close();
-        }
+        if (isset($stmt)) $stmt->close();
+        if (isset($stmt_select)) $stmt_select->close();
         $conn->close();
     }
 } else {

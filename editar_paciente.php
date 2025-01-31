@@ -478,28 +478,33 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         </div>
         <input type="hidden" id="p_id" value="<?php echo $paciente_id; ?>">
 
-        
-
-        <!-- Seção de Medicamentos -->
+        <!-- Seção de Análises e Estatísticas -->
         <div class="section-card">
-            <h2 class="section-header">Medicamentos</h2>
-            <?php if (temPermissao()): ?>
-                <div class="section-actions">
-                    <button onclick="abrirModalMedicamento(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            <?php endif; ?>
+            <h2 class="section-header">Análises e Estatísticas</h2>
             
+            <div class="d-flex justify-content-between mb-3">
+                <?php
+                // Contar total de registros
+                $query_total = "SELECT COUNT(*) as total FROM analises_estatisticas WHERE paciente_id = ?";
+                $stmt_total = $conn->prepare($query_total);
+                $stmt_total->bind_param("i", $paciente_id);
+                $stmt_total->execute();
+                $total_analises = $stmt_total->get_result()->fetch_assoc()['total'];
+                
+                if ($total_analises > 3): ?>
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasAnalises">
+                        <i class="fas fa-list"></i> Ver Todos (<?php echo $total_analises; ?>)
+                    </button>
+                <?php endif; ?>
+            </div>
+
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Medicamento</th>
-                        <th>Dosagem</th>
-                        <th>Frequência</th>
-                        <th>Data Início</th>
-                        <th>Data Fim</th>
-                        <th>Observações</th>
+                        <th>Data</th>
+                        <th>Pressão Arterial</th>
+                        <th>Glicemia</th>
+                        <th>Risco Cardiovascular</th>
                         <?php if (temPermissao()): ?>
                             <th>Ações</th>
                         <?php endif; ?>
@@ -507,33 +512,25 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 </thead>
                 <tbody>
                     <?php
-                    $query_med = "SELECT * FROM medicamentos WHERE paciente_id = ? ORDER BY data_inicio DESC";
-                    $stmt_med = $conn->prepare($query_med);
-                    $stmt_med->bind_param('i', $paciente_id);
-                    $stmt_med->execute();
-                    $result_med = $stmt_med->get_result();
+                    $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC LIMIT 3";
+                    $stmt_analises = $conn->prepare($query_analises);
+                    $stmt_analises->bind_param('i', $paciente_id);
+                    $stmt_analises->execute();
+                    $result_analises = $stmt_analises->get_result();
 
-                    while ($medicamento = $result_med->fetch_assoc()):
+                    while ($analise = $result_analises->fetch_assoc()):
                     ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
-                            <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
+                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                            <td><?php echo $analise['comparativo_pa']; ?></td>
+                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
                             <?php if (temPermissao()): ?>
                                 <td>
-                                    <div class="btn-group">
-                                        <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
+                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
                                             class="btn btn-sm btn-danger">
                                         <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
+                                    </button>
                                 </td>
                             <?php endif; ?>
                         </tr>
@@ -542,86 +539,67 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </table>
         </div>
 
-        <!-- Modal de Medicamento -->
-        <div class="modal fade" id="modalMedicamento" tabindex="-1" aria-labelledby="modalMedicamentoLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+        <!-- Modal para todas as análises -->
+        <div class="modal fade" id="modalTodasAnalises" tabindex="-1" aria-labelledby="modalTodasAnalisesLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalMedicamentoLabel">Novo Medicamento</h5>
+                        <h5 class="modal-title" id="modalTodasAnalisesLabel">
+                            <i class="fas fa-list"></i> Histórico Completo de Análises
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="formMedicamento" method="POST">
-                        <div class="modal-body">
-                            <input type="hidden" name="medicamento_id" id="medicamento_id">
-                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label>Nome do Medicamento:</label>
-                                    <input type="text" name="nome_medicamento" id="nome_medicamento" class="form-control" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label>Dosagem:</label>
-                                    <input type="text" name="dosagem" id="dosagem" class="form-control" required>
-                                </div>
-                            </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Pressão Arterial</th>
+                                        <th>Glicemia</th>
+                                        <th>Risco Cardiovascular</th>
+                                        <?php if (temPermissao()): ?>
+                                            <th>Ações</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $query_todas_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC";
+                                    $stmt_todas_analises = $conn->prepare($query_todas_analises);
+                                    $stmt_todas_analises->bind_param('i', $paciente_id);
+                                    $stmt_todas_analises->execute();
+                                    $result_todas_analises = $stmt_todas_analises->get_result();
 
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label>Frequência:</label>
-                                    <input type="text" name="frequencia" id="frequencia" class="form-control" required>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label>Data Início:</label>
-                                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label>Data Fim:</label>
-                                    <input type="date" name="data_fim" id="data_fim" class="form-control">
-                                </div>
-                            </div>
-
-                            <div class="form-group mb-3">
-                                <label>Observações:</label>
-                                <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
-                            </div>
+                                    while ($analise = $result_todas_analises->fetch_assoc()):
+                                    ?>
+                                        <tr>
+                                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                                            <td><?php echo $analise['comparativo_pa']; ?></td>
+                                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                                            <?php if (temPermissao()): ?>
+                                                <td>
+                                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
+                                                            class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            <?php endif; ?>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
 
-        
+    </div>
+
     <script>
-      
-
-        function abrirModalMedicamento(pacienteId) {
-            $('#formMedicamento')[0].reset();
-            $('#medicamento_id').val('');
-            $('#modalMedicamentoLabel').text('Novo Medicamento');
-            var myModal = new bootstrap.Modal(document.getElementById('modalMedicamento'));
-            myModal.show();
-        }
-
-        function editarMedicamento(medicamento) {
-            $('#medicamento_id').val(medicamento.id);
-            $('#nome_medicamento').val(medicamento.nome_medicamento);
-            $('#dosagem').val(medicamento.dosagem);
-            $('#frequencia').val(medicamento.frequencia);
-            $('#data_inicio').val(medicamento.data_inicio);
-            $('#data_fim').val(medicamento.data_fim);
-            $('#observacoes').val(medicamento.observacoes);
-            
-            $('#modalMedicamentoLabel').text('Editar Medicamento');
-            var myModal = new bootstrap.Modal(document.getElementById('modalMedicamento'));
-            myModal.show();
-        }
-
-        function excluirMedicamento(medicamentoId) {
+        function excluirAnalise(analiseId) {
             Swal.fire({
                 title: 'Tem certeza?',
                 text: "Esta ação não poderá ser revertida!",
@@ -634,24 +612,28 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: 'excluir_medicamento.php',
+                        url: 'excluir_analise.php',
                         type: 'POST',
-                        data: { medicamento_id: medicamentoId },
+                        data: { analise_id: analiseId },
                         dataType: 'json',
                         success: function(response) {
                             if (response.success) {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Excluído!',
-                                    text: 'O medicamento foi excluído com sucesso.'
+                                    text: 'A análise foi excluída com sucesso.'
                                 }).then(() => {
+                                    // Atualizar tanto a tabela principal quanto o modal
+                                    if ($('#modalTodasAnalises').hasClass('show')) {
+                                        $('#modalTodasAnalises').modal('hide');
+                                    }
                                     location.reload();
                                 });
                             } else {
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Erro!',
-                                    text: response.message || 'Ocorreu um erro ao excluir o medicamento.'
+                                    text: response.message || 'Ocorreu um erro ao excluir a análise.'
                                 });
                             }
                         },
@@ -667,55 +649,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 }
             });
         }
-
-        $('#formMedicamento').on('submit', function(e) {
-            e.preventDefault();
-            
-            $.ajax({
-                url: 'salvar_medicamento.php',
-                type: 'POST',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    try {
-                        if (response.success) {
-                            // Fechar o modal
-                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedicamento'));
-                            myModal.hide();
-                            
-                            // Mostrar mensagem de sucesso
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sucesso!',
-                                text: 'Medicamento salvo com sucesso!'
-                            }).then((result) => {
-                                // Recarrega a página após fechar o alerta
-                                location.reload();
-                            });
-                        } else {
-                            throw new Error(response.message || 'Erro ao salvar medicamento');
-                        }
-                    } catch (error) {
-                        console.error('Erro ao processar resposta:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erro',
-                            text: error.message
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erro na requisição:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erro',
-                        text: 'Erro ao processar a requisição: ' + error
-                    });
-                }
-            });
-        });
-
     </script>
-
 </body>
 </html>
