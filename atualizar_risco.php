@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         remedios_hipertensao = ?,
                         pontuacao = ?,
                         probabilidade = ?,
-                        data_atualizacao = NOW()
+                        data_calculo = NOW()
                     WHERE id = ?";
 
             $stmt = $conn->prepare($query);

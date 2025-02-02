@@ -1,6 +1,6 @@
 <?php
 require_once 'conexao.php';
-session_start();
+require_once 'verificar_login.php';
 
 header('Content-Type: application/json');
 
@@ -39,12 +39,13 @@ if (isset($_GET['paciente_id'])) {
         $riscos = [];
         while ($risco = $result->fetch_assoc()) {
             // Formatar a probabilidade de acordo com o valor
-            if ($risco['probabilidade'] == '<1') {
-                $risco['probabilidade_formatada'] = '<1';
-            } elseif ($risco['probabilidade'] == '≥30' || $risco['probabilidade'] >= 30) {
-                $risco['probabilidade_formatada'] = '≥30';
+            $probabilidade = $risco['probabilidade'];
+            if ($probabilidade < 1) {
+                $probabilidade_formatada = '<1';
+            } elseif ($probabilidade >= 30) {
+                $probabilidade_formatada = '≥30';
             } else {
-                $risco['probabilidade_formatada'] = $risco['probabilidade'];
+                $probabilidade_formatada = $probabilidade;
             }
             
             // Preparar o objeto com todos os campos necessários
@@ -61,7 +62,7 @@ if (isset($_GET['paciente_id'])) {
                 'fumante' => $risco['fumante'],
                 'remedios_hipertensao' => $risco['remedios_hipertensao'],
                 'pontuacao' => (int)$risco['pontuacao'],
-                'probabilidade' => $risco['probabilidade_formatada']
+                'probabilidade' => $probabilidade_formatada
             ];
             
             $riscos[] = $riscoFormatado;
@@ -88,6 +89,7 @@ if (isset($_GET['paciente_id'])) {
         // Fechar todas as conexões
         if (isset($stmt_total)) $stmt_total->close();
         if (isset($stmt)) $stmt->close();
+        $conn->close();
     }
 } else {
     echo json_encode([
@@ -95,6 +97,4 @@ if (isset($_GET['paciente_id'])) {
         'message' => 'ID do paciente não fornecido'
     ]);
 }
-
-$conn->close();
 ?> 
