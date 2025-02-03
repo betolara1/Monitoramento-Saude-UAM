@@ -160,7 +160,7 @@ include 'sidebar.php';
                         <select name="tipo_usuario" required>
                             <?php if ($_SESSION['tipo_usuario'] === 'Admin'): ?>
                                 <option value="Medico">Médico</option>
-                                <option value="Enfermeira">Enfermeira</option>
+                                <option value="Enfermeiro">Enfermeiro</option>
                                 <option value="ACS">ACS</option>
                                 <option value="Paciente">Paciente</option>
                             <?php endif; ?>

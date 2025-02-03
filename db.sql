@@ -10,7 +10,7 @@ CREATE TABLE usuarios (
     email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     tipo_usuario ENUM('Admin', 'Medico', 'Enfermeiro', 'ACS', 'Paciente') NOT NULL,
-    numero_familia VARCHAR(10) NOT NULL,
+    numero_familia VARCHAR(10),
     telefone VARCHAR(20),
     cep VARCHAR(10) NOT NULL,
     rua VARCHAR(100) NOT NULL,

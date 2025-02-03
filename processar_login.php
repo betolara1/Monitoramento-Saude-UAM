@@ -43,6 +43,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 case 'Paciente':
                     header("Location: dashboard.php");
                     break;
+                case 'ACS':
+                    header("Location: dashboard.php");
+                    break;
                 default:
                     header("Location: index.php");
             }

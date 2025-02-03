@@ -27,14 +27,14 @@ if ($tipo_usuario === 'Admin') {
             WHERE u.tipo_usuario IN ('Medico', 'Enfermeiro', 'ACS')
             ORDER BY u.tipo_usuario, u.nome";
 } elseif ($tipo_usuario === 'ACS') {
-    // ACS vê apenas outros ACS e seu próprio perfil
+    // ACS vê apenas seu próprio perfil
     $sql = "SELECT u.id as usuario_id, 
             u.nome, u.email, u.telefone, u.tipo_usuario,
             p.id as profissional_id,
             p.especialidade, p.registro_profissional, p.unidade_saude 
             FROM usuarios u 
             LEFT JOIN profissionais p ON u.id = p.usuario_id 
-            WHERE u.tipo_usuario = 'ACS'
+            WHERE u.id = ?
             ORDER BY u.nome";
 } else {
     // Médico ou Enfermeiro vê apenas seu próprio perfil
@@ -48,7 +48,8 @@ if ($tipo_usuario === 'Admin') {
 }
 
 $stmt = $conn->prepare($sql);
-if ($tipo_usuario !== 'Admin' && $tipo_usuario !== 'ACS') {
+if ($tipo_usuario !== 'Admin') {
+    // Bind o parâmetro para ACS, Médico e Enfermeiro
     $stmt->bind_param("i", $usuario_id);
 }
 $stmt->execute();
@@ -588,7 +589,7 @@ $unidades = [
                         <td><?php echo htmlspecialchars($profissional['unidade_saude'] ?? ''); ?></td>
                         <td>
                             <?php if ($profissional['especialidade']): ?>
-                                <span class="status-badge status-completo">Cadastro Completo</span>
+                                <span class="status-badge status-completo">Completo</span>
                             <?php else: ?>
                                 <span class="status-badge status-pendente">Pendente</span>
                             <?php endif; ?>
@@ -599,7 +600,7 @@ $unidades = [
                             <?php else: ?>
                                 <button onclick="abrirModalCadastro(<?php 
                                     echo $profissional['usuario_id']; ?>)" 
-                                    class="btn btn-primary">Completar Cadastro</button>
+                                    class="btn btn-primary">Cadastrar</button>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -801,56 +802,84 @@ $unidades = [
 
                     // Criar FormData
                     const formData = new FormData(this);
-
                     const registro = $(this).find('[name="registro_profissional"]').val();
+                    const isEditForm = formSelector === '#formEditar';
                     
-                    // Se for ACS, adicionar registro_profissional como null
+                    // Validações
                     if (tipoUsuario.toLowerCase() === 'acs') {
                         formData.set('especialidade', 'ACS');
                         formData.set('registro_profissional', null);
                     } 
                     else if (tipoUsuario.toLowerCase() === 'enfermeiro') {
-                        // Se for enfermeiro, definir especialidade como "Enfermeiro"
                         formData.set('especialidade', 'Enfermeiro');
                         const corenRegex = /^\d{3}\.\d{3}-[A-Z]{2}\/[A-Z]{2}$/;
-                            if (!corenRegex.test(registro)) {
-                                isValid = false;
-                                mensagem = 'COREN inválido. Use o formato: 000.000-XX/UF';
-                            }
+                        if (!corenRegex.test(registro)) {
+                            isValid = false;
+                            mensagem = 'COREN inválido. Use o formato: 000.000-XX/UF';
+                        }
                     }
-                    else {
-                        // Validação para médicos e enfermeiros
-                        if (tipoUsuario.toLowerCase() === 'medico') {
-                            const crmRegex = /^\d{6}\/[A-Z]{2}$/;
-                            if (!crmRegex.test(registro)) {
-                                isValid = false;
-                                mensagem = 'CRM inválido. Use o formato: 000000/UF';
-                            }
+                    else if (tipoUsuario.toLowerCase() === 'medico') {
+                        const crmRegex = /^\d{6}\/[A-Z]{2}$/;
+                        if (!crmRegex.test(registro)) {
+                            isValid = false;
+                            mensagem = 'CRM inválido. Use o formato: 000000/UF';
                         }
                     }
 
                     if (!isValid) {
-                        alert(mensagem);
+                        Swal.fire({
+                            title: 'Atenção!',
+                            text: mensagem,
+                            icon: 'warning',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#4CAF50'
+                        });
                         $(this).find('[name="registro_profissional"]').focus();
                         return false;
                     }
 
-                    // Desabilitar o botão de envio para evitar múltiplos envios
-                    const submitButton = $(this).find('button[type="submit"]');
-                    submitButton.prop('disabled', true);
+                    // Confirmar ação com SweetAlert2
+                    Swal.fire({
+                        title: isEditForm ? 'Confirmar Edição' : 'Confirmar Cadastro',
+                        text: isEditForm ? 
+                              'Deseja salvar as alterações realizadas?' : 
+                              'Deseja confirmar o cadastro do profissional?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#4CAF50',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Sim, salvar',
+                        cancelButtonText: 'Cancelar',
+                        showLoaderOnConfirm: true,
+                        preConfirm: () => {
+                            // Desabilitar o botão de envio para evitar múltiplos envios
+                            const submitButton = $(this).find('button[type="submit"]');
+                            submitButton.prop('disabled', true);
 
-                    console.log("Enviando formulário..."); // Para depuração
+                            const url = isEditForm ? 'atualizar_profissional.php' : 'salvar_profissional.php';
 
-                    const isEditForm = formSelector === '#formEditar';
-                    const url = isEditForm ? 'atualizar_profissional.php' : 'salvar_profissional.php';
-
-                    fetch(url, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
+                            return fetch(url, {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (!data.success) {
+                                    throw new Error(data.message || 'Erro ao processar a requisição');
+                                }
+                                return data;
+                            })
+                            .catch(error => {
+                                Swal.showValidationMessage(`Erro: ${error.message}`);
+                            })
+                            .finally(() => {
+                                submitButton.prop('disabled', false);
+                            });
+                        },
+                        allowOutsideClick: () => !Swal.isLoading()
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const data = result.value;
                             // Atualizar a tabela dinamicamente
                             const usuarioId = formData.get('usuario_id');
                             const row = $(`tr[data-usuario-id="${usuarioId}"]`);
@@ -862,9 +891,8 @@ $unidades = [
                                 unidade_saude: formData.get('unidade_saude')
                             };
 
-                            // Atualizar a linha existente ou criar uma nova
+                            // Atualizar a linha existente
                             if (row.length) {
-                                // Atualizar células existentes
                                 row.find('td:eq(4)').text(novosDados.especialidade);
                                 row.find('td:eq(5)').text(novosDados.registro_profissional || '');
                                 row.find('td:eq(6)').text(novosDados.unidade_saude);
@@ -880,55 +908,35 @@ $unidades = [
                             }
 
                             // Mostrar mensagem de sucesso
-                            alert(data.message);
-                            
-                            // Recarregar a página para atualizar a tabela
-                            location.reload();
-                        } else {
-                            alert('Erro: ' + data.message);
+                            Swal.fire({
+                                title: 'Sucesso!',
+                                text: data.message,
+                                icon: 'success',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#4CAF50'
+                            }).then(() => {
+                                location.reload();
+                            });
                         }
-                    })
-                    .catch(error => {
-                        handleError(error, 'processar a requisição');
-                    })
-                    .finally(() => {
-                        submitButton.prop('disabled', false);
                     });
                 });
             });
 
-            // Inicializar Select2 para especialidades
-            $('#especialidade, #edit_especialidade').select2({
+            // Inicializar Select2 para o modal de cadastro
+            $('#especialidade, #unidade_saude').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 dropdownParent: $('#modalCadastro .modal-body'),
-                placeholder: 'Selecione uma especialidade',
+                placeholder: 'Selecione uma opção',
                 allowClear: true
             });
 
-            // Inicializar Select2 para unidades
-            $('#unidade_saude, #edit_unidade_saude').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                dropdownParent: $('#modalCadastro .modal-body'),
-                placeholder: 'Selecione uma unidade',
-                allowClear: true
-            });
-
-            // Configuração específica para o modal de edição
-            $('#edit_especialidade').select2({
+            // Inicializar Select2 para o modal de edição
+            $('#edit_especialidade, #edit_unidade_saude').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 dropdownParent: $('#modalEditar .modal-body'),
-                placeholder: 'Selecione uma especialidade',
-                allowClear: true
-            });
-
-            $('#edit_unidade_saude').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                dropdownParent: $('#modalEditar .modal-body'),
-                placeholder: 'Selecione uma unidade',
+                placeholder: 'Selecione uma opção',
                 allowClear: true
             });
 
