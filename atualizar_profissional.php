@@ -6,10 +6,6 @@ error_reporting(E_ALL);
 // Garantir que a resposta seja sempre JSON
 header('Content-Type: application/json');
 
-// Registrar erros em log ao invés de exibi-los
-ini_set('log_errors', 1);
-ini_set('error_log', 'error.log');
-
 try {
     require_once 'conexao.php';
     require_once 'verificar_login.php';

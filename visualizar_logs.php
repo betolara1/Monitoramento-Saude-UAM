@@ -55,76 +55,123 @@ include "sidebar.php";
 <html lang="pt-BR">
 <head>
     <title>Logs de Acesso</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
+            margin: 0;
         }
-        
+
         .container {
+            padding: 2rem;
             max-width: 1200px;
-            margin: auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            padding: 20px;
+            margin: 0 auto;
+            margin-left: 220px;
+            background: transparent;
+            box-shadow: none;
         }
+
         h1 {
             text-align: center;
-            color: #333;
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
         }
+
         .search-container {
-            margin-bottom: 20px;
+            margin-bottom: 2rem;
             text-align: center;
         }
+
         .search-container input[type="text"] {
-            padding: 10px;
+            padding: 0.8rem;
             width: 300px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            transition: border-color 0.3s;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
         .search-container input[type="text"]:focus {
-            border-color: #007bff;
+            border-color: #1e3c72;
             outline: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
         .search-container button {
-            padding: 10px 15px;
-            border: none;
-            background-color: #007bff;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
             color: white;
-            border-radius: 4px;
+            font-weight: 500;
             cursor: pointer;
-            margin-left: 5px;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
         .search-container button:hover {
-            background-color: #0056b3;
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
+
         .table-container {
-            overflow-x: auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
+
         th {
-            background-color: #007bff;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
+            padding: 1rem;
+            text-align: left;
         }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f8f9fa;
         }
+
         .no-logs {
             text-align: center;
-            padding: 20px;
-            color: #777;
+            padding: 2rem;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 1rem 0;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            margin-top: 2rem;
+            text-align: center;
         }
     </style>
     <script>
