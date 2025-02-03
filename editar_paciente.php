@@ -1002,17 +1002,20 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             ?>
 
             <div class="d-flex justify-content-between mb-3">
-                <?php if (temPermissao()): ?>
-                    <button onclick="abrirModalConsulta(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                <?php endif; ?>
-                
-                <?php if ($total_consultas > 3): ?>
-                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasConsultas">
-                        <i class="fas fa-list"></i> Ver Todas (<?php echo $total_consultas; ?>)
-                    </button>
-                <?php endif; ?>
+                <div>
+                    <?php if (temPermissao()): ?>
+                        <button onclick="abrirModalConsulta(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <?php if ($total_consultas > 3): ?>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasConsultas">
+                            <i class="fas fa-list"></i> Ver Todas (<?php echo $total_consultas; ?>)
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <!-- Tabela com as 3 últimas consultas -->
@@ -1346,16 +1349,18 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         </div>
 
         <!---------------------------------------------------------------------------->
-                <!-- Seção de Riscos para Saúde -->
-                <div class="section-card">
+        <!-- Seção de Riscos para Saúde -->
+        <div class="section-card">
             <h2 class="section-header">Riscos CardioVasculares</h2>
 
             <div class="d-flex justify-content-between mb-3">
-                <?php if (temPermissao()): ?>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRiscoCardiovascular">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                <?php endif; ?>
+                <div>
+                    <?php if (temPermissao()): ?>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRiscoCardiovascular">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
 
                 <?php
                 // Buscar todos os riscos do paciente
@@ -1370,14 +1375,16 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 while ($risco = $result_riscos->fetch_assoc()) {
                     $todos_riscos[] = $risco;
                 }
-                $total_riscos = count($todos_riscos);
-
-                if ($total_riscos > 3): ?>
-                    <!-- Botão Ver Todos -->
-                    <button id="btnVerTodosRiscos" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosRiscos">
-                        <i class="fas fa-list"></i> Ver Todos
-                    </button>
-                <?php endif; ?>
+                $total_riscos = count($todos_riscos);   
+                ?>
+                <div>
+                    <?php if ($total_riscos > 3): ?>
+                        <!-- Botão Ver Todos -->
+                        <button id="btnVerTodosRiscos" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosRiscos">
+                            <i class="fas fa-list"></i> Ver Todos
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <!-- Tabela com os 3 últimos registros -->
@@ -1651,11 +1658,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             <h2 class="section-header">Medicamentos</h2>
             
             <div class="d-flex justify-content-between mb-3">
-                <?php if (temPermissao()): ?>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMedicamento">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                <?php endif; ?>
+                <div>
+                    <?php if (temPermissao()): ?>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMedicamento">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
                 
                 <?php
                 // Contar total de registros de medicamentos
@@ -1820,11 +1829,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             <h2 class="section-header">Exames</h2>
             
             <div class="d-flex justify-content-between mb-3">
-                <?php if (temPermissao()): ?>
-                    <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                <?php endif; ?>
+                <div>
+                    <?php if (temPermissao()): ?>
+                        <button onclick="abrirModalExame(<?php echo $paciente_id; ?>)" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    <?php endif; ?>
+                </div>
                 
                 <?php
                 // Contar total de registros
@@ -2010,19 +2021,21 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             <h2 class="section-header">Análises e Estatísticas</h2>
             
             <div class="d-flex justify-content-between mb-3">
-                <?php
-                // Contar total de registros
-                $query_total = "SELECT COUNT(*) as total FROM analises_estatisticas WHERE paciente_id = ?";
-                $stmt_total = $conn->prepare($query_total);
-                $stmt_total->bind_param("i", $paciente_id);
-                $stmt_total->execute();
-                $total_analises = $stmt_total->get_result()->fetch_assoc()['total'];
-                
-                if ($total_analises > 3): ?>
-                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasAnalises">
-                        <i class="fas fa-list"></i> Ver Todos (<?php echo $total_analises; ?>)
-                    </button>
-                <?php endif; ?>
+                <div>
+                    <?php
+                    // Contar total de registros
+                    $query_total = "SELECT COUNT(*) as total FROM analises_estatisticas WHERE paciente_id = ?";
+                    $stmt_total = $conn->prepare($query_total);
+                    $stmt_total->bind_param("i", $paciente_id);
+                    $stmt_total->execute();
+                    $total_analises = $stmt_total->get_result()->fetch_assoc()['total'];
+                    
+                    if ($total_analises > 3): ?>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodasAnalises">
+                            <i class="fas fa-list"></i> Ver Todos (<?php echo $total_analises; ?>)
+                        </button>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <table class="data-table">
@@ -2579,6 +2592,54 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         $(document).ready(function() {
             handleFormSubmit('formTrocarMedico', 'trocar_medico.php', 'modalMedico');
             handleFormSubmit('formAtribuirMedico', 'atribuir_medico.php', 'modalAtribuirMedico');
+        });
+
+        $('#formAtribuirMedico').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Mostrar loading
+            Swal.fire({
+                title: 'Processando...',
+                text: 'Aguarde enquanto atribuímos o médico',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            $.ajax({
+                url: 'atribuir_medico.php',
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso!',
+                            text: response.message
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro na requisição:', error);
+                    console.log('Resposta do servidor:', xhr.responseText);
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Ocorreu um erro ao atribuir o médico. Por favor, tente novamente.'
+                    });
+                }
+            });
         });
 
 
@@ -3568,16 +3629,18 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <td>${risco.fumante}</td>
                                     <td>${risco.remedios_hipertensao}</td>
                                     <td>
-                                        <div class="btn-group">
-                                            <button onclick='editarRisco(${JSON.stringify(risco).replace(/'/g, "\\'")})' 
-                                                class="btn btn-sm btn-warning">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button onclick="excluirRisco(${risco.id})" 
-                                                class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                        <?php if (temPermissao()): ?>
+                                            <div class="btn-group">
+                                                <button onclick='editarRisco(${JSON.stringify(risco).replace(/'/g, "\\'")})' 
+                                                    class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button onclick="excluirRisco(${risco.id})" 
+                                                    class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             `);
@@ -3624,16 +3687,18 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <td>${risco.fumante}</td>
                                     <td>${risco.remedios_hipertensao}</td>
                                     <td>
-                                        <div class="btn-group">
-                                            <button onclick='editarRisco(${JSON.stringify(risco).replace(/'/g, "\\'")})' 
-                                                class="btn btn-sm btn-warning me-2">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button onclick="excluirRisco(${risco.id})" 
-                                                class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
+                                        <?php if (temPermissao()): ?>
+                                            <div class="btn-group">
+                                                <button onclick='editarRisco(${JSON.stringify(risco).replace(/'/g, "\\'")})' 
+                                                    class="btn btn-sm btn-warning me-2">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button onclick="excluirRisco(${risco.id})" 
+                                                    class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             `);

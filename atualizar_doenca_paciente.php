@@ -4,12 +4,6 @@ require_once 'conexao.php';
 
 header('Content-Type: application/json');
 
-// Verifica permissão
-if (!isset($_SESSION['tipo_usuario']) || 
-    !in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro', 'ACS'])) {
-    echo json_encode(['success' => false, 'message' => 'Acesso não autorizado']);
-    exit;
-}
 
 // Recebe os dados do formulário
 $id = intval($_POST['id']);

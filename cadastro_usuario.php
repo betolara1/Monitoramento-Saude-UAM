@@ -30,16 +30,16 @@ include 'sidebar.php';
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
-            margin: 0; /* Remove margem padrão do body */
+            margin: 0;
         }
 
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 1000px;  /* Aumentado para melhor distribuição */
+            margin: 20px auto;
             background-color: white;
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         h1 {
@@ -50,13 +50,34 @@ include 'sidebar.php';
 
         .form-group {
             margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group i {
+            position: absolute;
+            left: 10px;
+            top: 40px;
+            color: #666;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding-left: 35px;  /* Espaço para o ícone */
+            height: 45px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
         }
 
         .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         label {
@@ -75,18 +96,20 @@ include 'sidebar.php';
         }
 
         input[type="submit"] {
-            background-color: #4CAF50;
+            width: 100%;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
             color: white;
             padding: 12px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
+            transition: transform 0.2s;
         }
 
         input[type="submit"]:hover {
-            background-color: #45a049;
+            transform: translateY(-2px);
         }
 
         .error {
@@ -118,6 +141,23 @@ include 'sidebar.php';
         input:-webkit-autofill {
             -webkit-box-shadow: 0 0 0 30px white inset !important;
         }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+            background-color: #fff8f8;
+        }
+
+        .is-valid {
+            border-color: #28a745 !important;
+            background-color: #f8fff8;
+        }
+
+        .loading {
+            background-image: url('data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==');
+            background-position: right 10px center;
+            background-repeat: no-repeat;
+            background-size: 20px 20px;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -129,23 +169,27 @@ include 'sidebar.php';
         <form method="POST" action="salvar_usuario.php">
             <div class="form-group">
                 <label for="nome">Nome Completo*:</label>
+                <i class="fas fa-user"></i>
                 <input type="text" id="nome" name="nome" required>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
                     <label for="senha">Senha*:</label>
+                    <i class="fas fa-lock"></i>
                     <input type="password" id="senha" name="senha" required>
                 </div>
 
                 <div class="form-group">
                     <label for="confirmar_senha">Confirmar Senha*:</label>
+                    <i class="fas fa-lock"></i>
                     <input type="password" id="confirmar_senha" name="confirmar_senha" required>
                     <div id="erro-senha" class="error">As senhas não coincidem!</div>
                 </div>
 
                 <div class="form-group">
                     <label for="cpf">CPF*:</label>
+                    <i class="fas fa-id-card"></i>
                     <input type="text" id="cpf" name="cpf" required placeholder="000.000.000-00">
                 </div>
             </div>
@@ -153,12 +197,14 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="email">E-mail*:</label>
+                    <i class="fas fa-envelope"></i>
                     <input type="email" id="email" name="email" required>
                     <span id="email-status"></span>
                 </div>
 
                 <div class="form-group">
                     <label for="telefone">Telefone*:</label>
+                    <i class="fas fa-phone"></i>
                     <input type="tel" id="telefone" name="telefone" required placeholder="(00)0000-00000">
                 </div>
                 
@@ -166,6 +212,7 @@ include 'sidebar.php';
                 <?php if (isset($_SESSION['tipo_usuario']) && ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Profissional')): ?>
                     <div class="form-group">
                         <label for="tipo_usuario">Tipo de Usuário:</label>
+                        <i class="fas fa-user-tag"></i>
                         <select name="tipo_usuario" required>
                             <?php if ($_SESSION['tipo_usuario'] === 'Admin'): ?>
                                 <option value="Medico">Médico</option>
@@ -178,9 +225,9 @@ include 'sidebar.php';
                     
                 <?php else: ?>
                     <!-- Se estiver deslogado ou for paciente, tipo é fixo como Paciente -->
-                    <input type="hidden" name="tipo_usuario" value="Paciente">
                     <div class="form-group">
                         <label for="numero_familia" class="required">N° da Familia*:</label>
+                        <i class="fas fa-users"></i>
                         <input type="text" id="numero_familia" name="numero_familia" required placeholder="00000000">
                     </div>
                 <?php endif; ?>
@@ -189,16 +236,19 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="cep" class="required">CEP*:</label>
+                    <i class="fas fa-map-marker-alt"></i>
                     <input type="text" id="cep" name="cep" required placeholder="00000-000">
                 </div>
 
                 <div class="form-group">
                     <label for="rua">Rua:</label>
+                    <i class="fas fa-road"></i>
                     <input type="text" id="rua" name="rua" readonly placeholder="Endereço">
                 </div>
 
                 <div class="form-group">
                     <label for="numero" class="required">Número*:</label>
+                    <i class="fas fa-home"></i>
                     <input type="text" id="numero" name="numero" required placeholder="Número">
                 </div>
             </div>
@@ -206,16 +256,19 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="bairro">Bairro:</label>
+                    <i class="fas fa-map-marker"></i>
                     <input type="text" id="bairro" name="bairro" readonly placeholder="Bairro">
                 </div>
 
                 <div class="form-group">
                     <label for="cidade">Cidade:</label>
+                    <i class="fas fa-city"></i>
                     <input type="text" id="cidade" name="cidade" readonly placeholder="Cidade">
                 </div>
 
                 <div class="form-group">
                     <label for="complemento">Complemento:</label>
+                    <i class="fas fa-plus"></i>
                     <input type="text" id="complemento" name="complemento" placeholder="Apartamento, sala, etc.">
                 </div>
             </div>
@@ -223,17 +276,20 @@ include 'sidebar.php';
             <div class="form-row">
                 <div class="form-group">
                     <label for="estado">Estado:</label>
+                    <i class="fas fa-map"></i>
                     <input type="text" id="estado" name="estado" readonly placeholder="Estado">
                 </div>
                 <div class="form-group"></div>
 
                 <div class="form-group">
                     <label for="data_nascimento">Data de Nascimento:</label>
-                    <input type="date" id="data_nascimento" name="data_nascimento">
+                    <i class="fas fa-birthday-cake"></i>
+                    <input type="date" id="data_nascimento" name="data_nascimento" max="" required>
                 </div>
 
                 <div class="form-group">
                     <label for="sexo">Sexo:</label>
+                    <i class="fas fa-venus-mars"></i>
                     <select id="sexo" name="sexo">
                         <option value="">Selecione</option>
                         <option value="M">Masculino</option>
@@ -247,10 +303,76 @@ include 'sidebar.php';
             </div>
         </form>
 
-        <script src="js/buscar_cep.js"></script>
-        <script src="js/confirmar_senha.js"></script>
+    <script src="js/confirmar_senha.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#cep').mask('00000-000');
+            $('#telefone').mask('(00) 0000-00000');
+            $('#numero_familia').mask('00000000');
 
-        <script>
+            $('#cep').blur(function() {
+                var cep = $(this).val().replace(/\D/g, '');
+                
+                // Limpa os campos de endereço
+                $("#rua").val("");
+                $("#bairro").val("");
+                $("#cidade").val("");
+                $("#estado").val("");
+                
+                // Remove classes de validação anteriores
+                $('#cep').removeClass('is-valid is-invalid');
+                
+                if (cep != "") {
+                    var validacep = /^[0-9]{8}$/;
+                    
+                    if(validacep.test(cep)) {
+                        // Mostra loading
+                        $("#cep").addClass('loading');
+                        
+                        $.getJSON("https://viacep.com.br/ws/"+ cep +"/json/?callback=?")
+                        .done(function(dados) {
+                            if (!("erro" in dados)) {
+                                $("#rua").val(dados.logradouro);
+                                $("#bairro").val(dados.bairro);
+                                $("#cidade").val(dados.localidade);
+                                $("#estado").val(dados.uf);
+                                $('#cep').addClass('is-valid').removeClass('is-invalid');
+                            } else {
+                                // CEP não encontrado
+                                $('#cep').addClass('is-invalid').removeClass('is-valid');
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'CEP não encontrado',
+                                    text: 'O CEP informado não foi encontrado. Por favor, verifique e tente novamente.'
+                                });
+                            }
+                        })
+                        .fail(function() {
+                            // Erro na consulta
+                            $('#cep').addClass('is-invalid').removeClass('is-valid');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro na consulta',
+                                text: 'Ocorreu um erro ao consultar o CEP. Por favor, tente novamente.'
+                            });
+                        })
+                        .always(function() {
+                            // Remove loading
+                            $("#cep").removeClass('loading');
+                        });
+                    } else {
+                        // CEP inválido
+                        $('#cep').addClass('is-invalid').removeClass('is-valid');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'CEP inválido',
+                            text: 'Por favor, digite um CEP válido.'
+                        });
+                    }
+                }
+            });
+        });
+
         $(document).ready(function() {
             // Máscara para CPF
             $('#cpf').mask('000.000.000-00', {
@@ -374,7 +496,30 @@ include 'sidebar.php';
                 
             return true;
         }
-        </script>
+
+        // Define a data máxima como hoje
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const maxDate = yyyy + '-' + mm + '-' + dd;
+        
+        // Define o atributo max do input
+        document.getElementById('data_nascimento').setAttribute('max', maxDate);
+        
+        // Adiciona validação adicional no change do input
+        document.getElementById('data_nascimento').addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            if (selectedDate > today) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Data inválida',
+                    text: 'A data de nascimento não pode ser maior que a data atual.'
+                });
+                this.value = '';
+            }
+        });
+    </script>
     </div>
 </body>
 </html>
