@@ -8,43 +8,67 @@ if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] !== 'Admin') 
     exit;
 }
 
-// Inicializar variável de busca
-$searchTerm = '';
-if (isset($_POST['search'])) {
-    $searchTerm = $_POST['search'];
-}
+// Parâmetros de paginação
+$registros_por_pagina = isset($_POST['per_page']) ? (int)$_POST['per_page'] : 10;
+$pagina_atual = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+$offset = ($pagina_atual - 1) * $registros_por_pagina;
 
-// Buscar logs com filtro
+// Inicializar variável de busca
+$searchTerm = isset($_POST['search']) ? $_POST['search'] : '';
+
+// Primeiro, contar o total de registros
+$sql_count = "SELECT COUNT(*) as total 
+              FROM logs_acesso l 
+              JOIN usuarios u ON l.usuario_id = u.id 
+              WHERE u.nome LIKE ? OR l.acao LIKE ? OR l.endereco_ip LIKE ? OR u.tipo_usuario LIKE ?";
+
+$stmt_count = $conn->prepare($sql_count);
+$likeTerm = "%$searchTerm%";
+$stmt_count->bind_param("ssss", $likeTerm, $likeTerm, $likeTerm, $likeTerm);
+$stmt_count->execute();
+$total_registros = $stmt_count->get_result()->fetch_assoc()['total'];
+$total_paginas = ceil($total_registros / $registros_por_pagina);
+
+// Buscar logs com paginação
 $sql = "SELECT l.*, u.nome as nome_usuario, u.tipo_usuario 
         FROM logs_acesso l 
         JOIN usuarios u ON l.usuario_id = u.id 
         WHERE u.nome LIKE ? OR l.acao LIKE ? OR l.endereco_ip LIKE ? OR u.tipo_usuario LIKE ? 
-        ORDER BY l.data_acesso DESC";
+        ORDER BY l.data_acesso DESC
+        LIMIT ? OFFSET ?";
 
 $stmt = $conn->prepare($sql);
-$likeTerm = "%$searchTerm%";
-$stmt->bind_param("ssss", $likeTerm, $likeTerm, $likeTerm, $likeTerm);
+$stmt->bind_param("ssssii", $likeTerm, $likeTerm, $likeTerm, $likeTerm, $registros_por_pagina, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Se a requisição for AJAX, retorne apenas o corpo da tabela
+// Se a requisição for AJAX, retorne JSON com os dados e informações de paginação
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $output = '';
+    $output = [
+        'html' => '',
+        'pagination' => [
+            'current_page' => $pagina_atual,
+            'total_pages' => $total_paginas,
+            'total_records' => $total_registros
+        ]
+    ];
+
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
-            $output .= '<tr>
-                            <td>' . date('d/m/Y H:i:s', strtotime($row['data_acesso'])) . '</td>
-                            <td>' . htmlspecialchars($row['nome_usuario']) . '</td>
-                            <td>' . htmlspecialchars($row['tipo_usuario']) . '</td>
-                            <td>' . htmlspecialchars($row['acao']) . '</td>
-                            <td>' . htmlspecialchars($row['endereco_ip']) . '</td>
-                        </tr>';
+            $output['html'] .= '<tr>
+                                <td>' . date('d/m/Y H:i:s', strtotime($row['data_acesso'])) . '</td>
+                                <td>' . htmlspecialchars($row['nome_usuario']) . '</td>
+                                <td>' . htmlspecialchars($row['tipo_usuario']) . '</td>
+                                <td>' . htmlspecialchars($row['acao']) . '</td>
+                                <td>' . htmlspecialchars($row['endereco_ip']) . '</td>
+                            </tr>';
         }
     } else {
-        $output .= '<tr><td colspan="5" class="no-logs">Nenhum log encontrado.</td></tr>';
+        $output['html'] = '<tr><td colspan="5" class="no-logs">Nenhum log encontrado.</td></tr>';
     }
-    echo $output; // Retorna apenas o corpo da tabela
-    exit; // Para evitar que o restante do código seja executado
+
+    echo json_encode($output);
+    exit;
 }
 
 // Se não for uma requisição AJAX, inclua a sidebar e o restante da página
@@ -173,32 +197,160 @@ include "sidebar.php";
             margin-top: 2rem;
             text-align: center;
         }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .pagination {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover {
+            background: #f0f0f0;
+        }
+
+        .pagination button.active {
+            background: #1e3c72;
+            color: white;
+            border-color: #1e3c72;
+        }
+
+        .per-page-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .per-page-selector select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
     <script>
-        function searchLogs(event) {
-            if (event) {
-                event.preventDefault();
-            }
+        let currentPage = 1;
+        let perPage = 10;
+
+        function loadLogs(page = 1) {
             const searchTerm = document.getElementById('searchInput').value;
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'visualizar_logs.php', true);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.onload = function() {
-                if (this.status === 200) {
-                    document.getElementById('logsTableBody').innerHTML = this.responseText;
-                }
-            };
-            xhr.send('search=' + encodeURIComponent(searchTerm));
+            const formData = new FormData();
+            formData.append('search', searchTerm);
+            formData.append('page', page);
+            formData.append('per_page', perPage);
+
+            fetch('visualizar_logs.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('logsTableBody').innerHTML = data.html;
+                updatePagination(data.pagination);
+                updateTotalRecords(data.pagination.total_records);
+                currentPage = page;
+            })
+            .catch(error => console.error('Erro:', error));
         }
+
+        function updatePagination(pagination) {
+            const paginationDiv = document.getElementById('pagination');
+            let html = '';
+
+            // Botão Anterior
+            html += `<button onclick="loadLogs(${currentPage - 1})" 
+                            ${currentPage === 1 ? 'disabled' : ''}>
+                        Anterior
+                    </button>`;
+
+            // Páginas
+            for (let i = 1; i <= pagination.total_pages; i++) {
+                if (i === 1 || i === pagination.total_pages || 
+                    (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button onclick="loadLogs(${i})" 
+                                    class="${i === currentPage ? 'active' : ''}">
+                                ${i}
+                            </button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += '<span>...</span>';
+                }
+            }
+
+            // Botão Próximo
+            html += `<button onclick="loadLogs(${currentPage + 1})" 
+                            ${currentPage === pagination.total_pages ? 'disabled' : ''}>
+                        Próximo
+                    </button>`;
+
+            paginationDiv.innerHTML = html;
+        }
+
+        function updateTotalRecords(total) {
+            document.getElementById('totalRecords').innerHTML = 
+                `Total de registros: ${total}`;
+        }
+
+        function searchLogs() {
+            currentPage = 1;
+            loadLogs(1);
+        }
+
+        function changePerPage() {
+            perPage = document.getElementById('perPageSelect').value;
+            currentPage = 1;
+            loadLogs(1);
+        }
+
+        // Carregar logs iniciais
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLogs(1);
+        });
+
+        // Adicionar debounce na busca
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchLogs, 500);
+        });
     </script>
 </head>
 <body>
     <div class="container">
         <h1>Logs de Acesso</h1>
+        
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Buscar por usuário, ação ou IP" onkeyup="searchLogs()">
-            <button id="searchButton" onclick="searchLogs(event)">Buscar</button>
+            <input type="text" id="searchInput" placeholder="Buscar por usuário, ação ou IP">
+            <button onclick="searchLogs()">Buscar</button>
         </div>
+
+        <div class="per-page-selector">
+            <label>Registros por página:</label>
+            <select id="perPageSelect" onchange="changePerPage()">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+        
         <div class="table-container">
             <table>
                 <thead>
@@ -211,23 +363,18 @@ include "sidebar.php";
                     </tr>
                 </thead>
                 <tbody id="logsTableBody">
-                    <?php if ($result->num_rows > 0): ?>
-                        <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo date('d/m/Y H:i:s', strtotime($row['data_acesso'])); ?></td>
-                            <td><?php echo htmlspecialchars($row['nome_usuario']); ?></td>
-                            <td><?php echo htmlspecialchars($row['tipo_usuario']); ?></td>
-                            <td><?php echo htmlspecialchars($row['acao']); ?></td>
-                            <td><?php echo htmlspecialchars($row['endereco_ip']); ?></td>
-                        </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="5" class="no-logs">Nenhum log encontrado.</td>
-                        </tr>
-                    <?php endif; ?>
+                    <!-- Dados serão carregados via JavaScript -->
                 </tbody>
             </table>
+        </div>
+
+        <div class="pagination-container">
+            <div id="pagination" class="pagination">
+                <!-- Botões de paginação serão gerados via JavaScript -->
+            </div>
+            <div id="totalRecords">
+                <!-- Total de registros será exibido aqui -->
+            </div>
         </div>
     </div>
 </body>

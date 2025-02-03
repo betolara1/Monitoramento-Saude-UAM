@@ -2140,26 +2140,24 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
     <script>
         <!-- Script para o modal de acompanhamento -->
         $(document).ready(function() {
-            // Consolidar todos os handlers document.ready em um único bloco
             initializeForms();
             initializeMasks();
         });
 
+        // Inicialização de formulários e eventos
         function initializeForms() {
-            // Handler para o formulário de novo acompanhamento
-            $('#formAcompanhamento').on('submit', handleFormSubmit);
-            
-            // Handler para o formulário de edição
+            $('#formAcompanhamento').on('submit', handleAcompanhamentoSubmit);
             $('#formEditarAcompanhamento').on('submit', handleEditFormSubmit);
         }
 
-        function handleFormSubmit(event) {
+        // Handlers de formulários
+        function handleAcompanhamentoSubmit(event) {
             event.preventDefault();
             submitAjaxForm($(this), 'salvar_acompanhamento.php', {
                 onSuccess: function(response) {
-                    adicionarLinhaTabela(response.dados_acompanhamento);
                     $('#modalAcompanhamento').modal('hide');
                     $('#formAcompanhamento')[0].reset();
+                    atualizarTodasTabelas(); // Adicionar esta linha
                 }
             });
         }
@@ -2168,13 +2166,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             event.preventDefault();
             submitAjaxForm($(this), 'atualizar_acompanhamento.php', {
                 onSuccess: function(response) {
-                    atualizarLinhaTabela(response.dados_acompanhamento);
                     $('#modalEditarAcompanhamento').modal('hide');
+                    atualizarTodasTabelas(); // Adicionar esta linha
                 }
             });
         }
 
-        // Função genérica para submissão de formulários via AJAX
+        // Funções AJAX principais
         function submitAjaxForm($form, url, options = {}) {
             $.ajax({
                 type: 'POST',
@@ -2182,66 +2180,38 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 data: $form.serialize(),
                 dataType: 'json',
                 success: function(response) {
-                    try {
-                        if (response.success) {
-                            if (options.onSuccess) options.onSuccess(response);
-                            showSuccessMessage(response.message);
-                        } else {
-                            throw new Error(response.message || 'Erro ao processar operação');
-                        }
-                    } catch (error) {
-                        showErrorMessage(error.message);
+                    if (response.success) {
+                        if (options.onSuccess) options.onSuccess(response);
+                        showSuccessMessage(response.message);
+                    } else {
+                        showErrorMessage(response.message || 'Erro ao processar operação');
                     }
                 },
-                error: function(xhr, status, error) {
-                    showErrorMessage('Erro ao processar a requisição. Tente novamente.');
+                error: function(xhr) {
+                    console.error('Erro na requisição:', xhr.responseText);
+                    showErrorMessage('Erro ao processar a requisição.');
                 }
             });
         }
 
-        // Funções auxiliares para mensagens
-        function showSuccessMessage(message) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Sucesso!',
-                text: message,
-                showConfirmButton: false,
-                timer: 1500
-            });
-        }
-
-        function showErrorMessage(message) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Erro',
-                text: message
-            });
-        }
-
+        // Funções de UI
         function initializeMasks() {
-            // Máscara para glicemia
             $('.glicemia').mask('000', {
                 reverse: true,
                 onChange: function(value, e) {
                     var numValue = parseInt(value);
-                    if (numValue > 999) {
-                        $(e.target).val('999');
-                    } else if (numValue < 0 && value !== '') {
-                        $(e.target).val('0');
-                    }
+                    if (numValue > 999) $(e.target).val('999');
+                    else if (numValue < 0 && value !== '') $(e.target).val('0');
                 }
             });
 
-            // Máscara para pressão arterial
             $('.pressao-arterial').mask('000/000', {
                 reverse: false,
                 onChange: function(value, e) {
                     if (value.includes('/')) {
                         var [sistolica, diastolica] = value.split('/').map(Number);
-                        
                         sistolica = Math.min(999, sistolica);
                         diastolica = Math.min(999, diastolica);
-
                         if (!isNaN(sistolica) && !isNaN(diastolica)) {
                             $(e.target).val(`${sistolica}/${diastolica}`);
                         }
@@ -2250,101 +2220,42 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             });
         }
 
-        // Função para adicionar uma nova linha na tabela de acompanhamento
-        function adicionarLinhaTabela(acompanhamento) {
-            // Criar a nova linha
-            var novaLinha = `
+        function criarLinhaTabela(acompanhamento) {
+            const temPermissao = <?php echo temPermissao() ? 'true' : 'false'; ?>;
+            
+            return `
                 <tr data-id="${acompanhamento.id}">
-                    <td>${acompanhamento.data_acompanhamento}</td>
+                    <td>${acompanhamento.data_formatada}</td>
                     <td>${acompanhamento.glicemia || 'Não informado'}</td>
                     <td>${acompanhamento.hipertensao || 'Não informado'}</td>
                     <td>${acompanhamento.observacoes || 'Não informado'}</td>
-                    <td>
-                        <div class="btn-group">
-                            <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i> Editar
-                            </a>
-                        <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-sm btn-danger">
-                                <i class="fas fa-trash"></i> Excluir
-                            </a>
-                        </div>
-                    </td>
+                    ${temPermissao ? `
+                        <td>
+                            <div class="btn-group">
+                                <button onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" 
+                                        class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button onclick="excluirAcompanhamento(${acompanhamento.id})" 
+                                        class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Excluir
+                                </button>
+                            </div>
+                        </td>
+                    ` : ''}
                 </tr>
             `;
-
-            // Adicionar a nova linha no início da tabela
-            $('.data-table tbody').prepend(novaLinha);
-            
-            // Remover linhas extras para manter apenas 3 registros visíveis
-            var linhas = $('.data-table tbody tr');
-            if (linhas.length > 3) {
-                linhas.slice(3).remove();
-                
-                // Atualizar o botão "Ver Todos"
-                const btnContainer = $('.d-flex.justify-content-between.mb-3');
-                let btnVerTodos = btnContainer.find('.btn-info');
-                
-                // Calcular novo total baseado no total atual + 1
-                const totalAtual = $('#modalTodosAcompanhamentos .table tbody tr').length;
-                const novoTotal = totalAtual + 1;
-                
-                // Adicionar a nova linha na tabela do modal também
-                $('#modalTodosAcompanhamentos .table tbody').prepend(novaLinha);
-                
-                if (!btnVerTodos.length) {
-                    btnContainer.append(`
-                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosAcompanhamentos">
-                            <i class="fas fa-list"></i> Ver Todos (${novoTotal})
-                        </button>
-                    `);
-                } else {
-                    btnVerTodos.html(`<i class="fas fa-list"></i> Ver Todos (${novoTotal})`);
-                }
-            }
         }
 
-        function atualizarTabelaAcompanhamentosModal() {
-            const paciente_id = <?php echo $paciente_id; ?>;
+        // Funções de ações
+        function editarAcompanhamento(acompanhamento) {
+            $('#edit_acompanhamento_id').val(acompanhamento.id);
+            $('#edit_data_acompanhamento').val(acompanhamento.data_acompanhamento);
+            $('#edit_glicemia').val(acompanhamento.glicemia);
+            $('#edit_hipertensao').val(acompanhamento.hipertensao);
+            $('#edit_observacoes').val(acompanhamento.observacoes);
             
-            $.ajax({
-                url: 'buscar_acompanhamentos.php',
-                type: 'GET',
-                data: { 
-                    paciente_id: paciente_id,
-                    get_all: 'true'
-                },
-                dataType: 'json',
-                success: function(response) {
-                    // Limpar a tabela do modal
-                    $('#modalTodosAcompanhamentos .table tbody').empty();
-                    
-                    // Adicionar os novos registros no modal
-                    response.registros.forEach(function(acompanhamento) {
-                        var linha = `
-                            <tr data-id="${acompanhamento.id}">
-                                <td>${acompanhamento.data_formatada}</td>
-                                <td>${acompanhamento.glicemia || 'Não informado'}</td>
-                                <td>${acompanhamento.hipertensao || 'Não informado'}</td>
-                                <td>${acompanhamento.observacoes || 'Não informado'}</td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning me-2">
-                                            <i class="fas fa-edit"></i> Editar
-                                        </a>
-                                        <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash"></i> Excluir
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                        $('#modalTodosAcompanhamentos .table tbody').append(linha);
-                    });
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erro ao atualizar tabela do modal:', error);
-                }
-            });
+            new bootstrap.Modal(document.getElementById('modalEditarAcompanhamento')).show();
         }
 
         function excluirAcompanhamento(id) {
@@ -2366,61 +2277,69 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         dataType: 'json',
                         success: function(response) {
                             if (response.success) {
-                                // Atualiza ambas as tabelas
-                                atualizarTabelaAcompanhamentos();
-                                atualizarTabelaAcompanhamentosModal();
-                                
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Excluído!',
-                                    text: 'O acompanhamento foi excluído com sucesso.',
-                                    showConfirmButton: false,
-                                    timer: 1500
-                                });
+                                atualizarTodasTabelas(); // Adicionar esta linha
+                                showSuccessMessage('Registro excluído com sucesso!');
                             } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Erro!',
-                                    text: response.message || 'Erro ao excluir o acompanhamento.'
-                                });
+                                showErrorMessage(response.message || 'Erro ao excluir o registro.');
                             }
                         },
                         error: function(xhr) {
                             console.error('Erro:', xhr.responseText);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Erro!',
-                                text: 'Erro na comunicação com o servidor.'
-                            });
+                            showErrorMessage('Erro na comunicação com o servidor.');
                         }
                     });
                 }
             });
         }
 
-        // Função do editar acompanhamento
-        function editarAcompanhamento(acompanhamento) {
-            // Preencher os campos do modal de edição com os dados do acompanhamento
-            $('#edit_acompanhamento_id').val(acompanhamento.id);
-            $('#edit_data_acompanhamento').val(acompanhamento.data_acompanhamento);
-            $('#edit_glicemia').val(acompanhamento.glicemia);
-            $('#edit_hipertensao').val(acompanhamento.hipertensao);
-            $('#edit_observacoes').val(acompanhamento.observacoes);
 
-            // Abre o modal
-            var myModal = new bootstrap.Modal(document.getElementById('modalEditarAcompanhamento'));
-            myModal.show();
+
+        // Funções auxiliares
+        function showSuccessMessage(message) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Sucesso!',
+                text: message,
+                showConfirmButton: false,
+                timer: 1500
+            });
         }
 
-        // Função para atualizar a linha na tabela de acompanhamento
-        function atualizarLinhaTabela(acompanhamento) {
-            var linha = $('tr[data-id="' + acompanhamento.id + '"]');
-            linha.find('td:eq(0)').text(acompanhamento.data_acompanhamento);
-            linha.find('td:eq(1)').text(acompanhamento.glicemia);
-            linha.find('td:eq(2)').text(acompanhamento.hipertensao);
-            linha.find('td:eq(3)').text(acompanhamento.observacoes);
+        function showErrorMessage(message) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: message
+            });
         }
 
+        function atualizarBotaoVerTodos(total) {
+            // Torna o seletor mais específico para a seção de acompanhamento
+            const btnContainer = $('.section-card:contains("Acompanhamento em Casa") .d-flex.justify-content-between.mb-3');
+            let btnVerTodos = btnContainer.find('.btn-info');
+            
+            if (total > 3) {
+                const btnHtml = `
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosAcompanhamentos">
+                        <i class="fas fa-list"></i> Ver Todos (${total})
+                    </button>
+                `;
+                
+                btnVerTodos.length ? btnVerTodos.html(btnHtml) : btnContainer.append(btnHtml);
+            } else {
+                btnVerTodos.remove();
+            }
+        }
+
+        // Função para atualizar todas as tabelas após qualquer operação CRUD
+        function atualizarTodasTabelas() {
+            // Atualiza a tabela principal (últimos 3 registros)
+            atualizarTabelaAcompanhamentos();
+            // Atualiza a tabela do modal com todos os registros
+            atualizarTabelaAcompanhamentosModal();
+        }
+
+        // Função para atualizar a tabela principal
         function atualizarTabelaAcompanhamentos() {
             const paciente_id = <?php echo $paciente_id; ?>;
             
@@ -2429,56 +2348,69 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 type: 'GET',
                 data: { 
                     paciente_id: paciente_id,
-                    get_total: true // Adicionar parâmetro para buscar total de registros
+                    limit: 3
                 },
                 dataType: 'json',
                 success: function(response) {
-                    // Limpar a tabela atual
-                    $('.data-table tbody').empty();
+                    // Usar um seletor mais específico para a tabela de acompanhamentos
+                    const tabelaAcompanhamento = $('.section-card:contains("Acompanhamento em Casa") .data-table tbody');
+                    tabelaAcompanhamento.empty();
                     
-                    // Adicionar os novos registros
-                    response.registros.forEach(function(acompanhamento) {
-                        var linha = `
-                            <tr data-id="${acompanhamento.id}">
-                                <td>${acompanhamento.data_formatada}</td>
-                                <td>${acompanhamento.glicemia || 'Não informado'}</td>
-                                <td>${acompanhamento.hipertensao || 'Não informado'}</td>
-                                <td>${acompanhamento.observacoes || 'Não informado'}</td>
-                                <td>
-                                    <a href="#" onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </a>
-                                    <a href="#" onclick="excluirAcompanhamento(${acompanhamento.id})" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i> Excluir
-                                    </a>
-                                </td>
+                    if (response.registros.length === 0) {
+                        tabelaAcompanhamento.append(`
+                            <tr>
+                                <td colspan="5" class="text-center">Nenhum registro encontrado</td>
                             </tr>
-                        `;
-                        $('.data-table tbody').append(linha);
-                    });
-                    
-                    // Atualizar o botão "Ver Todos"
-                    const btnContainer = $('.d-flex.justify-content-between.mb-3');
-                    if (response.total > 3) {
-                        // Se já existe o botão, apenas atualiza o texto
-                        let btnVerTodos = btnContainer.find('.btn-info');
-                        if (btnVerTodos.length) {
-                            btnVerTodos.html(`<i class="fas fa-list"></i> Ver Todos (${response.total})`);
-                        } else {
-                            // Se não existe, cria o botão
-                            btnContainer.append(`
-                                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalTodosAcompanhamentos">
-                                    <i class="fas fa-list"></i> Ver Todos (${response.total})
-                                </button>
-                            `);
-                        }
+                        `);
                     } else {
-                        // Remove o botão se total <= 3
-                        btnContainer.find('.btn-info').remove();
+                        response.registros.forEach(function(acompanhamento) {
+                            var linha = criarLinhaTabela(acompanhamento);
+                            tabelaAcompanhamento.append(linha);
+                        });
+                    }
+
+                    // Atualizar botão "Ver Todos"
+                    atualizarBotaoVerTodos(response.total);
+                },
+                error: function(xhr) {
+                    console.error('Erro ao atualizar tabela:', xhr.responseText);
+                    showErrorMessage('Erro ao atualizar os dados.');
+                }
+            });
+        }
+
+        // Função para atualizar a tabela do modal
+        function atualizarTabelaAcompanhamentosModal() {
+            const paciente_id = <?php echo $paciente_id; ?>;
+            
+            $.ajax({
+                url: 'buscar_acompanhamentos.php',
+                type: 'GET',
+                data: { 
+                    paciente_id: paciente_id,
+                    get_all: true
+                },
+                dataType: 'json',
+                success: function(response) {
+                    // Usar um seletor específico para a tabela do modal de acompanhamentos
+                    const tabelaModal = $('#modalTodosAcompanhamentos .table tbody');
+                    tabelaModal.empty();
+                    
+                    if (response.registros.length === 0) {
+                        tabelaModal.append(`
+                            <tr>
+                                <td colspan="5" class="text-center">Nenhum registro encontrado</td>
+                            </tr>
+                        `);
+                    } else {
+                        response.registros.forEach(function(acompanhamento) {
+                            var linha = criarLinhaTabela(acompanhamento);
+                            tabelaModal.append(linha);
+                        });
                     }
                 },
-                error: function(xhr, status, error) {
-                    console.error('Erro ao atualizar tabela:', error);
+                error: function(xhr) {
+                    console.error('Erro ao atualizar modal:', xhr.responseText);
                 }
             });
         }
@@ -2997,14 +2929,14 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         // 3. Consolidar handlers de formulários em uma função
         function initFormHandlers() {
             // Handler para o formulário de consulta
-            $('#formConsulta').on('submit', handleFormSubmit);
+            $('#formConsulta').on('submit', handleConsultaSubmit);
             
             // Handler para o formulário de edição
-            $('#formEditarConsulta').on('submit', handleFormSubmit);
+            $('#formEditarConsulta').on('submit', handleConsultaSubmit);
         }
 
         // 4. Função genérica para lidar com submissão de formulários
-        function handleFormSubmit(e) {
+        function handleConsultaSubmit(e) {
             e.preventDefault();
             const $form = $(this);
             const $submitButton = $form.find('button[type="submit"]');
