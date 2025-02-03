@@ -260,55 +260,112 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                         <th>CPF</th>
                         <th>Email</th>
                         <th>Telefone</th>
-                        <th>Status</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="pacientes-tbody">
                     <?php foreach ($usuarios as $usuario): ?>
-                        <tr>
+                        <tr data-usuario-id="<?php echo $usuario['id']; ?>">
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['cpf'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($usuario['email']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['telefone']); ?></td>
                             <td>
-                                <?php if ($usuario['tipo_doenca']): ?>
-                                    <span class="status-badge status-completo">Cadastro Completo</span>
-                                <?php else: ?>
-                                    <span class="status-badge status-pendente">Pendente</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($is_paciente): ?>
-                                    <?php if ($usuario['paciente_id']): ?>
-                                        <a href="editar_paciente.php?id=<?php echo $usuario['paciente_id']; ?>" 
-                                           class="btn btn-primary">
-                                            Editar Meus Dados
-                                        </a>
-                                    <?php else: ?>
-                                        <a href="cadastro_paciente.php?id=<?php echo $usuario['id']; ?>" 
-                                           class="btn btn-primary">
-                                            Completar Meu Cadastro
-                                        </a>
-                                    <?php endif; ?>
-                                <?php else: ?>
-                                    <?php if ($usuario['paciente_id']): ?>
-                                        <a href="editar_paciente.php?id=<?php echo $usuario['paciente_id']; ?>" 
-                                           class="btn btn-primary">
-                                            Editar Paciente
-                                        </a>
-                                    <?php else: ?>
-                                        <a href="cadastro_paciente.php?id=<?php echo $usuario['id']; ?>" 
-                                           class="btn btn-primary">
-                                            Completar Cadastro
-                                        </a>
-                                    <?php endif; ?>
+                                <button class="btn btn-primary btn-editar-usuario" 
+                                        onclick="abrirModalEditarUsuario(<?php echo $usuario['id']; ?>)">
+                                    <i class="fas fa-edit"></i> Editar Cadastro
+                                </button>
+                                <?php if ($usuario['paciente_id']): ?>
+                                    <a href="editar_paciente.php?id=<?php echo $usuario['paciente_id']; ?>" 
+                                       class="btn btn-success">
+                                        <i class="fas fa-user-md"></i> Dados Clínicos
+                                    </a>
                                 <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Cadastro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarUsuario">
+                        <input type="hidden" id="usuario_id" name="usuario_id">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_nome" class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" id="edit_nome" name="nome" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_cpf" class="form-label">CPF</label>
+                                <input type="text" class="form-control" id="edit_cpf" name="cpf" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="edit_email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="edit_email" name="email" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_telefone" class="form-label">Telefone</label>
+                                <input type="text" class="form-control" id="edit_telefone" name="telefone" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="edit_cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="edit_cep" name="cep" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_rua" class="form-label">Rua</label>
+                                <input type="text" class="form-control" id="edit_rua" name="rua">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="edit_numero" class="form-label">Número</label>
+                                <input type="text" class="form-control" id="edit_numero" name="numero" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="edit_bairro" class="form-label">Bairro</label>
+                                <input type="text" class="form-control" id="edit_bairro" name="bairro">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_cidade" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="edit_cidade" name="cidade">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="edit_estado" class="form-label">Estado</label>
+                                <input type="text" class="form-control" id="edit_estado" name="estado">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="edit_complemento" class="form-label">Complemento</label>
+                                <input type="text" class="form-control" id="edit_complemento" name="complemento">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarEdicao()">Salvar</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -340,5 +397,114 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
     }
     </script>
     <?php endif; ?>
+
+    <script>
+    function abrirModalEditarUsuario(usuarioId) {
+        // Buscar dados do usuário
+        $.ajax({
+            url: 'buscar_usuario.php',
+            type: 'POST',
+            data: { usuario_id: usuarioId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Preencher o formulário com os dados
+                    $('#usuario_id').val(usuarioId);
+                    $('#edit_nome').val(response.data.nome);
+                    $('#edit_cpf').val(response.data.cpf);
+                    $('#edit_email').val(response.data.email);
+                    $('#edit_telefone').val(response.data.telefone);
+                    $('#edit_cep').val(response.data.cep);
+                    $('#edit_rua').val(response.data.rua);
+                    $('#edit_numero').val(response.data.numero);
+                    $('#edit_bairro').val(response.data.bairro);
+                    $('#edit_cidade').val(response.data.cidade);
+                    $('#edit_estado').val(response.data.estado);
+                    $('#edit_complemento').val(response.data.complemento);
+
+                    // Abrir o modal
+                    new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao carregar dados do usuário'
+                    });
+                }
+            }
+        });
+    }
+
+    function salvarEdicao() {
+        const formData = new FormData(document.getElementById('formEditarUsuario'));
+        
+        $.ajax({
+            url: 'atualizar_usuario.php',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Fechar o modal
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario')).hide();
+                    
+                    // Atualizar a linha da tabela
+                    const usuarioId = formData.get('usuario_id');
+                    const row = document.querySelector(`tr[data-usuario-id="${usuarioId}"]`);
+                    if (row) {
+                        row.cells[0].textContent = formData.get('nome');
+                        row.cells[1].textContent = formData.get('cpf');
+                        row.cells[2].textContent = formData.get('email');
+                        row.cells[3].textContent = formData.get('telefone');
+                    }
+
+                    // Mostrar mensagem de sucesso
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Sucesso!',
+                        text: 'Cadastro atualizado com sucesso!'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: response.message || 'Erro ao atualizar cadastro'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Erro ao processar a requisição'
+                });
+            }
+        });
+    }
+
+    // Aplicar máscaras aos campos
+    $(document).ready(function() {
+        $('#edit_cpf').mask('000.000.000-00');
+        $('#edit_telefone').mask('(00) 00000-0000');
+        $('#edit_cep').mask('00000-000');
+        
+        // Busca CEP
+        $('#edit_cep').blur(function() {
+            const cep = $(this).val().replace(/\D/g, '');
+            if (cep.length === 8) {
+                $.getJSON(`https://viacep.com.br/ws/${cep}/json/`, function(data) {
+                    if (!("erro" in data)) {
+                        $('#edit_rua').val(data.logradouro);
+                        $('#edit_bairro').val(data.bairro);
+                        $('#edit_cidade').val(data.localidade);
+                        $('#edit_estado').val(data.uf);
+                    }
+                });
+            }
+        });
+    });
+    </script>
 </body>
 </html>
