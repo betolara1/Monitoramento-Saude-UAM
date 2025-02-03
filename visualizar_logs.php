@@ -57,11 +57,11 @@ include "sidebar.php";
     <title>Logs de Acesso</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
+        
         .container {
             max-width: 1200px;
             margin: auto;

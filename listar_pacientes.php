@@ -60,21 +60,19 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $titulo; ?></title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
         body {
-            background-color: #f4f4f4;
-            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
 
         .container {
@@ -89,6 +87,7 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
         h1 {
             color: #333;
             margin-bottom: 20px;
+            text-align: center;
         }
 
         .search-box {
@@ -172,6 +171,71 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                 padding: 6px 12px;
             }
         }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .btn {
+            display: inline-block;
+            margin: 2px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-completo {
+            background-color: #198754;
+            color: white;
+        }
+
+        .status-pendente {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .btn-primary {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #45a049;
+            border-color: #45a049;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -209,7 +273,7 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                             <td><?php echo htmlspecialchars($usuario['telefone']); ?></td>
                             <td>
                                 <?php if ($usuario['tipo_doenca']): ?>
-                                    <span class="status-badge status-cadastrado">Cadastro Completo</span>
+                                    <span class="status-badge status-completo">Cadastro Completo</span>
                                 <?php else: ?>
                                     <span class="status-badge status-pendente">Pendente</span>
                                 <?php endif; ?>
@@ -218,24 +282,24 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                                 <?php if ($is_paciente): ?>
                                     <?php if ($usuario['paciente_id']): ?>
                                         <a href="editar_paciente.php?id=<?php echo $usuario['paciente_id']; ?>" 
-                                           class="btn-editar">
+                                           class="btn btn-primary">
                                             Editar Meus Dados
                                         </a>
                                     <?php else: ?>
                                         <a href="cadastro_paciente.php?id=<?php echo $usuario['id']; ?>" 
-                                           class="btn-editar">
+                                           class="btn btn-primary">
                                             Completar Meu Cadastro
                                         </a>
                                     <?php endif; ?>
                                 <?php else: ?>
                                     <?php if ($usuario['paciente_id']): ?>
                                         <a href="editar_paciente.php?id=<?php echo $usuario['paciente_id']; ?>" 
-                                           class="btn-editar">
+                                           class="btn btn-primary">
                                             Editar Paciente
                                         </a>
                                     <?php else: ?>
                                         <a href="cadastro_paciente.php?id=<?php echo $usuario['id']; ?>" 
-                                           class="btn-editar">
+                                           class="btn btn-primary">
                                             Completar Cadastro
                                         </a>
                                     <?php endif; ?>

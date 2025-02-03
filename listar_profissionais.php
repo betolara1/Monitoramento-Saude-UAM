@@ -167,48 +167,14 @@ $unidades = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Usuários - Profissionais</title>
-
-    <!-- 1. Primeiro carregue o CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-    
-    <!-- 2. Depois carregue os scripts na ordem correta -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <!-- 3. Adicione um script para verificar se as bibliotecas foram carregadas -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Verificar se jQuery está carregado
-            if (typeof jQuery === 'undefined') {
-                console.error('jQuery não está carregado!');
-            }
-
-            // Verificar se Bootstrap está carregado
-            if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap não está carregado!');
-            }
-
-            // Verificar se Select2 está carregado
-            if (typeof jQuery.fn.select2 === 'undefined') {
-                console.error('Select2 não está carregado!');
-            }
-
-            // Verificar se Mask está carregado
-            if (typeof jQuery.fn.mask === 'undefined') {
-                console.error('jQuery Mask não está carregado!');
-            }
-
-            // Verificar se SweetAlert2 está carregado
-            if (typeof Swal === 'undefined') {
-                console.error('SweetAlert2 não está carregado!');
-            }
-        });
-    </script>
 
     <!-- 4. Seu CSS personalizado deve vir por último -->
     <style>
@@ -230,6 +196,7 @@ $unidades = [
         h1 {
             color: #333;
             margin-bottom: 20px;
+            text-align: center;
         }
 
         .filters {
