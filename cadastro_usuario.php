@@ -1,13 +1,13 @@
 <?php
-include 'conexao.php';
-include 'verificar_login.php';
-include 'sidebar.php';
-
+session_start();
 $tem_permissao = false;
 if (isset($_SESSION['tipo_usuario']) && 
     ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro')) {
     $tem_permissao = true;
 }
+include 'conexao.php';
+include 'verificar_login.php';
+include 'sidebar.php';
 ?>
 
 
@@ -17,20 +17,11 @@ if (isset($_SESSION['tipo_usuario']) &&
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Usuário</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
         body {
-            background-color: #f4f4f4;
-            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
 
         .container {
@@ -119,6 +110,9 @@ if (isset($_SESSION['tipo_usuario']) &&
             -webkit-box-shadow: 0 0 0 30px white inset !important;
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 </head>
 <body>
     <div class="container">

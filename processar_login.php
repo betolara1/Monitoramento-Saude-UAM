@@ -32,16 +32,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Redireciona baseado no tipo de usuário
             switch($usuario['tipo_usuario']) {
                 case 'Admin':
-                    header("Location: index.php");
+                    header("Location: dashboard.php");
                     break;
                 case 'Medico':
-                    header("Location: index.php");
+                    header("Location: dashboard.php");
                     break;
                 case 'Enfermeiro':
-                    header("Location: index.php");
+                    header("Location: dashboard.php");
                     break;
                 case 'Paciente':
-                    header("Location: index.php");
+                    header("Location: dashboard.php");
                     break;
                 default:
                     header("Location: index.php");

@@ -166,20 +166,58 @@ $unidades = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Usuários - Profissionais</title>
+
+    <!-- 1. Primeiro carregue o CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- 2. Depois carregue os scripts na ordem correta -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- 3. Adicione um script para verificar se as bibliotecas foram carregadas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se jQuery está carregado
+            if (typeof jQuery === 'undefined') {
+                console.error('jQuery não está carregado!');
+            }
+
+            // Verificar se Bootstrap está carregado
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap não está carregado!');
+            }
+
+            // Verificar se Select2 está carregado
+            if (typeof jQuery.fn.select2 === 'undefined') {
+                console.error('Select2 não está carregado!');
+            }
+
+            // Verificar se Mask está carregado
+            if (typeof jQuery.fn.mask === 'undefined') {
+                console.error('jQuery Mask não está carregado!');
+            }
+
+            // Verificar se SweetAlert2 está carregado
+            if (typeof Swal === 'undefined') {
+                console.error('SweetAlert2 não está carregado!');
+            }
+        });
+    </script>
+
+    <!-- 4. Seu CSS personalizado deve vir por último -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
         body {
-            background-color: #f4f4f4;
-            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
 
-        .container {
+        .container { 
             max-width: 1200px;
             margin: 0 auto;
             background-color: white;
@@ -509,12 +547,6 @@ $unidades = [
             transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
         }
     </style>
-    <!-- Adicione estes links no head ou antes do fechamento do body -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -690,325 +722,337 @@ $unidades = [
         </div>
     </div>
 
-    <!-- Mova os scripts do Bootstrap para ANTES do fechamento do body -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-    let modalCadastro, modalEditar;
+        document.addEventListener('DOMContentLoaded', function() {
+            let modalCadastro, modalEditar;
 
-    // Adicionar o tipo de usuário como variável JavaScript
-    const tipoUsuario = <?php echo json_encode($tipo_usuario); ?>;
-
-    // Disponibilizar os arrays para JavaScript
-    const especialidades = <?php echo json_encode($especialidades); ?>;
-    const unidades = <?php echo json_encode($unidades); ?>;
-
-    $(document).ready(function() {
-        modalCadastro = new bootstrap.Modal(document.getElementById('modalCadastro'));
-        modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
-
-        // Função para aplicar a máscara correta baseada no tipo de usuário
-        function aplicarMascaraRegistro(registroInput) {
-            const $registro = $(registroInput);
-            const tipoUsuario = $registro.data('tipo-usuario');
-            
-            // Remove máscaras anteriores
-            $registro.unmask();
-            
-            // Aplica a máscara apropriada baseada no tipo de usuário
-            if (tipoUsuario.toLowerCase() === 'enfermeiro') {
-                // COREN: 000.000-AA/UF
-                $registro.mask('000.000-AA/AA', {
-                    translation: {
-                        'A': { pattern: /[A-Za-z]/ }
-                    },
-                    onKeyPress: function(coren, e, field, options) {
-                        const value = $(field).val();
-                        $(field).val(value.toUpperCase());
-                    }
-                });
-                $registro.attr('placeholder', '000.000-XX/UF');
-                // Atualiza a label dinamicamente
-                $registro.closest('.mb-3').find('label').text('COREN');
-            } 
-            else if (tipoUsuario.toLowerCase() === 'medico') {
-                // CRM: 000000/UF
-                $registro.mask('000000/AA', {
-                    translation: {
-                        'A': { pattern: /[A-Za-z]/ }
-                    },
-                    onKeyPress: function(crm, e, field, options) {
-                        const value = $(field).val();
-                        $(field).val(value.toUpperCase());
-                    }
-                });
-                $registro.attr('placeholder', '000000/UF');
-                // Atualiza a label dinamicamente
-                $registro.closest('.mb-3').find('label').text('CRM');
+            // Inicializar os modais
+            try {
+                modalCadastro = new bootstrap.Modal(document.getElementById('modalCadastro'));
+                modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+            } catch (error) {
+                console.error('Erro ao inicializar modais:', error);
             }
-        }
 
-        // Aplicar as máscaras quando os modais são abertos
-        $('#modalCadastro').on('shown.bs.modal', function () {
-            aplicarMascaraRegistro('#registro_profissional');
-        });
+            // Adicionar o tipo de usuário como variável JavaScript
+            const tipoUsuario = <?php echo json_encode($tipo_usuario); ?>;
 
-        $('#modalEditar').on('shown.bs.modal', function () {
-            aplicarMascaraRegistro('#edit_registro_profissional');
-        });
+            // Disponibilizar os arrays para JavaScript
+            const especialidades = <?php echo json_encode($especialidades); ?>;
+            const unidades = <?php echo json_encode($unidades); ?>;
 
-        // Validação dos formulários
-        ['#formCadastro', '#formEditar'].forEach(formSelector => {
-            $(formSelector).off('submit').on('submit', function(e) {
-                e.preventDefault();
+            // Função para aplicar a máscara correta baseada no tipo de usuário
+            function aplicarMascaraRegistro(registroInput) {
+                const $registro = $(registroInput);
+                const tipoUsuario = $registro.data('tipo-usuario');
                 
-                let isValid = true;
-                let mensagem = '';
-
-                // Criar FormData
-                const formData = new FormData(this);
-
-                const registro = $(this).find('[name="registro_profissional"]').val();
+                // Remove máscaras anteriores
+                $registro.unmask();
                 
-                // Se for ACS, adicionar registro_profissional como null
-                if (tipoUsuario.toLowerCase() === 'acs') {
-                    formData.set('especialidade', 'ACS');
-                    formData.set('registro_profissional', null);
+                // Aplica a máscara apropriada baseada no tipo de usuário
+                if (tipoUsuario.toLowerCase() === 'enfermeiro') {
+                    // COREN: 000.000-AA/UF
+                    $registro.mask('000.000-AA/AA', {
+                        translation: {
+                            'A': { pattern: /[A-Za-z]/ }
+                        },
+                        onKeyPress: function(coren, e, field, options) {
+                            const value = $(field).val();
+                            $(field).val(value.toUpperCase());
+                        }
+                    });
+                    $registro.attr('placeholder', '000.000-XX/UF');
+                    // Atualiza a label dinamicamente
+                    $registro.closest('.mb-3').find('label').text('COREN');
                 } 
-                else if (tipoUsuario.toLowerCase() === 'enfermeiro') {
-                    // Se for enfermeiro, definir especialidade como "Enfermeiro"
-                    formData.set('especialidade', 'Enfermeiro');
-                    const corenRegex = /^\d{3}\.\d{3}-[A-Z]{2}\/[A-Z]{2}$/;
-                        if (!corenRegex.test(registro)) {
-                            isValid = false;
-                            mensagem = 'COREN inválido. Use o formato: 000.000-XX/UF';
+                else if (tipoUsuario.toLowerCase() === 'medico') {
+                    // CRM: 000000/UF
+                    $registro.mask('000000/AA', {
+                        translation: {
+                            'A': { pattern: /[A-Za-z]/ }
+                        },
+                        onKeyPress: function(crm, e, field, options) {
+                            const value = $(field).val();
+                            $(field).val(value.toUpperCase());
                         }
+                    });
+                    $registro.attr('placeholder', '000000/UF');
+                    // Atualiza a label dinamicamente
+                    $registro.closest('.mb-3').find('label').text('CRM');
                 }
-                else {
-                    // Validação para médicos e enfermeiros
-                    if (tipoUsuario.toLowerCase() === 'medico') {
-                        const crmRegex = /^\d{6}\/[A-Z]{2}$/;
-                        if (!crmRegex.test(registro)) {
-                            isValid = false;
-                            mensagem = 'CRM inválido. Use o formato: 000000/UF';
+            }
+
+            // Aplicar as máscaras quando os modais são abertos
+            $('#modalCadastro').on('shown.bs.modal', function () {
+                aplicarMascaraRegistro('#registro_profissional');
+            });
+
+            $('#modalEditar').on('shown.bs.modal', function () {
+                aplicarMascaraRegistro('#edit_registro_profissional');
+            });
+
+            // Validação dos formulários
+            ['#formCadastro', '#formEditar'].forEach(formSelector => {
+                $(formSelector).off('submit').on('submit', function(e) {
+                    e.preventDefault();
+                    
+                    let isValid = true;
+                    let mensagem = '';
+
+                    // Criar FormData
+                    const formData = new FormData(this);
+
+                    const registro = $(this).find('[name="registro_profissional"]').val();
+                    
+                    // Se for ACS, adicionar registro_profissional como null
+                    if (tipoUsuario.toLowerCase() === 'acs') {
+                        formData.set('especialidade', 'ACS');
+                        formData.set('registro_profissional', null);
+                    } 
+                    else if (tipoUsuario.toLowerCase() === 'enfermeiro') {
+                        // Se for enfermeiro, definir especialidade como "Enfermeiro"
+                        formData.set('especialidade', 'Enfermeiro');
+                        const corenRegex = /^\d{3}\.\d{3}-[A-Z]{2}\/[A-Z]{2}$/;
+                            if (!corenRegex.test(registro)) {
+                                isValid = false;
+                                mensagem = 'COREN inválido. Use o formato: 000.000-XX/UF';
+                            }
+                    }
+                    else {
+                        // Validação para médicos e enfermeiros
+                        if (tipoUsuario.toLowerCase() === 'medico') {
+                            const crmRegex = /^\d{6}\/[A-Z]{2}$/;
+                            if (!crmRegex.test(registro)) {
+                                isValid = false;
+                                mensagem = 'CRM inválido. Use o formato: 000000/UF';
+                            }
                         }
                     }
-                }
 
-                if (!isValid) {
-                    alert(mensagem);
-                    $(this).find('[name="registro_profissional"]').focus();
-                    return false;
-                }
+                    if (!isValid) {
+                        alert(mensagem);
+                        $(this).find('[name="registro_profissional"]').focus();
+                        return false;
+                    }
 
-                // Desabilitar o botão de envio para evitar múltiplos envios
-                const submitButton = $(this).find('button[type="submit"]');
-                submitButton.prop('disabled', true);
+                    // Desabilitar o botão de envio para evitar múltiplos envios
+                    const submitButton = $(this).find('button[type="submit"]');
+                    submitButton.prop('disabled', true);
 
-                console.log("Enviando formulário..."); // Para depuração
+                    console.log("Enviando formulário..."); // Para depuração
 
-                const isEditForm = formSelector === '#formEditar';
-                const url = isEditForm ? 'atualizar_profissional.php' : 'salvar_profissional.php';
+                    const isEditForm = formSelector === '#formEditar';
+                    const url = isEditForm ? 'atualizar_profissional.php' : 'salvar_profissional.php';
 
-                fetch(url, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Atualizar a tabela dinamicamente
-                        const usuarioId = formData.get('usuario_id');
-                        const row = $(`tr[data-usuario-id="${usuarioId}"]`);
-                        
-                        // Criar objeto com os novos dados
-                        const novosDados = {
-                            especialidade: formData.get('especialidade'),
-                            registro_profissional: formData.get('registro_profissional'),
-                            unidade_saude: formData.get('unidade_saude')
-                        };
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Atualizar a tabela dinamicamente
+                            const usuarioId = formData.get('usuario_id');
+                            const row = $(`tr[data-usuario-id="${usuarioId}"]`);
+                            
+                            // Criar objeto com os novos dados
+                            const novosDados = {
+                                especialidade: formData.get('especialidade'),
+                                registro_profissional: formData.get('registro_profissional'),
+                                unidade_saude: formData.get('unidade_saude')
+                            };
 
-                        // Atualizar a linha existente ou criar uma nova
-                        if (row.length) {
-                            // Atualizar células existentes
-                            row.find('td:eq(4)').text(novosDados.especialidade);
-                            row.find('td:eq(5)').text(novosDados.registro_profissional || '');
-                            row.find('td:eq(6)').text(novosDados.unidade_saude);
-                            row.find('td:eq(7)').html('<span class="status-badge status-completo">Cadastro Completo</span>');
-                            row.find('td:eq(8)').html(`<button onclick="abrirModalEditar(${data.profissional_id}, ${usuarioId})" class="btn btn-primary">Editar</button>`);
-                        }
+                            // Atualizar a linha existente ou criar uma nova
+                            if (row.length) {
+                                // Atualizar células existentes
+                                row.find('td:eq(4)').text(novosDados.especialidade);
+                                row.find('td:eq(5)').text(novosDados.registro_profissional || '');
+                                row.find('td:eq(6)').text(novosDados.unidade_saude);
+                                row.find('td:eq(7)').html('<span class="status-badge status-completo">Cadastro Completo</span>');
+                                row.find('td:eq(8)').html(`<button onclick="abrirModalEditar(${data.profissional_id}, ${usuarioId})" class="btn btn-primary">Editar</button>`);
+                            }
 
-                        // Fechar o modal
-                        if (isEditForm) {
-                            modalEditar.hide();
+                            // Fechar o modal
+                            if (isEditForm) {
+                                modalEditar.hide();
+                            } else {
+                                modalCadastro.hide();
+                            }
+
+                            // Mostrar mensagem de sucesso
+                            alert(data.message);
+                            
+                            // Recarregar a página para atualizar a tabela
+                            location.reload();
                         } else {
-                            modalCadastro.hide();
+                            alert('Erro: ' + data.message);
                         }
-
-                        // Mostrar mensagem de sucesso
-                        alert(data.message);
-                        
-                        // Recarregar a página para atualizar a tabela
-                        location.reload();
-                    } else {
-                        alert('Erro: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro ao salvar/atualizar profissional:', error);
-                    alert('Erro ao processar a requisição.');
-                })
-                .finally(() => {
-                    submitButton.prop('disabled', false);
+                    })
+                    .catch(error => {
+                        handleError(error, 'processar a requisição');
+                    })
+                    .finally(() => {
+                        submitButton.prop('disabled', false);
+                    });
                 });
             });
-        });
 
-        // Inicializar Select2 para especialidades
-        $('#especialidade, #edit_especialidade').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            dropdownParent: $('#modalCadastro .modal-body'),
-            placeholder: 'Selecione uma especialidade',
-            allowClear: true
-        });
-
-        // Inicializar Select2 para unidades
-        $('#unidade_saude, #edit_unidade_saude').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            dropdownParent: $('#modalCadastro .modal-body'),
-            placeholder: 'Selecione uma unidade',
-            allowClear: true
-        });
-
-        // Configuração específica para o modal de edição
-        $('#edit_especialidade').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            dropdownParent: $('#modalEditar .modal-body'),
-            placeholder: 'Selecione uma especialidade',
-            allowClear: true
-        });
-
-        $('#edit_unidade_saude').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            dropdownParent: $('#modalEditar .modal-body'),
-            placeholder: 'Selecione uma unidade',
-            allowClear: true
-        });
-
-        // Ajustar z-index dos dropdowns
-        $(document).on('select2:open', () => {
-            document.querySelector('.select2-container--open .select2-search__field').focus();
-        });
-
-        // Recarregar Select2 quando o modal for aberto
-        $('#modalCadastro').on('shown.bs.modal', function () {
-            $('#especialidade').select2('destroy').select2({
+            // Inicializar Select2 para especialidades
+            $('#especialidade, #edit_especialidade').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 dropdownParent: $('#modalCadastro .modal-body'),
                 placeholder: 'Selecione uma especialidade',
                 allowClear: true
             });
-        });
 
-        $('#modalEditar').on('shown.bs.modal', function () {
-            $('#edit_especialidade').select2('destroy').select2({
+            // Inicializar Select2 para unidades
+            $('#unidade_saude, #edit_unidade_saude').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#modalCadastro .modal-body'),
+                placeholder: 'Selecione uma unidade',
+                allowClear: true
+            });
+
+            // Configuração específica para o modal de edição
+            $('#edit_especialidade').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 dropdownParent: $('#modalEditar .modal-body'),
                 placeholder: 'Selecione uma especialidade',
                 allowClear: true
             });
+
+            $('#edit_unidade_saude').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $('#modalEditar .modal-body'),
+                placeholder: 'Selecione uma unidade',
+                allowClear: true
+            });
+
+            // Ajustar z-index dos dropdowns
+            $(document).on('select2:open', () => {
+                document.querySelector('.select2-container--open .select2-search__field').focus();
+            });
+
+            // Recarregar Select2 quando o modal for aberto
+            $('#modalCadastro').on('shown.bs.modal', function () {
+                $('#especialidade').select2('destroy').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $('#modalCadastro .modal-body'),
+                    placeholder: 'Selecione uma especialidade',
+                    allowClear: true
+                });
+            });
+
+            $('#modalEditar').on('shown.bs.modal', function () {
+                $('#edit_especialidade').select2('destroy').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $('#modalEditar .modal-body'),
+                    placeholder: 'Selecione uma especialidade',
+                    allowClear: true
+                });
+            });
+
+            // Ajusta a altura do container do Select2
+            $('.select2-container--bootstrap-5 .select2-selection').css('height', '60px');
+
+            // Ajustar z-index do dropdown do Select2
+            $('.select2-dropdown').css('z-index', 9999);
+            
+            // Habilitar o campo de busca
+            $('#busca').prop('disabled', false);
+
+            // Mova as funções para o escopo global
+            window.filtrarProfissionais = function() {
+                const input = document.getElementById('busca');
+                const filter = input.value.toLowerCase();
+                const tbody = document.getElementById('profissionais-tbody');
+                const rows = tbody.getElementsByTagName('tr');
+
+                for (let row of rows) {
+                    const nome = row.cells[0].textContent.toLowerCase();
+                    const email = row.cells[1].textContent.toLowerCase();
+                    const telefone = row.cells[2].textContent.toLowerCase();
+                    const especialidade = row.cells[3].textContent.toLowerCase();
+                    const registro = row.cells[4].textContent.toLowerCase();
+                    const unidade = row.cells[5].textContent.toLowerCase();
+                    
+                    const matchTermo = nome.includes(filter) || 
+                                    email.includes(filter) ||
+                                    telefone.includes(filter) ||
+                                    especialidade.includes(filter) || 
+                                    registro.includes(filter) ||
+                                    unidade.includes(filter);
+
+                    row.style.display = matchTermo ? '' : 'none';
+                }
+            }
+
+            window.abrirModalCadastro = function(usuarioId) {
+                document.getElementById('usuario_id').value = usuarioId;
+                $('#especialidade').val(null).trigger('change');
+                $('#unidade_saude').val(null).trigger('change');
+                $('#registro_profissional').val('');
+                modalCadastro.show();
+            }
+
+            window.abrirModalEditar = function(profissionalId, usuarioId) {
+                document.getElementById('edit_profissional_id').value = profissionalId;
+                document.getElementById('edit_usuario_id').value = usuarioId;
+                
+                fetch(`buscar_profissional.php?id=${profissionalId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Dados recebidos:', data); // Para debug
+                        
+                        if (data.success && data.profissional) {
+                            const profissional = data.profissional;
+                            
+                            // Preencher os campos do formulário
+                            if ($('#edit_especialidade').length) {
+                                $('#edit_especialidade').val(profissional.especialidade).trigger('change');
+                            }
+                            
+                            if ($('#edit_registro_profissional').length) {
+                                $('#edit_registro_profissional').val(profissional.registro_profissional);
+                            }
+                            
+                            if ($('#edit_unidade_saude').length) {
+                                $('#edit_unidade_saude').val(profissional.unidade_saude).trigger('change');
+                            }
+                            
+                            modalEditar.show();
+                        } else {
+                            alert(data.message || 'Profissional não encontrado.');
+                        }
+                    })
+                    .catch(error => {
+                        handleError(error, 'carregar os dados do profissional');
+                    });
+            }
         });
 
-        // Ajusta a altura do container do Select2
-        $('.select2-container--bootstrap-5 .select2-selection').css('height', '60px');
-
-        // Ajustar z-index do dropdown do Select2
-        $('.select2-dropdown').css('z-index', 9999);
-        
-        // Habilitar o campo de busca
-        $('#busca').prop('disabled', false);
-    });
-
-    function filtrarProfissionais() {
-        const input = document.getElementById('busca');
-        const filter = input.value.toLowerCase();
-        const tbody = document.getElementById('profissionais-tbody');
-        const rows = tbody.getElementsByTagName('tr');
-
-        for (let row of rows) {
-            const nome = row.cells[0].textContent.toLowerCase();
-            const email = row.cells[1].textContent.toLowerCase();
-            const telefone = row.cells[2].textContent.toLowerCase();
-            const especialidade = row.cells[3].textContent.toLowerCase();
-            const registro = row.cells[4].textContent.toLowerCase();
-            const unidade = row.cells[5].textContent.toLowerCase();
-            
-            const matchTermo = nome.includes(filter) || 
-                             email.includes(filter) ||
-                             telefone.includes(filter) ||
-                             especialidade.includes(filter) || 
-                             registro.includes(filter) ||
-                             unidade.includes(filter);
-
-            row.style.display = matchTermo ? '' : 'none';
-        }
-    }
-
-    function abrirModalCadastro(usuarioId) {
-        document.getElementById('usuario_id').value = usuarioId;
-        $('#especialidade').val(null).trigger('change');
-        $('#unidade_saude').val(null).trigger('change');
-        $('#registro_profissional').val('');
-        modalCadastro.show();
-    }
-
-    function abrirModalEditar(profissionalId, usuarioId) {
-        document.getElementById('edit_profissional_id').value = profissionalId;
-        document.getElementById('edit_usuario_id').value = usuarioId;
-        
-        fetch(`buscar_profissional.php?id=${profissionalId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Dados recebidos:', data); // Para debug
-                
-                if (data.success && data.profissional) {
-                    const profissional = data.profissional;
-                    
-                    // Preencher os campos do formulário
-                    if ($('#edit_especialidade').length) {
-                        $('#edit_especialidade').val(profissional.especialidade).trigger('change');
-                    }
-                    
-                    if ($('#edit_registro_profissional').length) {
-                        $('#edit_registro_profissional').val(profissional.registro_profissional);
-                    }
-                    
-                    if ($('#edit_unidade_saude').length) {
-                        $('#edit_unidade_saude').val(profissional.unidade_saude).trigger('change');
-                    }
-                    
-                    modalEditar.show();
-                } else {
-                    alert(data.message || 'Profissional não encontrado.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao buscar profissional:', error);
-                alert('Erro ao carregar os dados do profissional.');
+        // Adicione esta função no início do seu arquivo
+        function handleError(error, context) {
+            console.error(`Erro no contexto: ${context}`, error);
+            Swal.fire({
+                title: 'Erro!',
+                text: `Ocorreu um erro ao ${context}. Por favor, tente novamente.`,
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#4CAF50'
             });
-    }
+        }
     </script>
 </body>
 </html>
