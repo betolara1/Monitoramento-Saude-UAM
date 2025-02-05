@@ -284,6 +284,11 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                                        class="btn btn-success">
                                         <i class="fas fa-user-md"></i> Dados Clínicos
                                     </a>
+                                <?php else: ?>
+                                    <a href="cadastro_paciente.php?id=<?php echo $usuario['id']; ?>" 
+                                       class="btn btn-warning">
+                                        <i class="fas fa-user-plus"></i> Completar Cadastro
+                                    </a>
                                 <?php endif; ?>
                             </td>
                         </tr>

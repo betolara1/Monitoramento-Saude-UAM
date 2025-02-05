@@ -37,17 +37,18 @@ if (!$usuario) {
 <head>
     <title>Cadastro de Pacientes com DCNT</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f4f4f4;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             margin: 0;
             padding: 0;
         }
 
-        /* Estilo para o conteúdo principal */
         .main-content {
-            margin-left: 0px; /* Largura do sidebar */
+            margin-left: 0px;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -62,6 +63,7 @@ if (!$usuario) {
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             margin: 2rem auto;
             width: 100%;
+            animation: fadeIn 0.5s ease;
         }
 
         h2 {
@@ -77,6 +79,9 @@ if (!$usuario) {
             font-weight: 500;
             color: #34495e;
             margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .form-control, .form-select {
@@ -104,6 +109,10 @@ if (!$usuario) {
             transition: all 0.3s ease;
             width: 100%;
             margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-primary:hover {
@@ -120,11 +129,6 @@ if (!$usuario) {
             margin-bottom: 1.5rem;
         }
 
-        /* Animação suave ao carregar */
-        .container {
-            animation: fadeIn 0.5s ease;
-        }
-
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -136,7 +140,6 @@ if (!$usuario) {
             }
         }
 
-        /* Responsividade */
         @media (max-width: 768px) {
             .main-content {
                 margin-left: 0;
@@ -157,12 +160,14 @@ if (!$usuario) {
 <body>
     <div class="main-content">
         <div class="container">
-            <h2>Cadastro de DCNT - <?php echo htmlspecialchars($usuario['nome']); ?></h2>
+            <h2><i class="fas fa-user-plus"></i> Cadastro de DCNT - <?php echo htmlspecialchars($usuario['nome']); ?></h2>
             <form action="salvar_pacientes_doenca.php" method="POST">
                 <input type="hidden" name="usuario_id" value="<?php echo $usuario_id; ?>">
                 
                 <div class="form-group">
-                    <label for="tipo_doenca" class="form-label">Tipo de Doença*:</label>
+                    <label for="tipo_doenca" class="form-label">
+                        <i class="fas fa-heartbeat"></i> Tipo de Doença*:
+                    </label>
                     <select class="form-select" id="tipo_doenca" name="tipo_doenca" required>
                         <option value="">Selecione o tipo de doença...</option>
                         <option value="Hipertensão">Hipertensão</option>
@@ -184,13 +189,17 @@ if (!$usuario) {
                 </div>
 
                 <div class="form-group">
-                    <label for="historico_familiar" class="form-label">Histórico Familiar:</label>
+                    <label for="historico_familiar" class="form-label">
+                        <i class="fas fa-users"></i> Histórico Familiar:
+                    </label>
                     <textarea class="form-control" id="historico_familiar" name="historico_familiar" 
                               placeholder="Descreva o histórico familiar de doenças..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label for="estado_civil" class="form-label">Estado Civil*:</label>
+                    <label for="estado_civil" class="form-label">
+                        <i class="fas fa-ring"></i> Estado Civil*:
+                    </label>
                     <select class="form-select" id="estado_civil" name="estado_civil" required>
                         <option value="">Selecione o estado civil...</option>
                         <option value="Solteiro">Solteiro(a)</option>
@@ -201,18 +210,40 @@ if (!$usuario) {
                 </div>
 
                 <div class="form-group">
-                    <label for="profissao" class="form-label">Profissão*:</label>
+                    <label for="profissao" class="form-label">
+                        <i class="fas fa-briefcase"></i> Profissão*:
+                    </label>
                     <input type="text" class="form-control" id="profissao" name="profissao" 
                            placeholder="Digite sua profissão..." required>
                 </div>
 
                 <button type="submit" class="btn btn-primary">
-                    Cadastrar Paciente
+                    <i class="fas fa-save"></i> Cadastrar Paciente
                 </button>
             </form>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<?php
+// Verifica se há uma mensagem de sucesso na URL
+if (isset($_GET['success']) && $_GET['success'] == 'true') {
+    echo "<script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Sucesso!',
+            text: 'Paciente cadastrado com sucesso!',
+            confirmButtonColor: '#4CAF50',
+            timer: 3000,
+            timerProgressBar: true,
+            willClose: () => {
+                window.location.href = 'listar_pacientes.php';
+            }
+        });
+    </script>";
+}
+?>
 </body>
 </html>

@@ -13,7 +13,9 @@ $stmt = $conn->prepare("INSERT INTO pacientes (usuario_id, tipo_doenca, historic
 $stmt->bind_param("issss", $usuario_id, $tipo_doenca, $historico_familiar, $estado_civil, $profissao);
 
 if ($stmt->execute()) {
-    echo "<script>alert('Cadastro realizado com sucesso!'); window.location.href='listar_pacientes.php';</script>";
+    // Após o sucesso do cadastro
+    header('Location: cadastro_paciente.php?success=true');
+    exit();
 } else {
     echo "<script>alert('Erro ao cadastrar: " . $stmt->error . "'); window.location.href='cadastro_pacientes_doenca.php';</script>";
 }
