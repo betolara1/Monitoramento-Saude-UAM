@@ -666,11 +666,11 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label>Data:</label>
+                                    <label><i class="fas fa-calendar-alt"></i> Data:</label>
                                     <input type="date" name="data_acompanhamento" class="form-control" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Glicemia:</label>
+                                    <label><i class="fas fa-tint"></i> Glicemia:</label>
                                     <input type="text" 
                                         name="glicemia" 
                                         class="form-control glicemia" 
@@ -681,7 +681,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Pressão Arterial:</label>
+                                    <label><i class="fas fa-heartbeat"></i> Pressão Arterial:</label>
                                     <input type="text" 
                                         name="hipertensao" 
                                         class="form-control pressao-arterial" 
@@ -692,10 +692,9 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 </div>
                             </div>
                         
-
                             <div class="row">
                                 <div class="mb-3">
-                                    <label>Observações:</label>
+                                    <label><i class="fas fa-comment"></i> Observações:</label>
                                     <textarea name="observacoes" class="form-control" rows="3"></textarea>
                                 </div>
                             </div>
@@ -724,11 +723,11 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             
                             <div class="row mb-4">
                                 <div class="col-md-4">
-                                    <label class="form-label">Data:</label>
+                                    <label class="form-label"><i class="fas fa-calendar-alt"></i> Data:</label>
                                     <input type="date" name="data_acompanhamento" id="edit_data_acompanhamento" class="form-control form-control-lg" required>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Glicemia:</label>
+                                    <label class="form-label"><i class="fas fa-tint"></i> Glicemia:</label>
                                     <input type="text" 
                                         name="glicemia" 
                                         id="edit_glicemia"
@@ -738,7 +737,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label">Pressão Arterial:</label>
+                                    <label class="form-label"><i class="fas fa-heartbeat"></i> Pressão Arterial:</label>
                                     <input type="text" 
                                         name="hipertensao" 
                                         id="edit_hipertensao"
@@ -750,7 +749,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label">Observações:</label>
+                                <label class="form-label"><i class="fas fa-comment"></i> Observações:</label>
                                 <textarea name="observacoes" id="edit_observacoes" class="form-control form-control-lg" rows="5"></textarea>
                             </div>
                         </div>
@@ -838,7 +837,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <input type="hidden" id="edit_doenca_id" name="id">
                             
                             <div class="mb-3">
-                                <label for="edit_tipo_doenca" class="form-label">Tipo de Doença:</label>
+                                <label for="edit_tipo_doenca" class="form-label"><i class="fas fa-stethoscope"></i> Tipo de Doença:</label>
                                 <select class="form-select" id="edit_tipo_doenca" name="tipo_doenca" required>
                                 <option value="">Selecione o tipo de doença...</option>
                                     <option value="Hipertensão">Hipertensão</option>
@@ -860,12 +859,12 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             </div>
 
                             <div class="mb-3">
-                                <label for="edit_historico_familiar" class="form-label">Histórico Familiar:</label>
+                                <label for="edit_historico_familiar" class="form-label"><i class="fas fa-history"></i> Histórico Familiar:</label>
                                 <textarea class="form-control" id="edit_historico_familiar" name="historico_familiar" rows="3"></textarea>
                             </div>
 
                             <div class="mb-3">
-                                <label for="edit_estado_civil" class="form-label">Estado Civil:</label>
+                                <label for="edit_estado_civil" class="form-label"><i class="fas fa-heart"></i> Estado Civil:</label>
                                 <select class="form-select" id="edit_estado_civil" name="estado_civil">
                                     <option value="">Selecione...</option>
                                     <option value="Solteiro(a)">Solteiro(a)</option>
@@ -876,7 +875,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             </div>
 
                             <div class="mb-3">
-                                <label for="edit_profissao" class="form-label">Profissão:</label>
+                                <label for="edit_profissao" class="form-label"><i class="fas fa-briefcase"></i> Profissão:</label>
                                 <input type="text" class="form-control" id="edit_profissao" name="profissao">
                             </div>
                         </div>
@@ -957,7 +956,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <input type="hidden" name="paciente_id" id="paciente_id">
                             
                             <div class="form-group mb-3">
-                                <label>Selecione o Médico:</label>
+                                <label><i class="fas fa-user-md"></i> Selecione o Médico:</label>
                                 <select name="profissional_id" class="form-control" required>
                                     <option value="">Selecione...</option>
                                     <?php
@@ -996,7 +995,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <input type="hidden" name="paciente_id" id="atribuir_paciente_id">
                             <input type="hidden" name="tipo_profissional" value="<?php echo $tipo_profissional; ?>">
                             <div class="form-group mb-3">
-                                <label>Selecione o Médico:</label>
+                                <label><i class="fas fa-user-md"></i> Selecione o Médico:</label>
                                 <select name="profissional_id" class="form-control" required>
                                     <option value="">Selecione...</option>
                                     <?php
@@ -1209,7 +1208,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                             
                             <div class="form-group mb-3">
-                                <label>Profissional:</label>
+                                <label><i class="fas fa-user-md"></i> Profissional:</label>
                                 <select name="profissional_id" class="form-control" required>
                                     <option value="">Selecione o profissional</option>
                                     <?php
@@ -1228,11 +1227,11 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label>Data da Consulta:</label>
+                                    <label><i class="fas fa-calendar-alt"></i> Data da Consulta:</label>
                                     <input type="date" name="data_consulta" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label>Pressão Arterial:</label>
+                                    <label><i class="fas fa-heartbeat"></i> Pressão Arterial:</label>
                                     <input type="text" 
                                         name="pressao_arterial" 
                                         class="form-control pressao-arterial" 
@@ -1244,7 +1243,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label>Glicemia:</label>
+                                    <label><i class="fas fa-tint"></i> Glicemia:</label>
                                     <input type="text" 
                                         name="glicemia" 
                                         class="form-control glicemia" 
@@ -1253,7 +1252,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Peso (kg):</label>
+                                    <label><i class="fas fa-weight"></i> Peso (kg):</label>
                                     <input type="text" 
                                         name="peso" 
                                         class="form-control peso" 
@@ -1262,7 +1261,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <small class="form-text text-muted">Valor entre 0 e 300 kg</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Altura (cm):</label>
+                                    <label><i class="fas fa-ruler-vertical"></i> Altura (cm):</label>
                                     <input type="text" 
                                         name="altura" 
                                         class="form-control altura" 
@@ -1273,7 +1272,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             </div>
 
                             <div class="mb-3">
-                                <label for="estado_emocional" class="form-label">Estado Emocional:</label>
+                                <label><i class="fas fa-smile"></i> Estado Emocional:</label>
                                 <select class="form-select" id="estado_emocional" name="estado_emocional" required>
                                     <option value="">Selecione...</option>
                                     <option value="Calmo">Calmo</option>
@@ -1286,12 +1285,12 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             </div>
 
                             <div class="mb-3">
-                                <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                <label><i class="fas fa-running"></i> Hábitos de Vida:</label>
                                 <textarea class="form-control" id="habitos_vida" name="habitos_vida" rows="3"></textarea>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Observações:</label>
+                                <label><i class="fas fa-comment"></i> Observações:</label>
                                 <textarea name="observacoes" class="form-control" rows="4"></textarea>
                             </div>
                         </div>
@@ -1318,7 +1317,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
                             
                             <div class="form-group mb-3">
-                                <label>Profissional:</label>
+                                <label><i class="fas fa-user-md"></i> Profissional:</label>
                                 <select name="profissional_id" id="edit_profissional_id" class="form-control" required>
                                     <option value="">Selecione o profissional</option>
                                     <?php
@@ -1337,18 +1336,18 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label>Data da Consulta:</label>
+                                    <label><i class="fas fa-calendar-alt"></i> Data da Consulta:</label>
                                     <input type="date" name="data_consulta" id="edit_data_consulta" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label>Pressão Arterial:</label>
+                                    <label><i class="fas fa-heartbeat"></i> Pressão Arterial:</label>
                                     <input type="text" name="pressao_arterial" id="edit_pressao_arterial" class="form-control pressao-arterial" placeholder="Ex: 120/80" required>
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label>Glicemia:</label>
+                                    <label><i class="fas fa-tint"></i> Glicemia:</label>
                                     <input type="text" 
                                         name="glicemia" 
                                         id="edit_glicemia_consulta"
@@ -1358,17 +1357,17 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <small class="form-text text-muted">Valor entre 20 e 600 mg/dL</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Peso (kg):</label>
+                                    <label><i class="fas fa-weight"></i> Peso (kg):</label>
                                     <input type="text" name="peso" id="edit_peso" class="form-control peso" placeholder="Ex: 70.5" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Altura (cm):</label>
+                                    <label><i class="fas fa-ruler-vertical"></i> Altura (cm):</label>
                                     <input type="text" name="altura" id="edit_altura" class="form-control altura" placeholder="Ex: 170" required>
                                 </div>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Estado Emocional:</label>
+                                <label><i class="fas fa-smile"></i> Estado Emocional:</label>
                                 <select class="form-select" id="edit_estado_emocional" name="estado_emocional" required>
                                     <option value="">Selecione...</option>
                                     <option value="Calmo">Calmo</option>
@@ -1381,12 +1380,12 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             </div>
 
                             <div class="mb-3">
-                                <label for="habitos_vida" class="form-label">Hábitos de Vida:</label>
+                                <label><i class="fas fa-running"></i> Hábitos de Vida:</label>
                                 <textarea name="habitos_vida" id="edit_habitos_vida" class="form-control" rows="3"></textarea>
                             </div>
 
                             <div class="mb-3">
-                                <label>Observações:</label>
+                                <label><i class="fas fa-comment"></i> Observações:</label>
                                 <textarea name="observacoes" id="edit_observacoes_consulta" class="form-control" rows="3"></textarea>
                             </div>
                         </div>
@@ -1531,7 +1530,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label>Idade:</label>
+                                        <label><i class="fas fa-calendar-alt"></i> Idade:</label>
                                         <select name="idade" class="form-control" required>
                                             <option value="">Selecione...</option>
                                             <option value="20-34">20-34</option>
@@ -1547,24 +1546,24 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                         </select>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Colesterol Total (mg/dL):</label>
+                                        <label><i class="fas fa-vial"></i> Colesterol Total (mg/dL):</label>
                                         <input type="number" name="colesterol_total" class="form-control" placeholder="Ex: 180" required min="0" max="999" oninput="this.value = Math.min(this.value, 999)">
                                         <small class="form-text text-muted">Insira um valor entre 0 e 999 mg/dL.</small>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Colesterol HDL (mg/dL):</label>
+                                        <label><i class="fas fa-vial"></i> Colesterol HDL (mg/dL):</label>
                                         <input type="number" name="colesterol_hdl" class="form-control" placeholder="Ex: 45" required min="0" max="999" oninput="this.value = Math.min(this.value, 999)">
                                         <small class="form-text text-muted">Insira um valor entre 0 e 999 mg/dL.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label>Pressão Sistólica (mmHg):</label>
+                                        <label><i class="fas fa-heartbeat"></i> Pressão Sistólica (mmHg):</label>
                                         <input type="number" name="pressao_sistolica" class="form-control" placeholder="Ex: 120" required min="0" max="999" oninput="this.value = Math.min(this.value, 999)">
                                         <small class="form-text text-muted">Insira um valor entre 0 e 999 mmHg.</small>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Fumante:</label>
+                                        <label><i class="fas fa-smoking"></i> Fumante:</label>
                                         <select name="fumante" class="form-control" required>
                                             <option value="">Selecione...</option>
                                             <option value="Sim">Sim</option>
@@ -1572,7 +1571,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                         </select>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Toma remédios para hipertensão:</label>
+                                        <label><i class="fas fa-pills"></i> Toma remédios para hipertensão:</label>
                                         <select name="remedios_hipertensao" class="form-control" required>
                                             <option value="">Selecione...</option>
                                             <option value="Sim">Sim</option>
@@ -1586,13 +1585,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <div class="row mb-3" id="resultadosCalculo" style="display: none;">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label>Pontuação:</label>
+                                        <label><i class="fas fa-chart-line"></i> Pontuação:</label>
                                         <input type="text" id="pontuacao" name="pontuacao" class="form-control" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label>Probabilidade (%):</label>
+                                        <label><i class="fas fa-percentage"></i> Probabilidade (%):</label>
                                         <input type="text" id="probabilidade" name="probabilidade" class="form-control" readonly>
                                     </div>
                                 </div>
@@ -1627,7 +1626,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label>Idade:</label>
+                                        <label><i class="fas fa-calendar-alt"></i> Idade:</label>
                                         <select name="idade" id="editar_idade" class="form-control" required>
                                             <option value="">Selecione...</option>
                                             <option value="20-34">20-34</option>
@@ -1643,21 +1642,21 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                         </select>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Colesterol Total (mg/dL):</label>
+                                        <label><i class="fas fa-vial"></i> Colesterol Total (mg/dL):</label>
                                         <input type="number" name="colesterol_total" id="editar_colesterol_total" class="form-control" required min="0" max="999">
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Colesterol HDL (mg/dL):</label>
+                                        <label><i class="fas fa-vial"></i> Colesterol HDL (mg/dL):</label>
                                         <input type="number" name="colesterol_hdl" id="editar_colesterol_hdl" class="form-control" required min="0" max="999">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label>Pressão Sistólica (mmHg):</label>
+                                        <label><i class="fas fa-heartbeat"></i> Pressão Sistólica (mmHg):</label>
                                         <input type="number" name="pressao_sistolica" id="editar_pressao_sistolica" class="form-control" required min="0" max="999">
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Fumante:</label>
+                                        <label><i class="fas fa-smoking"></i> Fumante:</label>
                                         <select name="fumante" id="editar_fumante" class="form-control" required>
                                             <option value="">Selecione...</option>
                                             <option value="Sim">Sim</option>
@@ -1665,7 +1664,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                         </select>
                                     </div>
                                     <div class="form-group mb-3">
-                                        <label>Toma remédios para hipertensão:</label>
+                                        <label><i class="fas fa-pills"></i> Toma remédios para hipertensão:</label>
                                         <select name="remedios_hipertensao" id="editar_remedios_hipertensao" class="form-control" required>
                                             <option value="">Selecione...</option>
                                             <option value="Sim">Sim</option>
@@ -1679,13 +1678,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label>Pontuação:</label>
+                                        <label><i class="fas fa-chart-line"></i> Pontuação:</label>
                                         <input type="text" id="editar_pontuacao" name="pontuacao" class="form-control" readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label>Probabilidade (%):</label>
+                                        <label><i class="fas fa-percentage"></i> Probabilidade (%):</label>
                                         <input type="text" id="editar_probabilidade" name="probabilidade" class="form-control" readonly>
                                     </div>
                                 </div>
@@ -1835,32 +1834,32 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label>Nome do Medicamento:</label>
+                                    <label><i class="fas fa-pills"></i> Nome do Medicamento:</label>
                                     <input type="text" name="nome_medicamento" id="nome_medicamento" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label>Dosagem:</label>
+                                    <label><i class="fas fa-syringe"></i> Dosagem:</label>
                                     <input type="text" name="dosagem" id="dosagem" class="form-control" required>
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label>Frequência:</label>
+                                    <label><i class="fas fa-clock"></i> Frequência:</label>
                                     <input type="text" name="frequencia" id="frequencia" class="form-control" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Data Início:</label>
+                                    <label><i class="fas fa-calendar-alt"></i> Data Início:</label>
                                     <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
-                                    <label>Data Fim:</label>
+                                    <label><i class="fas fa-calendar-alt"></i> Data Fim:</label>
                                     <input type="date" name="data_fim" id="data_fim" class="form-control">
                                 </div>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Observações:</label>
+                                <label><i class="fas fa-comment"></i> Observações:</label>
                                 <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
                             </div>
                         </div>
@@ -1969,22 +1968,22 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label>Data do Exame:</label>
+                                    <label><i class="fas fa-calendar-alt"></i> Data do Exame:</label>
                                     <input type="date" name="data_exame" id="data_exame" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label>Tipo de Exame:</label>
+                                    <label><i class="fas fa-microscope"></i> Tipo de Exame:</label>
                                     <input type="text" name="tipo_exame" id="tipo_exame" class="form-control" required>
                                 </div>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Resultado:</label>
+                                <label><i class="fas fa-file-medical"></i> Resultado:</label>
                                 <textarea name="resultado" id="resultado" class="form-control" rows="4"></textarea>
                             </div>
 
                             <div class="form-group mb-3">
-                                <label>Arquivo do Exame:</label>
+                                <label><i class="fas fa-file-upload"></i> Arquivo do Exame:</label>
                                 <input type="file" name="arquivo_exame" id="arquivo_exame" class="form-control">
                                 <div id="arquivo_atual" class="mt-2"></div>
                             </div>
@@ -2188,6 +2187,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         </div>
 
     <script>
+
         <!-- Script para o modal de acompanhamento -->
         $(document).ready(function() {
             initializeForms();
@@ -2282,8 +2282,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     ${temPermissao ? `
                         <td>
                             <div class="btn-group">
-                                <button onclick="editarAcompanhamento(${JSON.stringify(acompanhamento)})" 
-                                        class="btn btn-sm btn-warning">
+                                <button onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, JSON_HEX_APOS | JSON_HEX_QUOT)); ?>)" 
+                                    class="btn btn-sm btn-warning">
                                     <i class="fas fa-edit"></i> Editar
                                 </button>
                                 <button onclick="excluirAcompanhamento(${acompanhamento.id})" 

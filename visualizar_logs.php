@@ -251,6 +251,9 @@ include "sidebar.php";
         let perPage = 10;
 
         function loadLogs(page = 1) {
+            // Atualiza a página atual antes de carregar os logs
+            currentPage = page;
+
             const searchTerm = document.getElementById('searchInput').value;
             const formData = new FormData();
             formData.append('search', searchTerm);
@@ -266,7 +269,6 @@ include "sidebar.php";
                 document.getElementById('logsTableBody').innerHTML = data.html;
                 updatePagination(data.pagination);
                 updateTotalRecords(data.pagination.total_records);
-                currentPage = page;
             })
             .catch(error => console.error('Erro:', error));
         }
@@ -286,7 +288,7 @@ include "sidebar.php";
                 if (i === 1 || i === pagination.total_pages || 
                     (i >= currentPage - 2 && i <= currentPage + 2)) {
                     html += `<button onclick="loadLogs(${i})" 
-                                    class="${i === currentPage ? 'active' : ''}">
+                                    ${i === currentPage ? 'class="active"' : ''}>
                                 ${i}
                             </button>`;
                 } else if (i === currentPage - 3 || i === currentPage + 3) {
