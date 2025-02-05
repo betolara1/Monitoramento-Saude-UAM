@@ -237,6 +237,7 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             border-color: #45a049;
             transform: translateY(-2px);
         }
+
     </style>
 </head>
 <body>

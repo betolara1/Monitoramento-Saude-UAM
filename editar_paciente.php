@@ -184,80 +184,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             font-size: 14px;
         }
 
-        /* Modal Base */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal.hidden {
-            display: none;
-        }
-
-        /* Overlay escuro */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-        }
-
-        /* Container do Modal */
-        .modal-content {
-            position: relative;
-            background: white;
-            width: 90%;
-            max-width: 600px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 1001;
-            overflow: hidden;
-            animation: modalFadeIn 0.3s ease-out;
-        }
-
-        /* Cabeçalho do Modal */
-        .modal-header {
-            padding: 20px 25px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: #2c3e50;
-            font-weight: 600;
-        }
-
-        /* Corpo do Modal */
-        .modal-body {
-            padding: 25px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        
-        /* Rodapé do Modal */
-        .modal-footer {
-            padding: 20px 25px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
+       
 
         /* Botões do Rodapé */
         .btn-secondary {
@@ -1078,7 +1005,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         <!-- Modal para todas as consultas -->
         <div class="modal fade" id="modalTodasConsultas" tabindex="-1" aria-labelledby="modalTodasConsultasLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalTodasConsultasLabel">
