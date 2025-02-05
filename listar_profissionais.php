@@ -408,6 +408,15 @@ $unidades = [
             padding: 2rem;
         }
 
+        /* Animação do Modal */
+        .modal.fade .modal-dialog {
+            transition: transform 0.3s ease-out;
+        }
+
+        .modal.fade.show .modal-dialog {
+            transform: none;
+        }
+
         .form-floating {
             margin-bottom: 1rem;
         }
@@ -449,15 +458,6 @@ $unidades = [
             font-size: 0.875rem;
             color: #dc3545;
             margin-top: 0.25rem;
-        }
-
-        /* Animação do Modal */
-        .modal.fade .modal-dialog {
-            transition: transform 0.3s ease-out;
-        }
-
-        .modal.fade.show .modal-dialog {
-            transform: none;
         }
 
         /* Ícones */

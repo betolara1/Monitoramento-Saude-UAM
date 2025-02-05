@@ -389,6 +389,130 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             font-weight: bold;
         }
 
+        /* Estilos para os modais */
+        .modal-form {
+            max-width: 800px;
+            width: 95%;
+            margin: 0.5rem auto;
+        }
+
+        .modal-table {
+            max-width: 95vw;
+            margin: 0.5rem auto;
+        }
+
+        .modal-dialog {
+            min-height: fit-content;  /* Ajusta à altura do conteúdo */
+            max-height: 90vh;        /* Limita a altura máxima */
+            margin: 1rem auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            height: auto;           /* Altura automática */
+            max-height: 90vh;      /* Altura máxima */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;      /* Previne scroll duplo */
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+            max-height: calc(90vh - 120px); /* Altura máxima considerando header e footer */
+        }
+
+        /* Ajustes para modal de formulário */
+        .modal-form .modal-body {
+            padding: 1.25rem;
+            max-height: calc(90vh - 120px);
+        }
+
+        /* Ajustes para modal de tabela */
+        .modal-table .table-responsive {
+            max-height: calc(90vh - 140px);
+            overflow-y: auto;
+        }
+
+        /* Mantém o cabeçalho da tabela fixo */
+        .modal-table .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Cabeçalho e rodapé do modal */
+        .modal-header {
+            padding: 0.75rem 1rem;    /* Reduzido o padding */
+            background-color: #0d6efd;
+            color: white;
+            border-bottom: 1px solid #0a58ca;
+        }
+
+        .modal-footer {
+            padding: 0.75rem 1rem;    /* Reduzido o padding */
+            border-top: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+        /* Animação suave */
+        .modal.fade .modal-dialog {
+            transform: scale(0.95);
+            transition: transform 0.2s ease-out;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+        }
+
+        /* Estilização da tabela dentro do modal */
+        .modal-table .table-responsive {
+            max-height: calc(100vh - 200px);  /* Altura dinâmica para a tabela */
+            overflow-y: auto;
+        }
+
+        /* Cabeçalho fixo para tabelas */
+        .modal-table .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilo consistente para todos os modais */
+        .modal-header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #0a58ca;
+        }
+
+        .modal-header .btn-close {
+            color: white;
+            opacity: 1;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+        /* Animação suave para abertura do modal */
+        .modal.fade .modal-dialog {
+            transform: scale(0.95);
+            transition: transform 0.2s ease-out;
+        }
+
+        .modal.show .modal-dialog {
+            transform: scale(1);
+        }
+
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -1005,7 +1129,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         <!-- Modal para todas as consultas -->
         <div class="modal fade" id="modalTodasConsultas" tabindex="-1" aria-labelledby="modalTodasConsultasLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalTodasConsultasLabel">
@@ -1053,11 +1177,11 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                                     <div class="btn-group">
                                                         <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
                                                             class="btn btn-sm btn-warning me-2">
-                                                            <i class="fas fa-edit"></i> Editar
+                                                            <i class="fas fa-edit"></i> 
                                                         </button>
                                                         <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
                                                             class="btn btn-sm btn-danger">
-                                                            <i class="fas fa-trash"></i> Excluir
+                                                            <i class="fas fa-trash"></i> 
                                                         </button>
                                                     </div>
                                                 </td>
@@ -1227,7 +1351,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                     <label>Glicemia:</label>
                                     <input type="text" 
                                         name="glicemia" 
-                                        id="edit_glicemia"
+                                        id="edit_glicemia_consulta"
                                         class="form-control glicemia" 
                                         placeholder="Ex: 99"
                                         title="Valor entre 20 e 600 mg/dL" required>
@@ -1263,7 +1387,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
                             <div class="mb-3">
                                 <label>Observações:</label>
-                                <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                                <textarea name="observacoes" id="edit_observacoes_consulta" class="form-control" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -2063,7 +2187,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </div>
         </div>
 
-
     <script>
         <!-- Script para o modal de acompanhamento -->
         $(document).ready(function() {
@@ -2661,14 +2784,14 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 document.getElementById('edit_profissional_id').value = consulta.profissional_id;
                 document.getElementById('edit_data_consulta').value = consulta.data_consulta;
                 document.getElementById('edit_pressao_arterial').value = consulta.pressao_arterial;
-                document.getElementById('edit_glicemia').value = consulta.glicemia;
+                document.getElementById('edit_glicemia_consulta').value = consulta.glicemia;
                 document.getElementById('edit_peso').value = consulta.peso;
                 document.getElementById('edit_altura').value = consulta.altura;
                 document.getElementById('edit_estado_emocional').value = consulta.estado_emocional;
                 document.getElementById('edit_habitos_vida').value = consulta.habitos_vida;
                 
                 // Garante que o campo de observações existe e tem um valor
-                const observacoesField = document.getElementById('edit_observacoes');
+                const observacoesField = document.getElementById('edit_observacoes_consulta');
                 if (observacoesField) {
                     observacoesField.value = consulta.observacoes || '';
                 }
