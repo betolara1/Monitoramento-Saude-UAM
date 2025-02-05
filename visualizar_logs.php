@@ -251,7 +251,6 @@ include "sidebar.php";
         let perPage = 10;
 
         function loadLogs(page = 1) {
-            // Atualiza a página atual antes de carregar os logs
             currentPage = page;
 
             const searchTerm = document.getElementById('searchInput').value;
@@ -288,7 +287,7 @@ include "sidebar.php";
                 if (i === 1 || i === pagination.total_pages || 
                     (i >= currentPage - 2 && i <= currentPage + 2)) {
                     html += `<button onclick="loadLogs(${i})" 
-                                    ${i === currentPage ? 'class="active"' : ''}>
+                                    class="${i === currentPage ? 'active' : ''}">
                                 ${i}
                             </button>`;
                 } else if (i === currentPage - 3 || i === currentPage + 3) {
