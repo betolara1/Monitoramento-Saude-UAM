@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $tem_permissao = false;
 if (isset($_SESSION['tipo_usuario']) && 
     ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Medico' || $_SESSION['tipo_usuario'] === 'Enfermeiro')) {
@@ -17,11 +19,11 @@ include 'sidebar.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Usuário</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -159,149 +161,204 @@ include 'sidebar.php';
             background-size: 20px 20px;
         }
     </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
+    <div class="container mt-4">
         <h1>Cadastro de Usuário</h1>
-        <form method="POST" action="salvar_usuario.php">
-            <div class="form-group">
-                <label for="nome">Nome Completo*:</label>
-                <i class="fas fa-user"></i>
-                <input type="text" id="nome" name="nome" required>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="senha">Senha*:</label>
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="senha" name="senha" required>
+        <form method="POST" action="salvar_usuario.php" class="mt-4">
+            <!-- Informações Pessoais -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-user"></i> Informações Pessoais
                 </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="nome" class="form-label">
+                                <i class="fas fa-user"></i> Nome Completo*
+                            </label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="cpf" class="form-label">
+                                <i class="fas fa-id-card"></i> CPF*
+                            </label>
+                            <input type="text" class="form-control" id="cpf" name="cpf" required placeholder="000.000.000-00">
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label for="confirmar_senha">Confirmar Senha*:</label>
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="confirmar_senha" name="confirmar_senha" required>
-                    <div id="erro-senha" class="error">As senhas não coincidem!</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="cpf">CPF*:</label>
-                    <i class="fas fa-id-card"></i>
-                    <input type="text" id="cpf" name="cpf" required placeholder="000.000.000-00">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="email">E-mail*:</label>
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="email" name="email" required>
-                    <span id="email-status"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="telefone">Telefone*:</label>
-                    <i class="fas fa-phone"></i>
-                    <input type="tel" id="telefone" name="telefone" required placeholder="(00)0000-00000">
-                </div>
-                
-                <!-- Tipo de usuário - visível para Admin e Profissional -->
-                <?php if (isset($_SESSION['tipo_usuario']) && ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Profissional')): ?>
-                    <div class="form-group">
-                        <label for="tipo_usuario">Tipo de Usuário:</label>
-                        <i class="fas fa-user-tag"></i>
-                        <select name="tipo_usuario" required>
-                            <?php if ($_SESSION['tipo_usuario'] === 'Admin'): ?>
-                                <option value="Medico">Médico</option>
-                                <option value="Enfermeiro">Enfermeiro</option>
-                                <option value="ACS">ACS</option>
-                                <option value="Paciente">Paciente</option>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="data_nascimento" class="form-label">
+                                <i class="fas fa-birthday-cake"></i> Data de Nascimento*
+                            </label>
+                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" max="" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sexo" class="form-label">
+                                <i class="fas fa-venus-mars"></i> Sexo*
+                            </label>
+                            <select class="form-select" id="sexo" name="sexo" required>
+                                <option value="">Selecione</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <?php if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
+                                <label for="numero_familia" class="form-label">
+                                    <i class="fas fa-users"></i> N° da Família*
+                                </label>
+                                <input type="text" class="form-control" id="numero_familia" name="numero_familia" required placeholder="00000000">
                             <?php endif; ?>
-                        </select>
+                        </div>
                     </div>
-                    
+                </div>
+            </div>
+
+            <!-- Informações de Acesso -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-lock"></i> Informações de Acesso
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i> E-mail*
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <span id="email-status"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefone" class="form-label">
+                                <i class="fas fa-phone"></i> Telefone*
+                            </label>
+                            <input type="tel" class="form-control" id="telefone" name="telefone" required placeholder="(00)0000-00000">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="senha" class="form-label">
+                                <i class="fas fa-lock"></i> Senha*
+                            </label>
+                            <input type="password" class="form-control" id="senha" name="senha" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirmar_senha" class="form-label">
+                                <i class="fas fa-lock"></i> Confirmar Senha*
+                            </label>
+                            <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" required>
+                            <div id="erro-senha" class="error text-danger mt-1">As senhas não coincidem!</div>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de usuário - visível para Admin e Profissional -->
+                    <?php if (isset($_SESSION['tipo_usuario']) && ($_SESSION['tipo_usuario'] === 'Admin' || $_SESSION['tipo_usuario'] === 'Profissional')): ?>
+                        <div class="col-md-2">
+                            <label for="tipo_usuario"><i class="fas fa-user-tag"></i>Tipo de Usuário:</label>
+                            <select name="tipo_usuario" required>
+                                <?php if ($_SESSION['tipo_usuario'] === 'Admin'): ?>
+                                    <option value="Medico">Médico</option>
+                                    <option value="Enfermeiro">Enfermeiro</option>
+                                    <option value="ACS">ACS</option>
+                                    <option value="Paciente">Paciente</option>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        
+                    <?php else: ?>
+                        <!-- Se estiver deslogado ou for paciente, tipo é fixo como Paciente -->
+                        <div class="col-md-2">
+                            <label for="numero_familia" class="required"><i class="fas fa-users"></i>N° da Familia*:</label>
+                            <input type="text" id="numero_familia" name="numero_familia" required placeholder="00000000">
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Endereço -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-map-marked-alt"></i> Endereço
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="cep" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> CEP*
+                            </label>
+                            <input type="text" class="form-control" id="cep" name="cep" required placeholder="00000-000">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rua" class="form-label">
+                                <i class="fas fa-road"></i> Rua
+                            </label>
+                            <input type="text" class="form-control" id="rua" name="rua" readonly placeholder="Endereço">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="numero" class="form-label">
+                                <i class="fas fa-home"></i> Número*
+                            </label>
+                            <input type="text" class="form-control" id="numero" name="numero" required placeholder="Número">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="bairro" class="form-label">
+                                <i class="fas fa-map"></i> Bairro
+                            </label>
+                            <input type="text" class="form-control" id="bairro" name="bairro" readonly placeholder="Bairro">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="cidade" class="form-label">
+                                <i class="fas fa-city"></i> Cidade
+                            </label>
+                            <input type="text" class="form-control" id="cidade" name="cidade" readonly placeholder="Cidade">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="estado" class="form-label">
+                                <i class="fas fa-flag"></i> Estado
+                            </label>
+                            <input type="text" class="form-control" id="estado" name="estado" readonly placeholder="Estado">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label for="complemento" class="form-label">
+                                <i class="fas fa-info-circle"></i> Complemento
+                            </label>
+                            <input type="text" class="form-control" id="complemento" name="complemento" placeholder="Apartamento, sala, etc.">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-4">
+                <?php if (isset($_SESSION['usuario_id'])): ?>
+                    <a href="dashboard.php" class="btn btn-info me-md-2">
+                        <i class="fas fa-arrow-left"></i> Voltar para Dashboard
+                    </a>
                 <?php else: ?>
-                    <!-- Se estiver deslogado ou for paciente, tipo é fixo como Paciente -->
-                    <div class="form-group">
-                        <label for="numero_familia" class="required">N° da Familia*:</label>
-                        <i class="fas fa-users"></i>
-                        <input type="text" id="numero_familia" name="numero_familia" required placeholder="00000000">
-                    </div>
+                    <a href="index.php" class="btn btn-info me-md-2">
+                        <i class="fas fa-arrow-left"></i> Voltar para Login
+                    </a>
                 <?php endif; ?>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="cep" class="required">CEP*:</label>
-                    <i class="fas fa-map-marker-alt"></i>
-                    <input type="text" id="cep" name="cep" required placeholder="00000-000">
-                </div>
-
-                <div class="form-group">
-                    <label for="rua">Rua:</label>
-                    <i class="fas fa-road"></i>
-                    <input type="text" id="rua" name="rua" readonly placeholder="Endereço">
-                </div>
-
-                <div class="form-group">
-                    <label for="numero" class="required">Número*:</label>
-                    <i class="fas fa-home"></i>
-                    <input type="text" id="numero" name="numero" required placeholder="Número">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="bairro">Bairro:</label>
-                    <i class="fas fa-map-marker"></i>
-                    <input type="text" id="bairro" name="bairro" readonly placeholder="Bairro">
-                </div>
-
-                <div class="form-group">
-                    <label for="cidade">Cidade:</label>
-                    <i class="fas fa-city"></i>
-                    <input type="text" id="cidade" name="cidade" readonly placeholder="Cidade">
-                </div>
-
-                <div class="form-group">
-                    <label for="complemento">Complemento:</label>
-                    <i class="fas fa-plus"></i>
-                    <input type="text" id="complemento" name="complemento" placeholder="Apartamento, sala, etc.">
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="estado">Estado:</label>
-                    <i class="fas fa-map"></i>
-                    <input type="text" id="estado" name="estado" readonly placeholder="Estado">
-                </div>
-                <div class="form-group"></div>
-
-                <div class="form-group">
-                    <label for="data_nascimento">Data de Nascimento:</label>
-                    <i class="fas fa-birthday-cake"></i>
-                    <input type="date" id="data_nascimento" name="data_nascimento" max="" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="sexo">Sexo:</label>
-                    <i class="fas fa-venus-mars"></i>
-                    <select id="sexo" name="sexo">
-                        <option value="">Selecione</option>
-                        <option value="M">Masculino</option>
-                        <option value="F">Feminino</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <input type="submit" value="Cadastrar">
+                
+                <button type="reset" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-undo"></i> Limpar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Cadastrar
+                </button>
             </div>
         </form>
+    </div>
 
     <script src="js/confirmar_senha.js"></script>
     <script>
@@ -520,6 +577,5 @@ include 'sidebar.php';
             }
         });
     </script>
-    </div>
 </body>
 </html>

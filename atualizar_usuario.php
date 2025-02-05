@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 cpf = ?,
                 email = ?,
                 telefone = ?,
+                numero_familia = ?,
                 cep = ?,
                 rua = ?,
                 numero = ?,
@@ -23,11 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 WHERE id = ?";
                 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssssssssi",
+        $stmt->bind_param("ssssssssssssi",
             $_POST['nome'],
             $_POST['cpf'],
             $_POST['email'],
             $_POST['telefone'],
+            $_POST['numero_familia'],
             $_POST['cep'],
             $_POST['rua'],
             $_POST['numero'],

@@ -166,7 +166,7 @@ $unidades = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Usuários - Profissionais</title>
+    <title>Profissionais</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
@@ -175,6 +175,7 @@ $unidades = [
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
     <!-- 4. Seu CSS personalizado deve vir por último -->
     <style>
@@ -206,7 +207,15 @@ $unidades = [
         }
 
         .search-box {
-            flex: 1;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
         }
 
         input {
@@ -220,22 +229,54 @@ $unidades = [
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
         th, td {
-            padding: 12px;
+            padding: 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #dee2e6;
         }
 
         th {
             background-color: #f8f9fa;
-            font-weight: bold;
+            font-weight: 600;
+            color: #495057;
         }
 
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
 
         .btn {
@@ -514,6 +555,20 @@ $unidades = [
             opacity: .65;
             transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
         }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .btn-editar {
+                padding: 6px 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -522,58 +577,52 @@ $unidades = [
 
         <!-- Remove a busca se não for admin -->
         <?php if ($tipo_usuario === 'Admin'): ?>
-            <div class="filters">
+
                 <div class="search-box">
                     <input type="text" id="busca" class="form-control" onkeyup="filtrarProfissionais()" 
                            placeholder="Buscar por nome, especialidade ou unidade...">
                 </div>
-            </div>
+            
         <?php endif; ?>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Email</th>
-                    <th>Telefone</th>
-                    <th>Profissional</th>
-                    <th>Especialidade</th>
-                    <th>Registro Profissional</th>
-                    <th>Unidade de Saúde</th>
-                    <th>Status</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody id="profissionais-tbody">
-                <?php foreach ($profissionais as $profissional): ?>
-                    <tr data-usuario-id="<?php echo $profissional['usuario_id']; ?>">
-                        <td><?php echo htmlspecialchars($profissional['nome']); ?></td>
-                        <td><?php echo htmlspecialchars($profissional['email']); ?></td>
-                        <td><?php echo htmlspecialchars($profissional['telefone']); ?></td>
-                        <td><?php echo htmlspecialchars($profissional['tipo_usuario']); ?></td>
-                        <td><?php echo htmlspecialchars($profissional['especialidade'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($profissional['registro_profissional'] ?? ''); ?></td>
-                        <td><?php echo htmlspecialchars($profissional['unidade_saude'] ?? ''); ?></td>
-                        <td>
-                            <?php if ($profissional['especialidade']): ?>
-                                <span class="status-badge status-completo">Completo</span>
-                            <?php else: ?>
-                                <span class="status-badge status-pendente">Pendente</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if ($profissional['especialidade']): ?>
-                                <button onclick="abrirModalEditar(<?php echo $profissional['profissional_id']; ?>, <?php echo $profissional['usuario_id']; ?>)" class="btn btn-primary">Editar</button>
-                            <?php else: ?>
-                                <button onclick="abrirModalCadastro(<?php 
-                                    echo $profissional['usuario_id']; ?>)" 
-                                    class="btn btn-primary">Cadastrar</button>
-                            <?php endif; ?>
-                        </td>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Nome</th>
+                        <th><i class="fas fa-envelope"></i> Email</th>
+                        <th><i class="fas fa-phone"></i> Telefone</th>
+                        <th><i class="fas fa-user-md"></i> Profissional</th>
+                        <th><i class="fas fa-stethoscope"></i> Especialidade</th>
+                        <th><i class="fas fa-id-card"></i> Registro Profissional</th>
+                        <th><i class="fas fa-hospital"></i> Unidade de Saúde</th>
+                        <th><i class="fas fa-cog"></i> Ação</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody id="profissionais-tbody">
+                    <?php foreach ($profissionais as $profissional): ?>
+                        <tr data-usuario-id="<?php echo $profissional['usuario_id']; ?>">
+                            <td><?php echo htmlspecialchars($profissional['nome']); ?></td>
+                            <td><?php echo htmlspecialchars($profissional['email']); ?></td>
+                            <td><?php echo htmlspecialchars($profissional['telefone']); ?></td>
+                            <td><?php echo htmlspecialchars($profissional['tipo_usuario']); ?></td>
+                            <td><?php echo htmlspecialchars($profissional['especialidade'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($profissional['registro_profissional'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($profissional['unidade_saude'] ?? ''); ?></td>
+                            <td>
+                                <?php if ($profissional['especialidade']): ?>
+                                    <button onclick="abrirModalEditar(<?php echo $profissional['profissional_id']; ?>, <?php echo $profissional['usuario_id']; ?>)" class="btn btn-primary">Editar</button>
+                                <?php else: ?>
+                                    <button onclick="abrirModalCadastro(<?php 
+                                        echo $profissional['usuario_id']; ?>)" 
+                                        class="btn btn-primary">Cadastrar</button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Modal de Cadastro -->
@@ -589,7 +638,9 @@ $unidades = [
                         <input type="hidden" id="usuario_id" name="usuario_id">
                         <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
                             <div class="mb-3">
-                                <label for="especialidade" class="form-label">Especialidade</label>
+                                <label for="especialidade" class="form-label">
+                                    <i class="fas fa-stethoscope"></i> Especialidade
+                                </label>
                                 <select class="form-select" id="especialidade" name="especialidade" required>
                                     <option value="">Selecione uma especialidade</option>
                                     <?php foreach ($especialidades as $esp): ?>
@@ -602,6 +653,7 @@ $unidades = [
                         <?php if ($tipo_usuario !== 'ACS'): ?>
                             <div class="mb-3">
                                 <label for="registro_profissional" class="form-label">
+                                    <i class="fas fa-id-card"></i> 
                                     <?php echo ($tipo_usuario === 'Enfermeiro') ? 'COREN' : 
                                           ($tipo_usuario === 'Medico' ? 'CRM' : 'CRM/COREN'); ?>
                                 </label>
@@ -616,7 +668,9 @@ $unidades = [
                         <?php endif; ?>
 
                         <div class="mb-3">
-                            <label for="unidade_saude" class="form-label">Unidade de Saúde</label>
+                            <label for="unidade_saude" class="form-label">
+                                <i class="fas fa-hospital"></i> Unidade de Saúde
+                            </label>
                             <select class="form-select" id="unidade_saude" name="unidade_saude" required>
                                 <option value="">Selecione uma unidade</option>
                                 <?php foreach ($unidades as $uni): ?>
@@ -636,8 +690,8 @@ $unidades = [
     <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditarLabel">Editar Profissional</h5>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalEditarLabel"><i class="fas fa-user-edit"></i> Editar Profissional</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -647,7 +701,9 @@ $unidades = [
 
                         <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'Medico'): ?>
                             <div class="mb-3">
-                                <label for="edit_especialidade" class="form-label">Especialidade</label>
+                                <label for="edit_especialidade" class="form-label">
+                                    <i class="fas fa-stethoscope"></i> Especialidade
+                                </label>
                                 <select class="form-select" id="edit_especialidade" name="especialidade" required>
                                     <option value="">Selecione uma especialidade</option>
                                     <?php foreach ($especialidades as $esp): ?>
@@ -660,6 +716,7 @@ $unidades = [
                         <?php if ($tipo_usuario !== 'ACS'): ?>
                             <div class="mb-3">
                                 <label for="edit_registro_profissional" class="form-label">
+                                    <i class="fas fa-id-card"></i>
                                     <?php echo ($tipo_usuario === 'Enfermeiro') ? 'COREN' : 
                                           ($tipo_usuario === 'Medico' ? 'CRM' : 'CRM/COREN'); ?>
                                 </label>
@@ -674,7 +731,9 @@ $unidades = [
                         <?php endif; ?>
 
                         <div class="mb-3">
-                            <label for="edit_unidade_saude" class="form-label">Unidade de Saúde</label>
+                            <label for="edit_unidade_saude" class="form-label">
+                                <i class="fas fa-hospital"></i> Unidade de Saúde
+                            </label>
                             <select class="form-select" id="edit_unidade_saude" name="unidade_saude" required>
                                 <option value="">Selecione uma unidade</option>
                                 <?php foreach ($unidades as $uni): ?>
@@ -683,7 +742,9 @@ $unidades = [
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Atualizar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Atualizar
+                        </button>
                     </form>
                 </div>
             </div>
