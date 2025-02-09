@@ -2281,7 +2281,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     <td>${acompanhamento.observacoes || 'Não informado'}</td>
                     <td>
                         <div class="btn-group">
-                            <button onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, JSON_HEX_APOS | JSON_HEX_QUOT)); ?>)" 
+                            <button onclick='editarAcompanhamento(${JSON.stringify(acompanhamento)})' 
                                 class="btn btn-sm btn-warning">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
@@ -2339,8 +2339,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 }
             });
         }
-
-
 
         // Funções auxiliares
         function showSuccessMessage(message) {
