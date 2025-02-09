@@ -4,7 +4,7 @@ require_once 'conexao.php';
 
 // Verifica permissão
 if (!isset($_SESSION['tipo_usuario']) || 
-    ($_SESSION['tipo_usuario'] !== 'Admin' && $_SESSION['tipo_usuario'] !== 'Medico' && $_SESSION['tipo_usuario'] !== 'Enfermeiro' && $_SESSION['tipo_usuario'] !== 'ACS')) {
+    ($_SESSION['tipo_usuario'] !== 'Admin' && $_SESSION['tipo_usuario'] !== 'Medico' && $_SESSION['tipo_usuario'] !== 'Enfermeiro' && $_SESSION['tipo_usuario'] !== 'ACS' && $_SESSION['tipo_usuario'] !== 'Paciente')) {
     echo json_encode([
         'success' => false,
         'message' => 'Acesso não autorizado'

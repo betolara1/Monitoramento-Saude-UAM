@@ -161,7 +161,7 @@ if (!$usuario) {
     <div class="main-content">
         <div class="container">
             <h2><i class="fas fa-user-plus"></i> Cadastro de DCNT - <?php echo htmlspecialchars($usuario['nome']); ?></h2>
-            <form action="salvar_pacientes_doenca.php" method="POST">
+            <form id="formCadastroPaciente" action="salvar_pacientes_doenca.php" method="POST">
                 <input type="hidden" name="usuario_id" value="<?php echo $usuario_id; ?>">
                 
                 <div class="form-group">
@@ -225,25 +225,93 @@ if (!$usuario) {
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+    $(document).ready(function() {
+        $('#formCadastroPaciente').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Verifica campos obrigatórios
+            let camposVazios = [];
+            $(this).find('[required]').each(function() {
+                if (!$(this).val()) {
+                    camposVazios.push($(this).prev('label').text().replace('*:', '').trim());
+                }
+            });
 
-<?php
-// Verifica se há uma mensagem de sucesso na URL
-if (isset($_GET['success']) && $_GET['success'] == 'true') {
-    echo "<script>
-        Swal.fire({
-            icon: 'success',
-            title: 'Sucesso!',
-            text: 'Paciente cadastrado com sucesso!',
-            confirmButtonColor: '#4CAF50',
-            timer: 3000,
-            timerProgressBar: true,
-            willClose: () => {
-                window.location.href = 'listar_pacientes.php';
+            if (camposVazios.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atenção!',
+                    text: 'Por favor, preencha os seguintes campos: ' + camposVazios.join(', '),
+                    confirmButtonColor: '#4CAF50'
+                });
+                return false;
             }
+
+            // Confirmação antes de enviar
+            Swal.fire({
+                title: 'Confirmar cadastro?',
+                text: "Verifique se todos os dados estão corretos",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#4CAF50',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, cadastrar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostra loading
+                    Swal.fire({
+                        title: 'Processando...',
+                        html: 'Por favor, aguarde enquanto realizamos o cadastro',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Envia o formulário via AJAX
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso!',
+                                    text: 'Cadastro realizado com sucesso!',
+                                    confirmButtonColor: '#4CAF50',
+                                    timer: 3000,
+                                    timerProgressBar: true
+                                }).then(() => {
+                                    window.location.href = 'listar_pacientes.php';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro!',
+                                    text: 'Ocorreu um erro ao realizar o cadastro: ' + (response.error || 'Erro desconhecido'),
+                                    confirmButtonColor: '#d33'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro ao processar a requisição',
+                                confirmButtonColor: '#d33'
+                            });
+                        }
+                    });
+                }
+            });
         });
-    </script>";
-}
-?>
+    });
+    </script>
 </body>
 </html>

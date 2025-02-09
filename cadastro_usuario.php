@@ -185,6 +185,7 @@ include 'sidebar.php';
                                 <i class="fas fa-id-card"></i> CPF*
                             </label>
                             <input type="text" class="form-control" id="cpf" name="cpf" required placeholder="000.000.000-00">
+                            <span id="cpf-status"></span>
                         </div>
                     </div>
 
@@ -267,13 +268,6 @@ include 'sidebar.php';
                                     <option value="Paciente">Paciente</option>
                                 <?php endif; ?>
                             </select>
-                        </div>
-                        
-                    <?php else: ?>
-                        <!-- Se estiver deslogado ou for paciente, tipo é fixo como Paciente -->
-                        <div class="col-md-2">
-                            <label for="numero_familia" class="required"><i class="fas fa-users"></i>N° da Familia*:</label>
-                            <input type="text" id="numero_familia" name="numero_familia" required placeholder="00000000">
                         </div>
                     <?php endif; ?>
                 </div>
@@ -428,28 +422,54 @@ include 'sidebar.php';
                     }
                 }
             });
-        });
 
-        $(document).ready(function() {
-            // Máscara para CPF
-            $('#cpf').mask('000.000.000-00', {
-                reverse: true,
-                onComplete: function(cpf) {
-                    // Validação do CPF
-                    if (!validarCPF(cpf)) {
-                        alert('CPF inválido!');
-                        $('#cpf').val('');
-                    }
+            // Máscara para o CPF
+            $('#cpf').mask('000.000.000-00');
+            
+            // Validação do CPF
+            $('#cpf').blur(function() {
+                var cpf = $(this).val();
+                if(cpf) {
+                    $.ajax({
+                        url: 'verificar_cpf.php',
+                        type: 'post',
+                        data: {cpf: cpf},
+                        success: function(response) {
+                            if(response == 'existe') {
+                                $('#cpf-status').html('<span style="color: #dc3545;"><i class="fas fa-times-circle"></i> CPF já cadastrado</span>');
+                                $('#cpf').addClass('is-invalid');
+                                $('button[type="submit"]').prop('disabled', true);
+                            } else {
+                                $('#cpf-status').html('<span style="color: #198754;"><i class="fas fa-check-circle"></i> CPF disponível</span>');
+                                $('#cpf').removeClass('is-invalid');
+                                $('button[type="submit"]').prop('disabled', false);
+                            }
+                        }
+                    });
                 }
             });
 
-            // Máscara para telefone (ajusta automaticamente para celular ou fixo)
+             // Máscara para telefone (ajusta automaticamente para celular ou fixo)
             $('#telefone').mask('(00) 0000-00009');
             $('#telefone').blur(function(event) {
                 if ($(this).val().length == 15) {
                     $('#telefone').mask('(00) 00000-0009');
                 } else {
                     $('#telefone').mask('(00) 0000-00009');
+                }
+            });
+
+            // Validação do formulário
+            $('form').submit(function(e) {
+                var cpfStatus = $('#cpf-status').text();
+                if(cpfStatus.includes('já cadastrado')) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro!',
+                        text: 'Por favor, utilize um CPF não cadastrado.',
+                        confirmButtonColor: '#dc3545'
+                    });
                 }
             });
 
@@ -575,6 +595,91 @@ include 'sidebar.php';
                 });
                 this.value = '';
             }
+        });
+
+        // Adiciona o evento de submit no formulário
+        $('form').on('submit', function(e) {
+            e.preventDefault(); // Previne o submit padrão
+
+            // Verifica se as senhas coincidem
+            if ($('#senha').val() !== $('#confirmar_senha').val()) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro!',
+                    text: 'As senhas não coincidem!',
+                    confirmButtonColor: '#d33'
+                });
+                return false;
+            }
+
+            // Verifica se todos os campos obrigatórios foram preenchidos
+            let camposVazios = [];
+            $(this).find('[required]').each(function() {
+                if (!$(this).val()) {
+                    camposVazios.push($(this).prev('label').text().replace('*', '').trim());
+                }
+            });
+
+            if (camposVazios.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Atenção!',
+                    text: 'Por favor, preencha os seguintes campos: ' + camposVazios.join(', '),
+                    confirmButtonColor: '#3085d6'
+                });
+                return false;
+            }
+
+            // Se tudo estiver ok, mostra o SweetAlert de confirmação
+            Swal.fire({
+                title: 'Confirmar cadastro?',
+                text: "Verifique se todos os dados estão corretos",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#4CAF50',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sim, cadastrar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostra loading enquanto processa
+                    Swal.fire({
+                        title: 'Processando...',
+                        html: 'Por favor, aguarde enquanto realizamos seu cadastro',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Faz o submit do formulário via AJAX
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: 'POST',
+                        data: $(this).serialize(),
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Cadastro realizado com sucesso!',
+                                confirmButtonColor: '#4CAF50',
+                                timer: 3000,
+                                timerProgressBar: true
+                            }).then(() => {
+                                window.location.href = 'index.php';
+                            });
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: 'Ocorreu um erro ao realizar o cadastro. Tente novamente.',
+                                confirmButtonColor: '#d33'
+                            });
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>

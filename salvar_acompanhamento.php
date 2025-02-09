@@ -13,7 +13,7 @@ require_once 'conexao.php';
 
 // Verifica permissão
 if (!isset($_SESSION['tipo_usuario']) || 
-    !in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro', 'ACS'])) {
+    !in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro', 'ACS', 'Paciente'])) {
     echo json_encode([
         'success' => false,
         'message' => 'Acesso não autorizado'

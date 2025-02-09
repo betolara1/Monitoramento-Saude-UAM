@@ -2279,20 +2279,18 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     <td>${acompanhamento.glicemia || 'Não informado'}</td>
                     <td>${acompanhamento.hipertensao || 'Não informado'}</td>
                     <td>${acompanhamento.observacoes || 'Não informado'}</td>
-                    ${temPermissao ? `
-                        <td>
-                            <div class="btn-group">
-                                <button onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, JSON_HEX_APOS | JSON_HEX_QUOT)); ?>)" 
-                                    class="btn btn-sm btn-warning">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
-                                <button onclick="excluirAcompanhamento(${acompanhamento.id})" 
-                                        class="btn btn-sm btn-danger">
-                                    <i class="fas fa-trash"></i> Excluir
-                                </button>
-                            </div>
-                        </td>
-                    ` : ''}
+                    <td>
+                        <div class="btn-group">
+                            <button onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, JSON_HEX_APOS | JSON_HEX_QUOT)); ?>)" 
+                                class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button onclick="excluirAcompanhamento(${acompanhamento.id})" 
+                                    class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
+                        </div>
+                    </td>
                 </tr>
             `;
         }
