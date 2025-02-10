@@ -96,12 +96,12 @@ include "sidebar.php";
         }
 
         .container {
-            padding: 2rem;
             max-width: 1200px;
             margin: 0 auto;
-            margin-left: 220px;
-            background: transparent;
-            box-shadow: none;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
         h1 {
@@ -151,34 +151,83 @@ include "sidebar.php";
         }
 
         .table-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            overflow-x: auto;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Define larguras específicas para cada coluna */
+        .table th:nth-child(1), .table td:nth-child(1) { width: 20%; } /* Exemplo de coluna */
+        .table th:nth-child(2), .table td:nth-child(2) { width: 15%; } /* Exemplo de coluna */
+        .table th:nth-child(3), .table td:nth-child(3) { width: 20%; } /* Exemplo de coluna */
+        .table th:nth-child(4), .table td:nth-child(4) { width: 15%; } /* Exemplo de coluna */
+        .table th:nth-child(5), .table td:nth-child(5) { width: 10%; } /* Exemplo de coluna */
+        .table th:nth-child(6), .table td:nth-child(6) { width: 20%; } /* Exemplo de coluna */
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: rgb(255, 255, 255);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
         }
 
         th {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 1rem;
-            text-align: left;
-        }
-
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            color:rgb(255, 255, 255);
         }
 
         tr:hover {
             background-color: #f8f9fa;
         }
 
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .btn-editar {
+                padding: 6px 12px;
+            }
+        }
+        
         .no-logs {
             text-align: center;
             padding: 2rem;
@@ -207,6 +256,7 @@ include "sidebar.php";
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
         }
 
         .pagination {
@@ -356,11 +406,11 @@ include "sidebar.php";
             <table>
                 <thead>
                     <tr>
-                        <th>Data/Hora</th>
-                        <th>Usuário</th>
-                        <th>Tipo</th>
-                        <th>Ação</th>
-                        <th>IP</th>
+                        <th><i class="fas fa-calendar-alt"></i> Data/Hora</th>
+                        <th><i class="fas fa-user"></i> Usuário</th>
+                        <th><i class="fas fa-info-circle"></i> Tipo</th>
+                        <th><i class="fas fa-tasks"></i> Ação</th>
+                        <th><i class="fas fa-network-wired"></i> IP</th>
                     </tr>
                 </thead>
                 <tbody id="logsTableBody">

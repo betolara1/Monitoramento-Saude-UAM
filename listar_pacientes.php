@@ -103,28 +103,6 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             font-size: 16px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
         .btn-editar {
             background-color: #0d6efd;
             color: white;
@@ -159,20 +137,6 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             color: #000;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            .btn-editar {
-                padding: 6px 12px;
-            }
-        }
-
         .table-container {
             overflow-x: auto;
             margin-top: 20px;
@@ -191,17 +155,67 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             padding: 12px;
             vertical-align: middle;
             border-top: 1px solid #dee2e6;
-            word-wrap: break-word;
-            white-space: normal;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        .table th:nth-child(1), .table td:nth-child(1) { width: 20%; }
+        .table th:nth-child(2), .table td:nth-child(2) { width: 15%; }
+        .table th:nth-child(3), .table td:nth-child(3) { width: 20%; }
+        .table th:nth-child(4), .table td:nth-child(4) { width: 15%; }
+        .table th:nth-child(5), .table td:nth-child(5) { width: 10%; }
+        .table th:nth-child(6), .table td:nth-child(6) { width: 20%; }
 
         .table thead th {
             vertical-align: bottom;
             border-bottom: 2px solid #dee2e6;
-            background-color: #f8f9fa;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: rgb(255, 255, 255);
+            font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 1;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn-group {
+            white-space: nowrap;
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .btn-editar {
+                padding: 6px 12px;
+            }
+
+            .table-container {
+                overflow-x: scroll;
+            }
+
+            .btn {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
         }
 
         .btn {

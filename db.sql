@@ -1,9 +1,9 @@
-CREATE DATABASE medicina;
+CREATE DATABASE IF NOT EXISTS teste_medicina;
 
-USE medicina;
+USE teste_medicina;
 
 -- Tabela de Usuários (pacientes, profissionais, familiares, etc.)
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     cpf VARCHAR(14) UNIQUE NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE usuarios (
 
 
 -- Tabela de Pacientes (dados específicos de pacientes com DCNTs)
-CREATE TABLE pacientes (
+CREATE TABLE IF NOT EXISTS pacientes (
  id INT AUTO_INCREMENT PRIMARY KEY,
  usuario_id INT NOT NULL,
  tipo_doenca VARCHAR(25) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE pacientes (
 
 
 -- Tabela de Profissionais de Saúde (associados aos pacientes)
-CREATE TABLE profissionais (
+CREATE TABLE IF NOT EXISTS profissionais (
  id INT AUTO_INCREMENT PRIMARY KEY,
  usuario_id INT NOT NULL,
  especialidade VARCHAR(100),
@@ -47,7 +47,7 @@ CREATE TABLE profissionais (
  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
-CREATE TABLE paciente_profissional (
+CREATE TABLE IF NOT EXISTS paciente_profissional (
     id INT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
     profissional_id INT NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE paciente_profissional (
 
 
 -- Tabela de Exames (resultados de exames dos pacientes)
-CREATE TABLE exames (
+CREATE TABLE IF NOT EXISTS exames (
  id INT AUTO_INCREMENT PRIMARY KEY,
  paciente_id INT NOT NULL,
  tipo_exame VARCHAR(100),
@@ -68,7 +68,7 @@ CREATE TABLE exames (
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
 
-CREATE TABLE acompanhamento_em_casa (
+CREATE TABLE IF NOT EXISTS acompanhamento_em_casa (
  id INT AUTO_INCREMENT PRIMARY KEY,
  paciente_id INT NOT NULL,
  data_acompanhamento DATE NOT NULL,
@@ -79,12 +79,12 @@ CREATE TABLE acompanhamento_em_casa (
 );
 
 -- Tabela de Consultas e Acompanhamento
-CREATE TABLE consultas (
+CREATE TABLE IF NOT EXISTS consultas (
  id INT AUTO_INCREMENT PRIMARY KEY,
  paciente_id INT NOT NULL,
  profissional_id INT,
  data_consulta DATE NOT NULL,
- observacoes TEXT;
+ observacoes TEXT,
  pressao_arterial VARCHAR(10),
  glicemia VARCHAR(10),
  peso DECIMAL(5,2),
@@ -98,7 +98,7 @@ CREATE TABLE consultas (
 );
 
 -- Tabela de Medicamentos e Controle de Uso
-CREATE TABLE medicamentos (
+CREATE TABLE IF NOT EXISTS medicamentos (
  id INT AUTO_INCREMENT PRIMARY KEY,
  paciente_id INT NOT NULL,
  nome_medicamento VARCHAR(100),
@@ -112,7 +112,7 @@ CREATE TABLE medicamentos (
 
 
 -- Tabela para Análises e Estatísticas
-CREATE TABLE analises_estatisticas (
+CREATE TABLE IF NOT EXISTS analises_estatisticas (
  id INT AUTO_INCREMENT PRIMARY KEY,
  paciente_id INT NOT NULL,
  data_analise DATE,
@@ -124,7 +124,7 @@ CREATE TABLE analises_estatisticas (
 
 
 -- Tabela de Logs de Acesso (para questões de segurança e rastreamento)
-CREATE TABLE logs_acesso (
+CREATE TABLE IF NOT EXISTS logs_acesso (
  id INT AUTO_INCREMENT PRIMARY KEY,
  usuario_id INT NOT NULL,
  acao VARCHAR(100),
@@ -133,7 +133,7 @@ CREATE TABLE logs_acesso (
  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
 
-CREATE TABLE riscos_saude (
+CREATE TABLE IF NOT EXISTS riscos_saude (
     id INT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
     data_calculo DATE NOT NULL,

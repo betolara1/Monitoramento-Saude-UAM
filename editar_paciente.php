@@ -65,11 +65,19 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Paciente</title>
     <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         
         .section-card {
@@ -129,32 +137,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         .section-header {
             margin-bottom: 20px;
             color: #333;
-        }
-
-        /* Estilos para as tabelas */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-
-        .data-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #dee2e6;
-            color: #495057;
-        }
-
-        .data-table td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-            vertical-align: middle;
-        }
-
-        .data-table tr:hover {
-            background-color: #f5f5f5;
         }
 
         /* Status badges */
@@ -513,6 +495,87 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             transform: scale(1);
         }
 
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .table th:nth-child(1), .table td:nth-child(1) { width: 20%; }
+        .table th:nth-child(2), .table td:nth-child(2) { width: 15%; }
+        .table th:nth-child(3), .table td:nth-child(3) { width: 20%; }
+        .table th:nth-child(4), .table td:nth-child(4) { width: 15%; }
+        .table th:nth-child(5), .table td:nth-child(5) { width: 10%; }
+        .table th:nth-child(6), .table td:nth-child(6) { width: 20%; }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: rgb(255, 255, 255);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn-group {
+            white-space: nowrap;
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+
+            .btn-editar {
+                padding: 6px 12px;
+            }
+
+            .table-container {
+                overflow-x: scroll;
+            }
+
+            .btn {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+        }
+
     </style>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -553,50 +616,51 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 <?php endif; ?>
             </div>
 
-            <!-- Tabela com os 3 últimos registros -->
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Glicemia</th>
-                        <th>Hipertensão</th>
-                        <th>Observações</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    // Armazenar todos os registros em um array
-                    $todos_acompanhamentos = [];
-                    while ($acompanhamento = $result_acompanhamento->fetch_assoc()) {
-                        $todos_acompanhamentos[] = $acompanhamento;
-                    }
-                    
-                    // Pegar apenas os 3 últimos registros
-                    $ultimos_tres = array_slice($todos_acompanhamentos, 0, 3);
-                    
-                    foreach ($ultimos_tres as $acompanhamento): ?>
-                        <tr data-id="<?php echo $acompanhamento['id']; ?>">
-                            <td><?php echo date('d/m/Y', strtotime($acompanhamento['data_acompanhamento'])); ?></td>
-                            <td><?php echo htmlspecialchars($acompanhamento['glicemia']) ?: 'Não informado'; ?></td>
-                            <td><?php echo htmlspecialchars($acompanhamento['hipertensao']) ?: 'Não informado'; ?></td>
-                            <td><?php echo htmlspecialchars($acompanhamento['observacoes']) ?: 'Não informado'; ?></td>
-                            <td>
-                                <?php if (podeEditarAcompanhamento()): ?>
-                                    <a href="#" onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, JSON_HEX_APOS | JSON_HEX_QUOT)); ?>)" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </a>
-                                    <a href="#" onclick="excluirAcompanhamento(<?php echo $acompanhamento['id']; ?>)" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i> Excluir
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-muted">Acesso restrito</span>
-                                <?php endif; ?>
-                            </td>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Glicemia</th>
+                            <th>Hipertensão</th>
+                            <th>Observações</th>
+                            <th>Ações</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        // Armazenar todos os registros em um array
+                        $todos_acompanhamentos = [];
+                        while ($acompanhamento = $result_acompanhamento->fetch_assoc()) {
+                            $todos_acompanhamentos[] = $acompanhamento;
+                        }
+                        
+                        // Pegar apenas os 3 últimos registros
+                        $ultimos_tres = array_slice($todos_acompanhamentos, 0, 3);
+                        
+                        foreach ($ultimos_tres as $acompanhamento): ?>
+                            <tr data-id="<?php echo $acompanhamento['id']; ?>">
+                                <td><?php echo date('d/m/Y', strtotime($acompanhamento['data_acompanhamento'])); ?></td>
+                                <td><?php echo htmlspecialchars($acompanhamento['glicemia']) ?: 'Não informado'; ?></td>
+                                <td><?php echo htmlspecialchars($acompanhamento['hipertensao']) ?: 'Não informado'; ?></td>
+                                <td><?php echo htmlspecialchars($acompanhamento['observacoes']) ?: 'Não informado'; ?></td>
+                                <td>
+                                    <?php if (podeEditarAcompanhamento()): ?>
+                                        <a href="#" onclick="editarAcompanhamento(<?php echo htmlspecialchars(json_encode($acompanhamento, JSON_HEX_APOS | JSON_HEX_QUOT)); ?>)" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <a href="#" onclick="excluirAcompanhamento(<?php echo $acompanhamento['id']; ?>)" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Excluir
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">Acesso restrito</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal para todos os acompanhamentos -->
@@ -767,61 +831,63 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         <!-- Seção de Doença -->
         <div class="section-card">
             <h2 class="section-header">Tipo de Doença</h2>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Tipo</th>
-                        <th>Histórico Familiar</th>
-                        <th>Estado Civil</th>
-                        <th>Profissão</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <?php if ($paciente['tipo_doenca']): ?>
-                                <span class="status-badge status-cadastrado">Cadastrado</span>
-                            <?php else: ?>
-                                <span class="status-badge status-pendente">Pendente</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php echo $paciente['tipo_doenca'] ? htmlspecialchars($paciente['tipo_doenca']) : 'Não cadastrado'; ?>
-                        </td>
-                        <td>
-                            <?php echo $paciente['historico_familiar'] ? htmlspecialchars($paciente['historico_familiar']) : 'Não informado'; ?>
-                        </td>
-                        <td>
-                            <?php echo $paciente['estado_civil'] ? htmlspecialchars($paciente['estado_civil']) : 'Não informado'; ?>
-                        </td>
-                        <td>
-                            <?php echo $paciente['profissao'] ? htmlspecialchars($paciente['profissao']) : 'Não informado'; ?>
-                        </td>
-                        <td>
-                            <?php if ($paciente['tipo_doenca']): ?>
-                                <a href="#" onclick="editarDoenca(<?php 
-                                    echo htmlspecialchars(json_encode([
-                                        'id' => $paciente['id'],
-                                        'tipo_doenca' => $paciente['tipo_doenca'],
-                                        'historico_familiar' => $paciente['historico_familiar'],
-                                        'estado_civil' => $paciente['estado_civil'],
-                                        'profissao' => $paciente['profissao']
-                                    ]), ENT_QUOTES); 
-                                ?>)" class="btn btn-sm btn-warning">
-                                <i class="fas fa-edit"></i>
-                                </a>
-                            <?php else: ?>
-                                <a href="cadastro_pacientes_doenca.php?id=<?php echo $paciente['usuario_id']; ?>" 
-                                class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus"></i>
-                                </a>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Tipo</th>
+                            <th>Histórico Familiar</th>
+                            <th>Estado Civil</th>
+                            <th>Profissão</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <?php if ($paciente['tipo_doenca']): ?>
+                                    <span class="status-badge status-cadastrado">Cadastrado</span>
+                                <?php else: ?>
+                                    <span class="status-badge status-pendente">Pendente</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php echo $paciente['tipo_doenca'] ? htmlspecialchars($paciente['tipo_doenca']) : 'Não cadastrado'; ?>
+                            </td>
+                            <td>
+                                <?php echo $paciente['historico_familiar'] ? htmlspecialchars($paciente['historico_familiar']) : 'Não informado'; ?>
+                            </td>
+                            <td>
+                                <?php echo $paciente['estado_civil'] ? htmlspecialchars($paciente['estado_civil']) : 'Não informado'; ?>
+                            </td>
+                            <td>
+                                <?php echo $paciente['profissao'] ? htmlspecialchars($paciente['profissao']) : 'Não informado'; ?>
+                            </td>
+                            <td>
+                                <?php if ($paciente['tipo_doenca']): ?>
+                                    <a href="#" onclick="editarDoenca(<?php 
+                                        echo htmlspecialchars(json_encode([
+                                            'id' => $paciente['id'],
+                                            'tipo_doenca' => $paciente['tipo_doenca'],
+                                            'historico_familiar' => $paciente['historico_familiar'],
+                                            'estado_civil' => $paciente['estado_civil'],
+                                            'profissao' => $paciente['profissao']
+                                        ]), ENT_QUOTES); 
+                                    ?>)" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <a href="cadastro_pacientes_doenca.php?id=<?php echo $paciente['usuario_id']; ?>" 
+                                    class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus"></i>
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal Editar Tipo de Doença -->
@@ -893,54 +959,56 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         <!-- Seção de Médico Responsável -->
         <div class="section-card">
             <h2 class="section-header">Médico Responsável</h2>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Nome do Médico</th>
-                        <th>Especialidade</th>
-                        <th>Unidade de Saúde</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <?php if (isset($paciente['nome_profissional']) && $paciente['nome_profissional'] !== 'Não atribuído'): ?>
-                                <span class="status-badge status-cadastrado">Atribuído</span>
-                            <?php else: ?>
-                                <span class="status-badge status-pendente">Não Atribuído</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?php echo htmlspecialchars($paciente['nome_profissional']); ?></td>
-                        <td>
-                            <?php echo $paciente['especialidade'] ? htmlspecialchars($paciente['especialidade']) : 'Não informado'; ?>
-                        </td>
-                        <td>
-                            <?php echo $paciente['unidade_saude'] ? htmlspecialchars($paciente['unidade_saude']) : 'Não informado'; ?>
-                        </td>
-                        <td>
-                            <?php if ($paciente['nome_profissional'] !== 'Não atribuído'): ?>
-                                <?php if (temPermissao()): ?>
-                                    <div class="section-actions">
-                                        <button onclick="abrirModalMedico(<?php echo $paciente_id; ?>)" class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit"></i>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Nome do Médico</th>
+                            <th>Especialidade</th>
+                            <th>Unidade de Saúde</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <?php if (isset($paciente['nome_profissional']) && $paciente['nome_profissional'] !== 'Não atribuído'): ?>
+                                    <span class="status-badge status-cadastrado">Atribuído</span>
+                                <?php else: ?>
+                                    <span class="status-badge status-pendente">Não Atribuído</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo htmlspecialchars($paciente['nome_profissional']); ?></td>
+                            <td>
+                                <?php echo $paciente['especialidade'] ? htmlspecialchars($paciente['especialidade']) : 'Não informado'; ?>
+                            </td>
+                            <td>
+                                <?php echo $paciente['unidade_saude'] ? htmlspecialchars($paciente['unidade_saude']) : 'Não informado'; ?>
+                            </td>
+                            <td>
+                                <?php if ($paciente['nome_profissional'] !== 'Não atribuído'): ?>
+                                    <?php if (temPermissao()): ?>
+                                        <div class="section-actions">
+                                            <button onclick="abrirModalMedico(<?php echo $paciente_id; ?>)" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <?php if (temPermissao()): ?>
+                                        <button onclick="abrirModalAtribuirMedico(<?php echo $paciente_id; ?>)" 
+                                                class="btn btn-primary"
+                                                <?php echo empty($paciente['tipo_doenca']) ? 'disabled' : ''; ?>>
+                                            <i class="fas fa-plus"></i>
                                         </button>
-                                    </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
-                            <?php else: ?>
-                                <?php if (temPermissao()): ?>
-                                    <button onclick="abrirModalAtribuirMedico(<?php echo $paciente_id; ?>)" 
-                                            class="btn btn-primary"
-                                            <?php echo empty($paciente['tipo_doenca']) ? 'disabled' : ''; ?>>
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal para trocar médico -->
@@ -1068,62 +1136,63 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 </div>
             </div>
 
-            <!-- Tabela com as 3 últimas consultas -->
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Profissional</th>
-                        <th>Pressão Arterial</th>
-                        <th>Glicemia</th>
-                        <th>Peso</th>
-                        <th>Altura</th>
-                        <th>IMC</th>
-                        <th>Classificação IMC</th>
-                        <th>Estado Emocional</th>
-                        <th>Habitos de Vida</th>
-                        <th>Observações</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    // Pegar apenas as 3 últimas consultas
-                    $ultimas_tres = array_slice($todas_consultas, 0, 3);
-                    
-                    foreach ($ultimas_tres as $consulta): ?>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td><?php echo date('d/m/Y', strtotime($consulta['data_consulta'])); ?></td>
-                            <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
-                            <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
-                            <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
-                            <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
-                            <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
-                            <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
-                            <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
-                            <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td>
-                            <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
-                            <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td>
+                            <th>Data</th>
+                            <th>Profissional</th>
+                            <th>Pressão Arterial</th>
+                            <th>Glicemia</th>
+                            <th>Peso</th>
+                            <th>Altura</th>
+                            <th>IMC</th>
+                            <th>Classificação IMC</th>
+                            <th>Estado Emocional</th>
+                            <th>Habitos de Vida</th>
+                            <th>Observações</th>
                             <?php if (temPermissao()): ?>
-                                <td>
-                                    <div class="btn-group">
-                                        <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
+                                <th>Ações</th>
                             <?php endif; ?>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // Pegar apenas as 3 últimas consultas
+                        $ultimas_tres = array_slice($todas_consultas, 0, 3);
+                        
+                        foreach ($ultimas_tres as $consulta): ?>
+                            <tr>
+                                <td><?php echo date('d/m/Y', strtotime($consulta['data_consulta'])); ?></td>
+                                <td><?php echo htmlspecialchars($consulta['nome_profissional']); ?></td>
+                                <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
+                                <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
+                                <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
+                                <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
+                                <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
+                                <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
+                                <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td>
+                                <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
+                                <td><?php echo htmlspecialchars($consulta['observacoes']) ?: '-'; ?></td>
+                                <?php if (temPermissao()): ?>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button onclick='editarConsulta(<?php echo json_encode($consulta, JSON_HEX_APOS | JSON_HEX_QUOT); ?>)' 
+                                                class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="excluirConsulta(<?php echo $consulta['id']; ?>)" 
+                                                class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal para todas as consultas -->
@@ -1731,56 +1800,57 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 <?php endif; ?>
             </div>
 
-            <!-- Tabela com os 3 últimos registros -->
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Medicamento</th>
-                        <th>Dosagem</th>
-                        <th>Frequência</th>
-                        <th>Data Início</th>
-                        <th>Data Fim</th>
-                        <th>Observações</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $query_med = "SELECT * FROM medicamentos WHERE paciente_id = ? ORDER BY data_inicio DESC LIMIT 3";
-                    $stmt_med = $conn->prepare($query_med);
-                    $stmt_med->bind_param('i', $paciente_id);
-                    $stmt_med->execute();
-                    $result_med = $stmt_med->get_result();
-
-                    while ($medicamento = $result_med->fetch_assoc()):
-                    ?>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
-                            <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
-                            <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
+                            <th>Medicamento</th>
+                            <th>Dosagem</th>
+                            <th>Frequência</th>
+                            <th>Data Início</th>
+                            <th>Data Fim</th>
+                            <th>Observações</th>
                             <?php if (temPermissao()): ?>
-                                <td>
-                                    <div class="btn-group">
-                                        <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
+                                <th>Ações</th>
                             <?php endif; ?>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $query_med = "SELECT * FROM medicamentos WHERE paciente_id = ? ORDER BY data_inicio DESC LIMIT 3";
+                        $stmt_med = $conn->prepare($query_med);
+                        $stmt_med->bind_param('i', $paciente_id);
+                        $stmt_med->execute();
+                        $result_med = $stmt_med->get_result();
+
+                        while ($medicamento = $result_med->fetch_assoc()):
+                        ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
+                                <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
+                                <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
+                                <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
+                                <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
+                                <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
+                                <?php if (temPermissao()): ?>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button onclick='editarMedicamento(<?php echo json_encode($medicamento); ?>)' 
+                                                class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="excluirMedicamento(<?php echo $medicamento['id']; ?>)" 
+                                                class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal para todos os medicamentos -->
@@ -1902,55 +1972,57 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 <?php endif; ?>
             </div>
             
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo de Exame</th>
-                        <th>Resultado</th>
-                        <th>Arquivo</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC LIMIT 3";
-                    $stmt_exames = $conn->prepare($query_exames);
-                    $stmt_exames->bind_param('i', $paciente_id);
-                    $stmt_exames->execute();
-                    $result_exames = $stmt_exames->get_result();
-
-                    while ($exame = $result_exames->fetch_assoc()):
-                    ?>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
-                            <td><?php echo $exame['tipo_exame']; ?></td>
-                            <td><?php echo nl2br($exame['resultado']); ?></td>
-                            <td>
-                                <?php if ($exame['arquivo_exame']): ?>
-                                    <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
-                                        <i class="fas fa-file-medical"></i> Ver Arquivo
-                                    </a>
-                                <?php endif; ?>
-                            </td>
+                            <th>Data</th>
+                            <th>Tipo de Exame</th>
+                            <th>Resultado</th>
+                            <th>Arquivo</th>
                             <?php if (temPermissao()): ?>
-                                <td>
-                                    <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
-                                            class="btn btn-sm btn-warning">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
+                                <th>Ações</th>
                             <?php endif; ?>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $query_exames = "SELECT * FROM exames WHERE paciente_id = ? ORDER BY data_exame DESC LIMIT 3";
+                        $stmt_exames = $conn->prepare($query_exames);
+                        $stmt_exames->bind_param('i', $paciente_id);
+                        $stmt_exames->execute();
+                        $result_exames = $stmt_exames->get_result();
+
+                        while ($exame = $result_exames->fetch_assoc()):
+                        ?>
+                            <tr>
+                                <td><?php echo date('d/m/Y', strtotime($exame['data_exame'])); ?></td>
+                                <td><?php echo $exame['tipo_exame']; ?></td>
+                                <td><?php echo nl2br($exame['resultado']); ?></td>
+                                <td>
+                                    <?php if ($exame['arquivo_exame']): ?>
+                                        <a href="<?php echo $exame['arquivo_exame']; ?>" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="fas fa-file-medical"></i> Ver Arquivo
+                                        </a>
+                                    <?php endif; ?>
+                                </td>
+                                <?php if (temPermissao()): ?>
+                                    <td>
+                                        <button onclick='editarExame(<?php echo json_encode($exame); ?>)' 
+                                                class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="excluirExame(<?php echo $exame['id']; ?>)" 
+                                                class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal de Exame -->
@@ -2088,45 +2160,47 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 </div>
             </div>
 
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Pressão Arterial</th>
-                        <th>Glicemia</th>
-                        <th>Risco Cardiovascular</th>
-                        <?php if (temPermissao()): ?>
-                            <th>Ações</th>
-                        <?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC LIMIT 3";
-                    $stmt_analises = $conn->prepare($query_analises);
-                    $stmt_analises->bind_param('i', $paciente_id);
-                    $stmt_analises->execute();
-                    $result_analises = $stmt_analises->get_result();
-
-                    while ($analise = $result_analises->fetch_assoc()):
-                    ?>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
-                            <td><?php echo $analise['comparativo_pa']; ?></td>
-                            <td><?php echo $analise['comparativo_glicemia']; ?></td>
-                            <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                            <th>Data</th>
+                            <th>Pressão Arterial</th>
+                            <th>Glicemia</th>
+                            <th>Risco Cardiovascular</th>
                             <?php if (temPermissao()): ?>
-                                <td>
-                                    <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
-                                            class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
+                                <th>Ações</th>
                             <?php endif; ?>
                         </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $query_analises = "SELECT * FROM analises_estatisticas WHERE paciente_id = ? ORDER BY data_analise DESC LIMIT 3";
+                        $stmt_analises = $conn->prepare($query_analises);
+                        $stmt_analises->bind_param('i', $paciente_id);
+                        $stmt_analises->execute();
+                        $result_analises = $stmt_analises->get_result();
+
+                        while ($analise = $result_analises->fetch_assoc()):
+                        ?>
+                            <tr>
+                                <td><?php echo date('d/m/Y', strtotime($analise['data_analise'])); ?></td>
+                                <td><?php echo $analise['comparativo_pa']; ?></td>
+                                <td><?php echo $analise['comparativo_glicemia']; ?></td>
+                                <td><?php echo $analise['comparativo_risco_cardio']; ?></td>
+                                <?php if (temPermissao()): ?>
+                                    <td>
+                                        <button onclick="excluirAnalise(<?php echo $analise['id']; ?>)" 
+                                                class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Modal para todas as análises -->
@@ -2399,7 +2473,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 dataType: 'json',
                 success: function(response) {
                     // Usar um seletor mais específico para a tabela de acompanhamentos
-                    const tabelaAcompanhamento = $('.section-card:contains("Acompanhamento em Casa") .data-table tbody');
+                    const tabelaAcompanhamento = $('.section-card:contains("Acompanhamento em Casa") .table tbody');
                     tabelaAcompanhamento.empty();
                     
                     if (response.registros.length === 0) {
@@ -2504,7 +2578,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     await Swal.fire({
                         icon: 'success',
                         title: 'Sucesso!',
-                        text: 'Dados atualizados com sucesso!'
+                        text: 'Dados atualizados com sucesso!',
+                        showConfirmButton: false
                     });
                     
                     location.reload();
@@ -2549,7 +2624,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Sucesso!',
-                                text: response.message || 'Operação realizada com sucesso!'
+                                text: 'Dados atualizados com sucesso!',
+                                showConfirmButton: false
                             }).then(() => location.reload());
                         } else {
                             throw new Error(response.message || 'Erro ao processar operação');
@@ -2595,7 +2671,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         Swal.fire({
                             icon: 'success',
                             title: 'Sucesso!',
-                            text: response.message
+                            text: 'Dados atualizados com sucesso!'
                         }).then(() => {
                             location.reload();
                         });
@@ -2813,71 +2889,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 });
         }
 
-        // Manipula o envio do formulário de edição
-        $('#formEditarConsulta').on('submit', function(e) {
-            e.preventDefault();
-            
-            let formData = $(this).serializeArray();
-            let dados = {};
-            
-            // Converte os dados do formulário para um objeto
-            formData.forEach(function(item) {
-                dados[item.name] = item.value;
-            });
-
-            // Debug
-            console.log('Dados a serem enviados:', dados);
-            
-            $.ajax({
-                url: 'atualizar_consulta.php',
-                type: 'POST',
-                data: dados,
-                dataType: 'json',
-                success: function(response) {
-                    console.log('Resposta do servidor:', response);
-                    try {
-                        if (response.success) {
-                            // Fecha o modal
-                            var myModal = bootstrap.Modal.getInstance(document.getElementById('modalEditarConsulta'));
-                            myModal.hide();
-                            
-                            // Mostra mensagem de sucesso
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sucesso!',
-                                text: 'Consulta atualizada com sucesso!'
-                            }).then((result) => {
-                                location.reload();
-                            });
-                        } else {
-                            throw new Error(response.message || 'Erro ao atualizar consulta');
-                        }
-                    } catch (error) {
-                        console.error('Erro ao processar resposta:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erro',
-                            text: error.message
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erro detalhado:', {
-                        status: status,
-                        error: error,
-                        responseText: xhr.responseText,
-                        readyState: xhr.readyState,
-                        statusText: xhr.statusText
-                    });
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erro',
-                        text: 'Erro ao processar a requisição. Verifique o console para mais detalhes.'
-                    });
-                }
-            });
-        });
-
         function excluirConsulta(consultaId) {
             Swal.fire({
                 title: 'Tem certeza?',
@@ -2900,6 +2911,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Excluído!',
+                                    showConfirmButton: false,
                                     text: 'A consulta foi excluída com sucesso.'
                                 }).then(() => {
                                     location.reload();
@@ -3011,7 +3023,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Sucesso!',
-                                text: jsonResponse.message || 'Operação realizada com sucesso!'
+                                text: 'Dados atualizados com sucesso!',
+                                showConfirmButton: false
                             }).then(() => location.reload());
                             
                             if (!isEditForm) {
@@ -3249,7 +3262,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Sucesso!',
-                                text: 'Risco cardiovascular salvo com sucesso!',
+                                text: 'Dados atualizados com sucesso!',
                                 showConfirmButton: false,
                                 timer: 1500
                             });
@@ -3393,7 +3406,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Sucesso!',
-                                text: 'Risco cardiovascular salvo com sucesso!',
+                                text: 'Dados atualizados com sucesso!',
                                 showConfirmButton: false,
                                 timer: 1500
                             });
@@ -3430,7 +3443,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Sucesso!',
-                                text: 'Risco atualizado com sucesso!',
+                                text: 'Dados atualizados com sucesso!',
                                 showConfirmButton: false,
                                 timer: 1500
                             });
@@ -3753,7 +3766,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Excluído!',
-                                    text: 'O medicamento foi excluído com sucesso.',
+                                    text: 'Dados atualizados com sucesso!',
                                     showConfirmButton: false,
                                     timer: 1500
                                 });
@@ -3798,7 +3811,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         Swal.fire({
                             icon: 'success',
                             title: 'Sucesso!',
-                            text: 'Medicamento salvo com sucesso!',
+                            text: 'Dados atualizados com sucesso!',
                             showConfirmButton: false,
                             timer: 1500,
                             didOpen: () => {
@@ -3850,7 +3863,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         if (response.success) {
                             console.log('Medicamentos:', response.medicamentos);
                             const tbody = tipo === 'principal' 
-                                ? $('.section-card .data-table tbody')
+                                ? $('.section-card .table tbody')
                                 : $('#modalTodosMedicamentos .table tbody');
                             
                             tbody.empty();
@@ -3979,7 +3992,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Excluído!',
-                                    text: 'O exame foi excluído com sucesso.'
+                                    text: 'O exame foi excluído com sucesso.',
+                                    showConfirmButton: false
                                 }).then(() => {
                                     location.reload();
                                 });
@@ -3992,7 +4006,9 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             }
                         },
                         error: function(xhr, status, error) {
-                            console.error('Erro:', xhr.responseText);
+                            console.error('Status:', status);
+                            console.error('Error:', error);
+                            console.error('Response:', xhr.responseText);
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Erro!',
@@ -4044,7 +4060,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Sucesso!',
-                                    text: 'Exame salvo com sucesso!'
+                                    text: 'Dados atualizados com sucesso!',
+                                    showConfirmButton: false
                                 }).then((result) => {
                                     // Recarrega a página após fechar o alerta
                                     location.reload();
@@ -4105,10 +4122,12 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Excluído!',
-                                    text: 'A análise foi excluída com sucesso.'
+                                    text: 'Dados atualizados com sucesso!',
+                                    showConfirmButton: false
                                 }).then(() => {
                                     // Atualizar tanto a tabela principal quanto o modal
                                     if ($('#modalTodasAnalises').hasClass('show')) {
+
                                         $('#modalTodasAnalises').modal('hide');
                                     }
                                     location.reload();
