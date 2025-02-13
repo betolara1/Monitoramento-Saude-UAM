@@ -689,6 +689,35 @@ $unidades = [
                             </div>
                         <?php endif; ?>
 
+                        <?php if ($tipo_usuario === 'ACS'): ?>
+                            <div class="mb-3">
+                                <label for="edit_micro_area" class="form-label">
+                                    <i class="fas fa-map-marked-alt"></i> Micro Área*
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="edit_micro_area" name="micro_area" required>
+                                        <option value="">Selecione</option>
+                                        <?php
+                                            $sql = "SELECT id, nome FROM micro_areas ORDER BY nome";
+                                            $result = $conn->query($sql);
+                                            
+                                            if ($result && $result->num_rows > 0) {
+                                                while($row = $result->fetch_assoc()) {
+                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "' data-id='" . $row['id'] . "'>" . htmlspecialchars($row['nome']) . "</option>";
+                                                }
+                                            }
+                                        ?>
+                                    </select>
+                                    <button type="button" class="btn btn-primary" onclick="abrirModalMicroArea()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger" onclick="deletarMicroArea()" id="btn-deletar-micro-area-edit" disabled>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="mb-3">
                             <label for="edit_unidade_saude" class="form-label">
                                 <i class="fas fa-hospital"></i> Unidade de Saúde
@@ -1030,12 +1059,12 @@ $unidades = [
                         return response.json();
                     })
                     .then(data => {
-                        console.log('Dados recebidos:', data); // Para debug
+                        console.log('Dados recebidos:', data);
                         
                         if (data.success && data.profissional) {
                             const profissional = data.profissional;
                             
-                            // Preencher os campos do formulário
+                            // Preencher os campos existentes
                             if ($('#edit_especialidade').length) {
                                 $('#edit_especialidade').val(profissional.especialidade).trigger('change');
                             }
@@ -1046,6 +1075,11 @@ $unidades = [
                             
                             if ($('#edit_unidade_saude').length) {
                                 $('#edit_unidade_saude').val(profissional.unidade_saude).trigger('change');
+                            }
+
+                            // Adicionar preenchimento da micro área
+                            if ($('#edit_micro_area').length) {
+                                $('#edit_micro_area').val(profissional.micro_area).trigger('change');
                             }
                             
                             modalEditar.show();
@@ -1224,68 +1258,11 @@ $unidades = [
             });
         }
 
-        function salvarMicroArea() {
-            const novaMicroArea = $('#nova_micro_area').val().trim();
-            
-            if (!novaMicroArea) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erro',
-                    text: 'Por favor, insira um nome para a micro área'
-                });
-                return;
-            }
-
-            $.ajax({
-                url: 'salvar_micro_area.php',
-                type: 'POST',
-                data: { nome: novaMicroArea },
-                success: function(response) {
-                    try {
-                        const data = JSON.parse(response);
-                        if (data.success) {
-                            // Adiciona a nova opção ao select
-                            const select = document.getElementById('micro_area');
-                            const newOption = new Option(novaMicroArea, novaMicroArea);
-                            newOption.setAttribute('data-id', data.id); // Assumindo que o backend retorna o ID
-                            select.add(newOption);
-                            
-                            // Fecha o modal
-                            const modalMicroArea = bootstrap.Modal.getInstance(document.getElementById('modalMicroArea'));
-                            modalMicroArea.hide();
-                            
-                            // Limpa o campo
-                            $('#nova_micro_area').val('');
-                            
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sucesso',
-                                text: 'Micro área adicionada com sucesso!'
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Erro',
-                                text: data.message || 'Erro ao salvar micro área'
-                            });
-                        }
-                    } catch (e) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erro',
-                            text: 'Erro ao processar resposta do servidor'
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erro',
-                        text: 'Erro ao comunicar com o servidor'
-                    });
-                }
-            });
-        }
+        // Adicionar o event listener para o select de micro área no modal de edição
+        document.getElementById('edit_micro_area')?.addEventListener('change', function() {
+            const btnDeletar = document.getElementById('btn-deletar-micro-area-edit');
+            btnDeletar.disabled = !this.value;
+        });
     </script>
 </body>
 </html>

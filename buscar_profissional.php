@@ -8,7 +8,7 @@ if (isset($_GET['id'])) {
     $id = $_GET['id'];
     
     // Modificar a query para buscar todos os dados necessários
-    $sql = "SELECT p.*, u.tipo_usuario 
+    $sql = "SELECT p.*, u.tipo_usuario, u.micro_area 
             FROM profissionais p 
             JOIN usuarios u ON p.usuario_id = u.id 
             WHERE p.id = ?";
@@ -28,7 +28,8 @@ if (isset($_GET['id'])) {
                     'especialidade' => $profissional['especialidade'],
                     'registro_profissional' => $profissional['registro_profissional'],
                     'unidade_saude' => $profissional['unidade_saude'],
-                    'tipo_usuario' => $profissional['tipo_usuario']
+                    'tipo_usuario' => $profissional['tipo_usuario'],
+                    'micro_area' => $profissional['micro_area']
                 ]
             ]);
         } else {
