@@ -7,6 +7,34 @@ if (!isset($_SESSION['usuario_id'])) {
     header("Location: index.php");
     exit();
 }
+
+function temPermissao($tipo_permissao = null) {
+    // Verifica se o usuário está logado
+    if (!isset($_SESSION['tipo_usuario'])) {
+        return false;
+    }
+
+    // Se não foi especificado um tipo de permissão, retorna true (usuário está logado)
+    if ($tipo_permissao === null) {
+        return true;
+    }
+
+    // Verifica o tipo de permissão
+    switch ($tipo_permissao) {
+        case 'Admin':
+            return $_SESSION['tipo_usuario'] === 'Admin';
+        case 'Medico':
+            return $_SESSION['tipo_usuario'] === 'Medico';
+        case 'Enfermeiro':
+            return $_SESSION['tipo_usuario'] === 'Enfermeiro';
+        case 'Paciente':
+            return $_SESSION['tipo_usuario'] === 'Paciente';
+        case 'ACS':
+            return $_SESSION['tipo_usuario'] === 'ACS';
+        default:
+            return false;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -136,6 +164,10 @@ if (!isset($_SESSION['usuario_id'])) {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
+
+        a.text-decoration-none {
+            color: inherit;
+        }
     </style>
 </head>
 <body>
@@ -147,45 +179,77 @@ if (!isset($_SESSION['usuario_id'])) {
     </div>
 
     <div class="row">
-        <div class="col-md-3 mb-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="fas fa-heartbeat feature-icon"></i>
-                    <h5 class="card-title">Monitoramento de Saúde</h5>
-                    <p class="card-text">Acompanhamento contínuo de pacientes com doenças crônicas.</p>
-                </div>
+        <?php if (temPermissao('Admin') || temPermissao('ACS') || temPermissao('Enfermeiro') || temPermissao('Medico')): ?>
+            <div class="col-md-3 mb-4">
+                <a href="cadastro_usuario.php" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-user-plus feature-icon"></i>
+                            <h5 class="card-title">Cadastrar Usuário</h5>
+                            <p class="card-text">Cadastre novos usuários, profissionais e pacientes no sistema.</p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </div>
-        
-        <div class="col-md-3 mb-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="fas fa-user-md feature-icon"></i>
-                    <h5 class="card-title">Equipe Médica</h5>
-                    <p class="card-text">Profissionais especializados para seu atendimento.</p>
-                </div>
+
+            <div class="col-md-3 mb-4">
+                <a href="listar_profissionais.php" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-user-md feature-icon"></i>
+                            <h5 class="card-title">Profissionais</h5>
+                            <p class="card-text">Visualize e gerencie a lista de profissionais cadastrados.</p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </div>
-        
-        <div class="col-md-3 mb-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="fas fa-chart-line feature-icon"></i>
-                    <h5 class="card-title">Análise de Dados</h5>
-                    <p class="card-text">Acompanhamento estatístico da evolução do paciente.</p>
-                </div>
+
+            <div class="col-md-3 mb-4">
+                <a href="listar_pacientes.php" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-users feature-icon"></i>
+                            <h5 class="card-title">Pacientes</h5>
+                            <p class="card-text">Acesse a lista completa de pacientes e seus dados.</p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </div>
-        
-        <div class="col-md-3 mb-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <i class="fas fa-mobile-alt feature-icon"></i>
-                    <h5 class="card-title">Acesso Facilitado</h5>
-                    <p class="card-text">Sistema responsivo para acesso em qualquer dispositivo.</p>
-                </div>
+        <?php endif; ?>
+
+        <?php if (temPermissao('Paciente')): 
+            $usuario_id = $_SESSION['usuario_id'];
+            $query = "SELECT id FROM pacientes WHERE usuario_id = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $usuario_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $paciente = $result->fetch_assoc();
+            $paciente_id = $paciente['id'];
+        ?>
+            <div class="col-md-3 mb-4">
+                <a href="listar_pacientes.php" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-user-edit feature-icon"></i>
+                            <h5 class="card-title">Meus Dados</h5>
+                            <p class="card-text">Visualize e atualize suas informações pessoais.</p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </div>
+            <div class="col-md-3 mb-4">
+                <a href="editar_paciente.php?id=<?php echo $paciente_id; ?>" class="text-decoration-none">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-user-edit feature-icon"></i>
+                            <h5 class="card-title">Meus Dados Clínicos</h5>
+                            <p class="card-text">Visualize e atualize suas informações pessoais e de saúde.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 

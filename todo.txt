@@ -1,7 +1,5 @@
 
 
-* campo automático para idade na calculadora de risco cardio 
-
 
 * notificação de medicamento via SMS (horário, nome e dosagem)
 

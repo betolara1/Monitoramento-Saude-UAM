@@ -1500,38 +1500,57 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     </div>
                     <div class="modal-body">
                         <form id="formRiscoCardiovascular">
-                            <!-- Campo oculto para o sexo do paciente -->
                             <?php
-                            $query_sexo = "SELECT u.sexo FROM usuarios u 
-                                          INNER JOIN pacientes p ON u.id = p.usuario_id 
-                                          WHERE p.id = ?";
-                            $stmt = $conn->prepare($query_sexo);
+                            // Buscar dados do usuário
+                            $query_usuario = "SELECT u.sexo, u.data_nascimento FROM usuarios u 
+                                            INNER JOIN pacientes p ON u.id = p.usuario_id 
+                                            WHERE p.id = ?";
+                            $stmt = $conn->prepare($query_usuario);
                             $stmt->bind_param("i", $paciente_id);
                             $stmt->execute();
-                            $result_sexo = $stmt->get_result();
-                            $paciente_sexo = $result_sexo->fetch_assoc();
-                            $sexo_valor = ($paciente_sexo['sexo'] == 'M') ? 'Homem' : 'Mulher';
+                            $result_usuario = $stmt->get_result();
+                            $usuario = $result_usuario->fetch_assoc();
+                            
+                            // Calcular idade
+                            $data_nascimento = new DateTime($usuario['data_nascimento']);
+                            $hoje = new DateTime();
+                            $idade = $data_nascimento->diff($hoje)->y;
+                            
+                            // Determinar faixa etária
+                            $faixa_etaria = '';
+                            if ($idade >= 20 && $idade <= 34) $faixa_etaria = '20-34';
+                            elseif ($idade >= 35 && $idade <= 39) $faixa_etaria = '35-39';
+                            elseif ($idade >= 40 && $idade <= 44) $faixa_etaria = '40-44';
+                            elseif ($idade >= 45 && $idade <= 49) $faixa_etaria = '45-49';
+                            elseif ($idade >= 50 && $idade <= 54) $faixa_etaria = '50-54';
+                            elseif ($idade >= 55 && $idade <= 59) $faixa_etaria = '55-59';
+                            elseif ($idade >= 60 && $idade <= 64) $faixa_etaria = '60-64';
+                            elseif ($idade >= 65 && $idade <= 69) $faixa_etaria = '65-69';
+                            elseif ($idade >= 70 && $idade <= 74) $faixa_etaria = '70-74';
+                            elseif ($idade >= 75 && $idade <= 79) $faixa_etaria = '75-79';
                             ?>
-                            <input type="hidden" name="sexo" value="<?php echo htmlspecialchars($sexo_valor); ?>">
+                            
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
 
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label><i class="fas fa-calendar-alt"></i> Idade:</label>
-                                        <select name="idade" class="form-control" required>
+                                        <label><i class="fas fa-venus-mars"></i> Sexo:</label>
+                                        <select name="sexo" class="form-control" required>
                                             <option value="">Selecione...</option>
-                                            <option value="20-34">20-34</option>
-                                            <option value="35-39">35-39</option>
-                                            <option value="40-44">40-44</option>
-                                            <option value="45-49">45-49</option>
-                                            <option value="50-54">50-54</option>
-                                            <option value="55-59">55-59</option>
-                                            <option value="60-64">60-64</option>
-                                            <option value="65-69">65-69</option>
-                                            <option value="70-74">70-74</option>
-                                            <option value="75-79">75-79</option>
+                                            <option value="Homem" <?php echo ($usuario['sexo'] == 'M') ? 'selected' : ''; ?>>Homem</option>
+                                            <option value="Mulher" <?php echo ($usuario['sexo'] == 'F') ? 'selected' : ''; ?>>Mulher</option>
                                         </select>
+                                    </div>
+                                    <div class="form-group mb-3">
+                                        <label><i class="fas fa-calendar-alt"></i> Idade:</label>
+                                        <input type="text" 
+                                            name="idade" 
+                                            class="form-control" 
+                                            value="<?php echo $idade; ?>" 
+                                            readonly 
+                                            required>
+                                        <small class="form-text text-muted">Idade calculada automaticamente com base na data de nascimento</small>
                                     </div>
                                     <div class="form-group mb-3">
                                         <label><i class="fas fa-vial"></i> Colesterol Total (mg/dL):</label>
@@ -1615,19 +1634,14 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label><i class="fas fa-calendar-alt"></i> Idade:</label>
-                                        <select name="idade" id="editar_idade" class="form-control" required>
-                                            <option value="">Selecione...</option>
-                                            <option value="20-34">20-34</option>
-                                            <option value="35-39">35-39</option>
-                                            <option value="40-44">40-44</option>
-                                            <option value="45-49">45-49</option>
-                                            <option value="50-54">50-54</option>
-                                            <option value="55-59">55-59</option>
-                                            <option value="60-64">60-64</option>
-                                            <option value="65-69">65-69</option>
-                                            <option value="70-74">70-74</option>
-                                            <option value="75-79">75-79</option>
-                                        </select>
+                                        <input type="text" 
+                                            name="idade" 
+                                            id="editar_idade" 
+                                            class="form-control" 
+                                            value="<?php echo $idade; ?>" 
+                                            readonly 
+                                            required>
+                                        <small class="form-text text-muted">Idade calculada automaticamente com base na data de nascimento</small>
                                     </div>
                                     <div class="form-group mb-3">
                                         <label><i class="fas fa-vial"></i> Colesterol Total (mg/dL):</label>
