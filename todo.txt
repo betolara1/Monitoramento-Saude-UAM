@@ -1,9 +1,5 @@
 
 
-* profissionais responsáveis (médicos e enf) 
-
-* alterar classificação do IMC para peso adequado 
-
 * campo automático para idade na calculadora de risco cardio 
 
 

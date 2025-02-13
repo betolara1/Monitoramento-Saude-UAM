@@ -15,10 +15,11 @@ $paciente_id = $_GET['id'];
 $sql = "SELECT 
     u.*,
     p.*,
-    COALESCE(up.nome, 'Não atribuído') as nome_profissional,
-    COALESCE(pr.especialidade, '') as especialidade,
-    COALESCE(pr.registro_profissional, '') as registro_profissional,
-    COALESCE(pr.unidade_saude, '') as unidade_saude
+    pp.tipo_profissional,
+    up.nome as nome_profissional,
+    pr.especialidade,
+    pr.registro_profissional,
+    pr.unidade_saude
     FROM usuarios u 
     INNER JOIN pacientes p ON u.id = p.usuario_id 
     LEFT JOIN paciente_profissional pp ON p.id = pp.paciente_id
@@ -958,134 +959,52 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         <!---------------------------------------------------------------------------->
         <!-- Seção de Médico Responsável -->
         <div class="section-card">
-            <h2 class="section-header">Médico Responsável</h2>
+            <h2 class="section-header">Profissionais Responsáveis</h2>
             <div class="table-container">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Status</th>
-                            <th>Nome do Médico</th>
+                            <th>Nome do Profissional</th>
+                            <th>Tipo</th>
                             <th>Especialidade</th>
                             <th>Unidade de Saúde</th>
-                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <?php if (isset($paciente['nome_profissional']) && $paciente['nome_profissional'] !== 'Não atribuído'): ?>
-                                    <span class="status-badge status-cadastrado">Atribuído</span>
-                                <?php else: ?>
-                                    <span class="status-badge status-pendente">Não Atribuído</span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?php echo htmlspecialchars($paciente['nome_profissional']); ?></td>
-                            <td>
-                                <?php echo $paciente['especialidade'] ? htmlspecialchars($paciente['especialidade']) : 'Não informado'; ?>
-                            </td>
-                            <td>
-                                <?php echo $paciente['unidade_saude'] ? htmlspecialchars($paciente['unidade_saude']) : 'Não informado'; ?>
-                            </td>
-                            <td>
-                                <?php if ($paciente['nome_profissional'] !== 'Não atribuído'): ?>
-                                    <?php if (temPermissao()): ?>
-                                        <div class="section-actions">
-                                            <button onclick="abrirModalMedico(<?php echo $paciente_id; ?>)" class="btn btn-sm btn-warning">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    <?php endif; ?>
-                                <?php else: ?>
-                                    <?php if (temPermissao()): ?>
-                                        <button onclick="abrirModalAtribuirMedico(<?php echo $paciente_id; ?>)" 
-                                                class="btn btn-primary"
-                                                <?php echo empty($paciente['tipo_doenca']) ? 'disabled' : ''; ?>>
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
+                        <?php
+                        $query_profissionais = "SELECT 
+                            pp.id as vinculo_id,
+                            u.nome as nome_profissional,
+                            pp.tipo_profissional,
+                            p.especialidade,
+                            p.unidade_saude
+                            FROM paciente_profissional pp
+                            JOIN profissionais p ON pp.profissional_id = p.id
+                            JOIN usuarios u ON p.usuario_id = u.id
+                            WHERE pp.paciente_id = ?
+                            ORDER BY pp.tipo_profissional, u.nome";
+                        
+                        $stmt_prof = $conn->prepare($query_profissionais);
+                        $stmt_prof->bind_param('i', $paciente_id);
+                        $stmt_prof->execute();
+                        $result_prof = $stmt_prof->get_result();
+                        
+                        if ($result_prof->num_rows > 0):
+                            while ($prof = $result_prof->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($prof['nome_profissional']); ?></td>
+                                    <td><?php echo htmlspecialchars($prof['tipo_profissional']); ?></td>
+                                    <td><?php echo $prof['especialidade'] ? htmlspecialchars($prof['especialidade']) : 'Não informado'; ?></td>
+                                    <td><?php echo $prof['unidade_saude'] ? htmlspecialchars($prof['unidade_saude']) : 'Não informado'; ?></td>
+                                </tr>
+                            <?php endwhile;
+                        else: ?>
+                            <tr>
+                                <td colspan="5" class="text-center">Nenhum profissional atribuído</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
-            </div>
-        </div>
-
-        <!-- Modal para trocar médico -->
-        <div class="modal fade" id="modalMedico" tabindex="-1" aria-labelledby="modalMedicoLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalMedicoLabel">Trocar Médico Responsável</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="formTrocarMedico" method="POST">
-                        <div class="modal-body">
-                            <input type="hidden" name="paciente_id" id="paciente_id">
-                            
-                            <div class="form-group mb-3">
-                                <label><i class="fas fa-user-md"></i> Selecione o Médico:</label>
-                                <select name="profissional_id" class="form-control" required>
-                                    <option value="">Selecione...</option>
-                                    <?php
-                                    $query_medicos = "SELECT p.id, u.nome, p.especialidade 
-                                                    FROM profissionais p 
-                                                    JOIN usuarios u ON p.usuario_id = u.id 
-                                                    WHERE u.tipo_usuario = 'Medico'
-                                                    ORDER BY u.nome";
-                                    $result_medicos = $conn->query($query_medicos);
-                                    while($medico = $result_medicos->fetch_assoc()) {
-                                        echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal para atribuir médico -->
-        <div class="modal fade" id="modalAtribuirMedico" tabindex="-1" aria-labelledby="modalAtribuirMedicoLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalAtribuirMedicoLabel">Atribuir Médico</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="formAtribuirMedico" method="POST">
-                        <div class="modal-body">
-                            <input type="hidden" name="paciente_id" id="atribuir_paciente_id">
-                            <input type="hidden" name="tipo_profissional" value="<?php echo $tipo_profissional; ?>">
-                            <div class="form-group mb-3">
-                                <label><i class="fas fa-user-md"></i> Selecione o Médico:</label>
-                                <select name="profissional_id" class="form-control" required>
-                                    <option value="">Selecione...</option>
-                                    <?php
-                                    $query_medicos = "SELECT p.id, u.nome, p.especialidade 
-                                                    FROM profissionais p 
-                                                    JOIN usuarios u ON p.usuario_id = u.id 
-                                                    WHERE u.tipo_usuario = 'Medico'
-                                                    ORDER BY u.nome";
-                                    $result_medicos = $conn->query($query_medicos);
-                                    while($medico = $result_medicos->fetch_assoc()) {
-                                        echo "<option value='{$medico['id']}'>{$medico['nome']} - {$medico['especialidade']}</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
 
@@ -1168,8 +1087,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                 <td><?php echo htmlspecialchars($consulta['pressao_arterial']); ?></td>
                                 <td><?php echo htmlspecialchars($consulta['glicemia']); ?></td>
                                 <td><?php echo $consulta['peso'] ? number_format($consulta['peso'], 1) . ' kg' : '-'; ?></td>
-                                <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
                                 <td><?php echo $consulta['altura'] ? number_format($consulta['altura']) . ' cm' : '-'; ?></td>
+                                <td><?php echo $consulta['imc'] ? number_format($consulta['imc'], 1) : '-'; ?></td>
                                 <td><?php echo htmlspecialchars($consulta['classificacao_imc']) ?: '-'; ?></td>
                                 <td><?php echo htmlspecialchars($consulta['estado_emocional']) ?: '-'; ?></td>
                                 <td><?php echo htmlspecialchars($consulta['habitos_vida']) ?: '-'; ?></td>
@@ -2598,103 +2517,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         <!---------------------------------------------------------------------------->
         <!-- Script para o modal de médico -->
-        function abrirModalMedico(pacienteId) {
-            $('#paciente_id').val(pacienteId);
-            new bootstrap.Modal(document.getElementById('modalMedico')).show();
-        }
 
-        function abrirModalAtribuirMedico(pacienteId) {
-            $('#atribuir_paciente_id').val(pacienteId);
-            new bootstrap.Modal(document.getElementById('modalAtribuirMedico')).show();
-        }
-
-        function handleFormSubmit(formId, actionUrl, modalId) {
-            $(`#${formId}`).on('submit', function(e) {
-                e.preventDefault();
-                
-                $.ajax({
-                    url: actionUrl,
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-                            bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
-                            
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sucesso!',
-                                text: 'Dados atualizados com sucesso!',
-                                showConfirmButton: false
-                            }).then(() => location.reload());
-                        } else {
-                            throw new Error(response.message || 'Erro ao processar operação');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Erro na requisição:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erro',
-                            text: 'Erro ao processar a requisição'
-                        });
-                    }
-                });
-            });
-        }
-
-        $(document).ready(function() {
-            handleFormSubmit('formTrocarMedico', 'trocar_medico.php', 'modalMedico');
-            handleFormSubmit('formAtribuirMedico', 'atribuir_medico.php', 'modalAtribuirMedico');
-        });
-
-        $('#formAtribuirMedico').on('submit', function(e) {
-            e.preventDefault();
-            
-            // Mostrar loading
-            Swal.fire({
-                title: 'Processando...',
-                text: 'Aguarde enquanto atribuímos o médico',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            $.ajax({
-                url: 'atribuir_medico.php',
-                type: 'POST',
-                data: $(this).serialize(),
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Sucesso!',
-                            text: 'Dados atualizados com sucesso!'
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erro',
-                            text: response.message
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Erro na requisição:', error);
-                    console.log('Resposta do servidor:', xhr.responseText);
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erro',
-                        text: 'Ocorreu um erro ao atribuir o médico. Por favor, tente novamente.'
-                    });
-                }
-            });
-        });
 
 
         <!---------------------------------------------------------------------------->
@@ -3083,7 +2906,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 // Classificação do IMC
                 let classificacao = '';
                 if (imc < 18.5) classificacao = 'Abaixo do peso';
-                else if (imc < 25) classificacao = 'Peso normal';
+                else if (imc < 25) classificacao = 'Peso adequado';
                 else if (imc < 30) classificacao = 'Sobrepeso';
                 else if (imc < 35) classificacao = 'Obesidade Grau I';
                 else if (imc < 40) classificacao = 'Obesidade Grau II';

@@ -315,7 +315,7 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                             <td>
                                 <button class="btn btn-primary btn-editar-usuario" 
                                         onclick="abrirModalEditarUsuario(<?php echo $usuario['id']; ?>)">
-                                    <i class="fas fa-edit"></i> Editar Cadastro
+                                    <i class="fas fa-edit"></i> Editar
                                 </button>
                                 <?php if ($usuario['paciente_id']): ?>
                                     <a href="editar_paciente.php?id=<?php echo $usuario['paciente_id']; ?>" 
@@ -325,8 +325,14 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                                 <?php else: ?>
                                     <a href="cadastro_paciente.php?id=<?php echo $usuario['id']; ?>" 
                                        class="btn btn-warning">
-                                        <i class="fas fa-user-plus"></i> Completar Cadastro
+                                        <i class="fas fa-user-plus"></i> Completar
                                     </a>
+                                <?php endif; ?>
+
+                                <?php if (($is_admin || $is_medico || $is_enfermeiro) && !$is_paciente && !$is_acs): ?>
+                                    <button class="btn btn-danger" onclick="deletarUsuario(<?php echo $usuario['id']; ?>)">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -784,6 +790,56 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
         const btnDeletar = document.getElementById('btn-deletar-micro-area-edit');
         btnDeletar.disabled = !this.value;
     });
+    </script>
+
+    <script>
+    function deletarUsuario(usuarioId) {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: "Esta ação não poderá ser revertida!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: 'deletar_usuario.php',
+                    type: 'POST',
+                    data: { usuario_id: usuarioId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso!',
+                                text: 'Usuário excluído com sucesso!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro!',
+                                text: response.message || 'Erro ao excluir usuário'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro!',
+                            text: 'Erro ao processar a requisição'
+                        });
+                    }
+                });
+            }
+        });
+    }
     </script>
 </body>
 </html>
