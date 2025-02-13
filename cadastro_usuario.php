@@ -190,23 +190,53 @@ include 'sidebar.php';
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="data_nascimento" class="form-label">
                                 <i class="fas fa-birthday-cake"></i> Data de Nascimento*
                             </label>
-                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" max="" required>
+                            <input type="text" class="form-control" id="data_nascimento" name="data_nascimento" required placeholder="DD/MM/AAAA">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <label for="sexo" class="form-label">
-                                <i class="fas fa-venus-mars"></i> Sexo*
+                                <i class="fas fa-venus-mars"></i> Gênero*
                             </label>
                             <select class="form-select" id="sexo" name="sexo" required>
                                 <option value="">Selecione</option>
                                 <option value="M">Masculino</option>
                                 <option value="F">Feminino</option>
+                                <option value="Outros">Outros</option>
                             </select>
+                            <div id="outro_genero_div" style="display: none; margin-top: 10px;">
+                                <input type="text" class="form-control" id="outro_genero" name="outro_genero" placeholder="Especifique seu gênero">
+                            </div>
                         </div>
-                        <div class="col-md-4">
+                        <?php if (isset($_SESSION['tipo_usuario']) && in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro', 'ACS'])): ?>
+                            <div class="col-md-3">
+                                <label for="micro_area" class="form-label">
+                                    <i class="fas fa-map-marked-alt"></i> Micro Área*
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="micro_area" name="micro_area" required>
+                                        <option value="">Selecione</option>
+                                        <?php
+                                            $sql = "SELECT nome FROM micro_areas ORDER BY nome";
+                                            $result = $conn->query($sql);
+                                            
+                                            if ($result && $result->num_rows > 0) {
+                                                while($row = $result->fetch_assoc()) {
+                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "'>" . htmlspecialchars($row['nome']) . "</option>";
+                                                }
+                                            }
+                                        ?>
+                                    </select>
+                                    <button type="button" class="btn btn-primary" onclick="abrirModalMicroArea()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="col-md-2">
                             <?php if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
                                 <label for="numero_familia" class="form-label">
                                     <i class="fas fa-users"></i> N° da Família*
@@ -530,6 +560,77 @@ include 'sidebar.php';
                     });
                 }, 500); // Delay de 500ms
             });
+
+            // Máscara para data de nascimento
+            $('#data_nascimento').mask('00/00/0000');
+            
+            // Validação da data de nascimento
+            $('#data_nascimento').blur(function() {
+                let data = $(this).val();
+                if(data) {
+                    // Converte data do formato DD/MM/YYYY para objeto Date
+                    let partes = data.split('/');
+                    let dataNascimento = new Date(partes[2], partes[1] - 1, partes[0]);
+                    let hoje = new Date();
+                    let dataMinima = new Date('1900-01-01');
+                    
+                    // Validações
+                    if(dataNascimento > hoje) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data inválida',
+                            text: 'A data de nascimento não pode ser maior que hoje'
+                        });
+                        $(this).val('');
+                        return;
+                    }
+                    
+                    if(dataNascimento < dataMinima) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data inválida',
+                            text: 'A data de nascimento não pode ser anterior a 01/01/1900'
+                        });
+                        $(this).val('');
+                        return;
+                    }
+                    
+                    // Validação adicional para data válida
+                    if(partes[2] < 1900 || partes[1] > 12 || partes[0] > 31) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data inválida',
+                            text: 'Por favor, insira uma data válida'
+                        });
+                        $(this).val('');
+                        return;
+                    }
+                }
+            });
+
+            $('#sexo').change(function() {
+                if($(this).val() === 'Outros') {
+                    $('#outro_genero_div').show();
+                    $('#outro_genero').prop('required', true);
+                } else {
+                    $('#outro_genero_div').hide();
+                    $('#outro_genero').prop('required', false);
+                    $('#outro_genero').val('');
+                }
+            });
+        });
+
+        // Adicione este código ao bloco de JavaScript existente
+        $('form').submit(function(e) {
+            if ($('#sexo').val() === 'Outros' && !$('#outro_genero').val().trim()) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Campo obrigatório',
+                    text: 'Por favor, especifique seu gênero'
+                });
+                return false;
+            }
         });
 
         // Função para validar CPF
@@ -681,6 +782,93 @@ include 'sidebar.php';
                 }
             });
         });
+
+        function abrirModalMicroArea() {
+            var myModal = new bootstrap.Modal(document.getElementById('modalMicroArea'));
+            myModal.show();
+        }
+
+        function salvarMicroArea() {
+            const novaMicroArea = $('#nova_micro_area').val().trim();
+            
+            if (!novaMicroArea) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Por favor, insira um nome para a micro área'
+                });
+                return;
+            }
+
+            $.ajax({
+                url: 'salvar_micro_area.php',
+                type: 'POST',
+                data: { nome: novaMicroArea },
+                success: function(response) {
+                    try {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            // Adiciona a nova opção ao select
+                            $('#micro_area').append(new Option(novaMicroArea, novaMicroArea));
+                            
+                            // Fecha o modal
+                            $('#modalMicroArea').modal('hide');
+                            
+                            // Limpa o campo
+                            $('#nova_micro_area').val('');
+                            
+                            // Mostra mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso',
+                                text: 'Micro área adicionada com sucesso!'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: data.message || 'Erro ao salvar micro área'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao processar resposta do servidor'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao comunicar com o servidor'
+                    });
+                }
+            });
+        }
     </script>
+
+    <!-- Adicione este modal no final do arquivo, antes do </body> -->
+    <div class="modal fade" id="modalMicroArea" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Nova Micro Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nova_micro_area">Nome da Micro Área</label>
+                        <input type="text" class="form-control" id="nova_micro_area" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarMicroArea()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -14,6 +14,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Hash da senha
     $senha_hash = password_hash($_POST['senha'], PASSWORD_DEFAULT);
 
+    // Determina o valor do sexo baseado na seleção
+    $sexo = $_POST['sexo'];
+    if ($sexo === 'Outros' && !empty($_POST['outro_genero'])) {
+        $sexo = $_POST['outro_genero'];
+    }
+
+    $micro_area = null;
+    if (isset($_POST['micro_area'])) {
+        $micro_area = $_POST['micro_area'];
+    }
 
     // Prepara a query SQL com todas as colunas necessárias
     $sql = "INSERT INTO usuarios (
@@ -32,13 +42,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         cidade, 
         estado,
         data_nascimento,
-        sexo
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        sexo,
+        micro_area
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
     // Bind dos parâmetros na mesma ordem das colunas
-    $stmt->bind_param("ssssssssssssssss", 
+    $stmt->bind_param("sssssssssssssssss", 
         $_POST['nome'],
         $_POST['cpf'],
         $_POST['email'],
@@ -54,7 +65,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_POST['cidade'],
         $_POST['estado'],
         $_POST['data_nascimento'],
-        $_POST['sexo']
+        $sexo,
+        $micro_area
     );
     
     if ($stmt->execute()) {

@@ -1,0 +1,15 @@
+
+* cada ACS ter acesso a sua micro área 
+
+
+* profissionais responsáveis (médicos e enf) 
+
+* alterar classificação do IMC para peso adequado 
+
+* campo automático para idade na calculadora de risco cardio 
+
+
+* notificação de medicamento via SMS (horário, nome e dosagem)
+
+* Colocar os card no inicio pra entrar nas respectivas paginas 
+(Paciente ir direto pra pagina de acessar dados e pagina para dados clinicos)

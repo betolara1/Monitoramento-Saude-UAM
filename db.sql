@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS teste_medicina;
+CREATE DATABASE IF NOT EXISTS medicina;
 
-USE teste_medicina;
+USE medicina;
 
 -- Tabela de Usuários (pacientes, profissionais, familiares, etc.)
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -19,8 +19,18 @@ CREATE TABLE IF NOT EXISTS usuarios (
     bairro VARCHAR(50) NOT NULL,
     cidade VARCHAR(50) NOT NULL,
     estado CHAR(2) NOT NULL,
-    data_nascimento DATE,
-    sexo ENUM('M', 'F'),
+    data_nascimento VARCHAR(12) NOT NULL,
+    sexo VARCHAR(20) NOT NULL,
+    micro_area VARCHAR(50),
+    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+alter table usuarios add column micro_area VARCHAR(50) after sexo;
+alter table usuarios modify sexo VARCHAR(20) NOT NULL;
+alter table usuarios modify data_nascimento VARCHAR(12) NOT NULL;
+
+CREATE TABLE IF NOT EXISTS micro_areas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL UNIQUE,
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -44,8 +54,10 @@ CREATE TABLE IF NOT EXISTS profissionais (
  especialidade VARCHAR(100),
  registro_profissional VARCHAR(50),
  unidade_saude VARCHAR(100),
+ micro_area VARCHAR(20),
  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 );
+alter table profissionais add column micro_area VARCHAR(20) after unidade_saude;
 
 CREATE TABLE IF NOT EXISTS paciente_profissional (
     id INT AUTO_INCREMENT PRIMARY KEY,

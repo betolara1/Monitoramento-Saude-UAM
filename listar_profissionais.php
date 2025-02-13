@@ -61,103 +61,11 @@ $titulo = $tipo_usuario === 'Admin' ? "Profissionais de Saúde" : ($tipo_usuario
 
 // Mova os arrays para o PHP
 $especialidades = [
-    "Acupuntura",
-    "Alergia e Imunologia",
-    "Anestesiologia",
-    "Angiologia",
-    "Cardiologia",
-    "Cirurgia Cardiovascular",
-    "Cirurgia da Mão",
-    "Cirurgia de Cabeça e Pescoço",
-    "Cirurgia do Aparelho Digestivo",
-    "Cirurgia Geral",
-    "Cirurgia Pediátrica",
-    "Cirurgia Plástica",
-    "Cirurgia Torácica",
-    "Cirurgia Vascular",
-    "Clínica Médica",
-    "Coloproctologia",
-    "Dermatologia",
-    "Endocrinologia e Metabologia",
-    "Endoscopia",
-    "Enfermeiro",
-    "Gastroenterologia",
-    "Genética Médica",
-    "Geriatria",
-    "Ginecologia e Obstetrícia",
-    "Hematologia e Hemoterapia",
-    "Homeopatia",
-    "Infectologia",
-    "Mastologia",
-    "Medicina de Emergência",
-    "Medicina de Família e Comunidade",
-    "Medicina do Trabalho",
-    "Medicina de Tráfego",
-    "Medicina Esportiva",
-    "Medicina Física e Reabilitação",
-    "Medicina Intensiva",
-    "Medicina Legal e Perícia Médica",
-    "Medicina Nuclear",
-    "Medicina Preventiva e Social",
-    "Nefrologia",
-    "Neurocirurgia",
-    "Neurologia",
-    "Nutrologia",
-    "Oftalmologia",
-    "Oncologia Clínica",
-    "Ortopedia e Traumatologia",
-    "Otorrinolaringologia",
-    "Patologia",
-    "Patologia Clínica/Medicina Laboratorial",
-    "Pediatria",
-    "Pneumologia",
-    "Psiquiatria",
-    "Radiologia e Diagnóstico por Imagem",
-    "Radioterapia",
-    "Reumatologia",
-    "Urologia"
+    "Medicina de Família e Comunidade"
 ];
 
 $unidades = [
-    "UBS Alvorada",
-    "UBS Cecap",
-    "UBS Centro",
-    "UBS Independência",
-    "UBS Jardim Oriente",
-    "UBS Mario Dedini",
-    "UBS Parque Orlanda",
-    "UBS Paulicéia",
-    "UBS Piracicamirim",
-    "UBS São Jorge",
-    "UBS Vila Cristina",
-    "UBS Vila Rezende",
-    "UBS Vila Sônia",
-    "CRAB Boa Esperança",
-    "CRAB Nova América",
-    "CRAB Piracicamirim",
-    "CRAB Vila Rezende",
-    "CRAB Vila Sônia",
-    "USF 1° de Maio",
-    "USF Algodoal",
-    "USF Anhumas",
-    "USF Artemis",
-    "USF Boa Esperança",
-    "USF Chapadão",
-    "USF Costa Rica",
-    "USF Jardim Gilda",
-    "USF Jardim Vitória",
-    "USF Monte Líbano",
-    "USF Novo Horizonte",
-    "USF Santa Fé",
-    "USF Santa Rosa",
-    "USF Santo Antonio",
-    "USF São Francisco",
-    "USF Serra Verde",
-    "USF Tanquinho",
-    "USF Tupi",
-    "Santa Casa de Piracicaba",
-    "Hospital dos Fornecedores de Cana",
-    "Hospital Unimed Piracicaba"
+    "USF Santa Rita Avencas"
 ];
 ?>
 
@@ -177,7 +85,6 @@ $unidades = [
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <!-- 4. Seu CSS personalizado deve vir por último -->
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -234,14 +141,6 @@ $unidades = [
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-        }
-
-        .btn-primary {
-            background-color: #4CAF50;
-        }
-
-        .btn-primary:hover {
-            background-color: #45a049;
         }
 
         .status-badge {
@@ -626,11 +525,13 @@ $unidades = [
                             <td><?php echo htmlspecialchars($profissional['unidade_saude'] ?? ''); ?></td>
                             <td>
                                 <?php if ($profissional['especialidade']): ?>
-                                    <button onclick="abrirModalEditar(<?php echo $profissional['profissional_id']; ?>, <?php echo $profissional['usuario_id']; ?>)" class="btn btn-primary">Editar</button>
+                                    <button onclick="abrirModalEditar(<?php echo $profissional['profissional_id']; ?>, <?php 
+                                        echo $profissional['usuario_id']; ?>)" 
+                                        class="btn btn-primary"><i class="fas fa-user-edit"></i> Editar</button>
                                 <?php else: ?>
                                     <button onclick="abrirModalCadastro(<?php 
                                         echo $profissional['usuario_id']; ?>)" 
-                                        class="btn btn-primary">Cadastrar</button>
+                                        class="btn btn-warning"><i class="fas fa-user-plus"></i> Cadastrar</button>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -682,6 +583,32 @@ $unidades = [
                             </div>
                         <?php endif; ?>
 
+                        <?php if ($tipo_usuario === 'ACS'): ?>
+                            <div class="mb-3">
+                                <label for="micro_area" class="form-label">
+                                    <i class="fas fa-map-marked-alt"></i> Micro Área*
+                                </label>
+                                <div class="input-group">
+                                    <select class="form-select" id="micro_area" name="micro_area" required>
+                                        <option value="">Selecione</option>
+                                        <?php
+                                            $sql = "SELECT nome FROM micro_areas ORDER BY nome";
+                                            $result = $conn->query($sql);
+                                            
+                                            if ($result && $result->num_rows > 0) {
+                                                while($row = $result->fetch_assoc()) {
+                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "'>" . htmlspecialchars($row['nome']) . "</option>";
+                                                }
+                                            }
+                                        ?>
+                                    </select>
+                                    <button type="button" class="btn btn-primary" onclick="abrirModalMicroArea()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="mb-3">
                             <label for="unidade_saude" class="form-label">
                                 <i class="fas fa-hospital"></i> Unidade de Saúde
@@ -694,7 +621,7 @@ $unidades = [
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button>
                     </form>
                 </div>
             </div>
@@ -761,6 +688,28 @@ $unidades = [
                             <i class="fas fa-save"></i> Atualizar
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Micro Área -->
+    <div class="modal fade" id="modalMicroArea" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Nova Micro Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nova_micro_area">Nome da Micro Área</label>
+                        <input type="text" class="form-control" id="nova_micro_area" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarMicroArea()">Salvar</button>
                 </div>
             </div>
         </div>
@@ -1090,6 +1039,71 @@ $unidades = [
                     .catch(error => {
                         handleError(error, 'carregar os dados do profissional');
                     });
+            }
+
+            function abrirModalMicroArea() {
+                var myModal = new bootstrap.Modal(document.getElementById('modalMicroArea'));
+                myModal.show();
+            }
+
+            function salvarMicroArea() {
+                const novaMicroArea = $('#nova_micro_area').val().trim();
+                
+                if (!novaMicroArea) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Por favor, insira um nome para a micro área'
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    url: 'salvar_micro_area.php',
+                    type: 'POST',
+                    data: { nome: novaMicroArea },
+                    success: function(response) {
+                        try {
+                            const data = JSON.parse(response);
+                            if (data.success) {
+                                // Adiciona a nova opção ao select
+                                $('#micro_area').append(new Option(novaMicroArea, novaMicroArea));
+                                
+                                // Fecha o modal
+                                $('#modalMicroArea').modal('hide');
+                                
+                                // Limpa o campo
+                                $('#nova_micro_area').val('');
+                                
+                                // Mostra mensagem de sucesso
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sucesso',
+                                    text: 'Micro área adicionada com sucesso!'
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: data.message || 'Erro ao salvar micro área'
+                                });
+                            }
+                        } catch (e) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro ao processar resposta do servidor'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao comunicar com o servidor'
+                        });
+                    }
+                });
             }
         });
 
