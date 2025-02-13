@@ -18,6 +18,17 @@ $is_enfermeiro = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] =
 $is_paciente = isset($_SESSION['tipo_usuario']) && $_SESSION['tipo_usuario'] === 'Paciente';
 $usuario_id = $_SESSION['usuario_id'] ?? null;
 
+
+// Modificar a query para buscar micro áreas da tabela micro_areas
+$sql_micro_areas = "SELECT id, nome FROM micro_areas ORDER BY nome";
+$result_micro_areas = $conn->query($sql_micro_areas);
+$micro_areas = [];
+if ($result_micro_areas) {
+    while ($row = $result_micro_areas->fetch_assoc()) {
+        $micro_areas[] = $row;
+    }
+}
+
 // Query SQL diferente baseada no tipo de usuário
 if ($is_admin || $is_medico || $is_enfermeiro || $is_acs) {
     // Admin e Profissional veem todos os pacientes
@@ -25,7 +36,8 @@ if ($is_admin || $is_medico || $is_enfermeiro || $is_acs) {
         u.*,
         p.id as paciente_id,
         p.tipo_doenca,
-        u.cpf
+        u.cpf,
+        u.micro_area_id
         FROM usuarios u 
         LEFT JOIN pacientes p ON u.id = p.usuario_id 
         WHERE u.tipo_usuario = 'Paciente' 
@@ -91,16 +103,41 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             text-align: center;
         }
 
-        .search-box {
+        .search-container {
             margin-bottom: 20px;
         }
 
-        .search-box input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ced4da;
+        .search-container .row {
+            margin: 0;
+            gap: 15px;
+        }
+
+        .search-container .form-control,
+        .search-container .form-select {
+            height: 38px;
             border-radius: 4px;
-            font-size: 16px;
+            border: 1px solid #ced4da;
+        }
+
+        .search-container .form-select {
+            cursor: pointer;
+        }
+
+        .search-container .form-select:focus,
+        .search-container .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .search-container .col-md-6,
+            .search-container .col-md-4 {
+                margin-bottom: 10px;
+            }
         }
 
         .btn-editar {
@@ -195,34 +232,6 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             white-space: nowrap;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            .btn-editar {
-                padding: 6px 12px;
-            }
-
-            .table-container {
-                overflow-x: scroll;
-            }
-
-            .btn {
-                padding: 4px 8px;
-                font-size: 0.75rem;
-            }
-        }
-
-        .btn {
-            display: inline-block;
-            margin: 2px;
-        }
-
         .status-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -259,12 +268,26 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
         <h1><?php echo $titulo; ?></h1>
         
         <?php if ($is_admin || $is_medico || $is_enfermeiro || $is_acs): ?>
-            <div class="search-box">
-                <input type="text" 
-                       id="busca" 
-                       class="form-control" 
-                       onkeyup="filtrarPacientes()" 
-                       placeholder="Buscar por nome, CPF, email ou telefone...">
+            <div class="search-container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" 
+                               id="busca" 
+                               class="form-control" 
+                               placeholder="Buscar por nome, CPF, email ou telefone...">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <select id="micro_area_filter" class="form-select">
+                            <option value="">Todas as Micro Áreas</option>
+                            <?php foreach ($micro_areas as $area): ?>
+                                <option value="<?php echo htmlspecialchars($area['id']); ?>">
+                                    <?php echo htmlspecialchars($area['nome']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
         
@@ -282,7 +305,8 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                 </thead>
                 <tbody id="pacientes-tbody">
                     <?php foreach ($usuarios as $usuario): ?>
-                        <tr data-usuario-id="<?php echo $usuario['id']; ?>">
+                        <tr data-usuario-id="<?php echo $usuario['id']; ?>" 
+                            data-micro-area="<?php echo htmlspecialchars($usuario['micro_area_id']); ?>">
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['cpf'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($usuario['email']); ?></td>
@@ -369,6 +393,30 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                                         <input type="text" class="form-control" id="edit_numero_familia" name="numero_familia" required placeholder="00000000">
                                     </div>
                                 </div>
+
+                                <?php if ($is_admin || $is_medico || $is_enfermeiro || $is_acs): ?>
+                                    <div class="col-md-4">
+                                        <label for="edit_micro_area" class="form-label">
+                                            <i class="fas fa-map-marked-alt"></i> Micro Área*
+                                        </label>
+                                        <div class="input-group">
+                                            <select class="form-select" id="edit_micro_area" name="micro_area_id" required>
+                                                <option value="">Selecione</option>
+                                                <?php foreach ($micro_areas as $area): ?>
+                                                    <option value="<?php echo htmlspecialchars($area['id']); ?>">
+                                                        <?php echo htmlspecialchars($area['nome']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <button type="button" class="btn btn-primary" onclick="abrirModalMicroArea()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger" onclick="deletarMicroArea()" id="btn-deletar-micro-area-edit" disabled>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -467,6 +515,28 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
         </div>
     </div>
 
+    <!-- Adicionar o Modal de Micro Área após os outros modais -->
+    <div class="modal fade" id="modalMicroArea" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Nova Micro Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nova_micro_area">Nome da Micro Área</label>
+                        <input type="text" class="form-control" id="nova_micro_area" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarMicroArea()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     
     <?php if ($is_admin || $is_medico || $is_enfermeiro || $is_acs): ?>
@@ -474,6 +544,7 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
     function filtrarPacientes() {
         const input = document.getElementById('busca');
         const filter = input.value.toLowerCase();
+        const microAreaSelecionada = document.getElementById('micro_area_filter').value;
         const tbody = document.getElementById('pacientes-tbody');
         const rows = tbody.getElementsByTagName('tr');
 
@@ -482,11 +553,16 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
             const cpf = row.cells[1].textContent.toLowerCase();
             const email = row.cells[2].textContent.toLowerCase();
             const telefone = row.cells[3].textContent.toLowerCase();
+            const microAreaUsuario = row.getAttribute('data-micro-area');
             
-            if (nome.includes(filter) || 
-                cpf.includes(filter) || 
-                email.includes(filter) || 
-                telefone.includes(filter)) {
+            const matchTexto = nome.includes(filter) || 
+                              cpf.includes(filter) || 
+                              email.includes(filter) || 
+                              telefone.includes(filter);
+                              
+            const matchMicroArea = !microAreaSelecionada || microAreaSelecionada === microAreaUsuario;
+
+            if (matchTexto && matchMicroArea) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';
@@ -522,6 +598,11 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                     $('#edit_data_nascimento').val(response.data.data_nascimento);
                     $('#edit_sexo').val(response.data.sexo);
                     $('#edit_numero_familia').val(response.data.numero_familia);
+
+                    // Adicionar preenchimento da micro área
+                    if ($('#edit_micro_area').length) {
+                        $('#edit_micro_area').val(response.data.micro_area_id).trigger('change');
+                    }
 
                     // Abrir o modal
                     new bootstrap.Modal(document.getElementById('modalEditarUsuario')).show();
@@ -607,6 +688,101 @@ $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pac
                 });
             }
         });
+    });
+
+    // Função para filtrar por micro área
+    document.getElementById('micro_area_filter').addEventListener('change', function() {
+        const microAreaSelecionada = this.value;
+        const tbody = document.getElementById('pacientes-tbody');
+        const rows = tbody.getElementsByTagName('tr');
+
+        for (let row of rows) {
+            const microAreaUsuario = row.getAttribute('data-micro-area');
+            
+            if (!microAreaSelecionada || microAreaSelecionada === microAreaUsuario) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+
+    // Adicionar evento de busca também ao select de micro área
+    document.getElementById('micro_area_filter').addEventListener('change', filtrarPacientes);
+    document.getElementById('busca').addEventListener('input', filtrarPacientes);
+    </script>
+
+    <script>
+    function abrirModalMicroArea() {
+        var myModal = new bootstrap.Modal(document.getElementById('modalMicroArea'));
+        myModal.show();
+    }
+
+    function salvarMicroArea() {
+        const novaMicroArea = $('#nova_micro_area').val().trim();
+        
+        if (!novaMicroArea) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: 'Por favor, insira um nome para a micro área'
+            });
+            return;
+        }
+
+        $.ajax({
+            url: 'salvar_micro_area.php',
+            type: 'POST',
+            data: { nome: novaMicroArea },
+            success: function(response) {
+                try {
+                    const data = JSON.parse(response);
+                    if (data.success) {
+                        // Adiciona a nova opção aos selects
+                        const novaOption = new Option(novaMicroArea, data.id);
+                        $('#edit_micro_area').append(novaOption);
+                        $('#micro_area_filter').append(novaOption);
+                        
+                        // Fecha o modal
+                        $('#modalMicroArea').modal('hide');
+                        
+                        // Limpa o campo
+                        $('#nova_micro_area').val('');
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sucesso',
+                            text: 'Micro área adicionada com sucesso!'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: data.message || 'Erro ao salvar micro área'
+                        });
+                    }
+                } catch (e) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao processar resposta do servidor'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Erro ao comunicar com o servidor'
+                });
+            }
+        });
+    }
+
+    // Adicionar o event listener para o select de micro área
+    document.getElementById('edit_micro_area')?.addEventListener('change', function() {
+        const btnDeletar = document.getElementById('btn-deletar-micro-area-edit');
+        btnDeletar.disabled = !this.value;
     });
     </script>
 </body>

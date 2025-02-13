@@ -1,6 +1,4 @@
 
-* cada ACS ter acesso a sua micro área 
-
 
 * profissionais responsáveis (médicos e enf) 
 
