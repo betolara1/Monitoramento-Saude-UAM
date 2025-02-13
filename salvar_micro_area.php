@@ -3,7 +3,7 @@ session_start();
 include 'conexao.php';
 
 // Verifica se é um administrador
-if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] !== 'Admin') {
+if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] === 'Paciente') {
     echo json_encode(['success' => false, 'message' => 'Acesso não autorizado']);
     exit;
 }

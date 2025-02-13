@@ -211,7 +211,7 @@ include 'sidebar.php';
                             </div>
                         </div>
                         <?php if (isset($_SESSION['tipo_usuario']) && in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro', 'ACS'])): ?>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="micro_area" class="form-label">
                                     <i class="fas fa-map-marked-alt"></i> Micro Área*
                                 </label>
@@ -219,12 +219,12 @@ include 'sidebar.php';
                                     <select class="form-select" id="micro_area" name="micro_area" required>
                                         <option value="">Selecione</option>
                                         <?php
-                                            $sql = "SELECT nome FROM micro_areas ORDER BY nome";
+                                            $sql = "SELECT id, nome FROM micro_areas ORDER BY nome";
                                             $result = $conn->query($sql);
                                             
                                             if ($result && $result->num_rows > 0) {
                                                 while($row = $result->fetch_assoc()) {
-                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "'>" . htmlspecialchars($row['nome']) . "</option>";
+                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "' data-id='" . $row['id'] . "'>" . htmlspecialchars($row['nome']) . "</option>";
                                                 }
                                             }
                                         ?>
@@ -232,12 +232,15 @@ include 'sidebar.php';
                                     <button type="button" class="btn btn-primary" onclick="abrirModalMicroArea()">
                                         <i class="fas fa-plus"></i>
                                     </button>
+                                    <button type="button" class="btn btn-danger" onclick="deletarMicroArea()" id="btn-deletar-micro-area" disabled>
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </div>
                             </div>
                         <?php endif; ?>
 
                         <div class="col-md-2">
-                            <?php if (!isset($_SESSION['tipo_usuario']) || $_SESSION['tipo_usuario'] === 'Paciente'): ?>
+                        <?php if (isset($_SESSION['tipo_usuario']) && in_array($_SESSION['tipo_usuario'], ['Admin', 'Medico', 'Enfermeiro', 'ACS'])): ?>
                                 <label for="numero_familia" class="form-label">
                                     <i class="fas fa-users"></i> N° da Família*
                                 </label>
@@ -262,7 +265,7 @@ include 'sidebar.php';
                             <input type="email" class="form-control" id="email" name="email" required>
                             <span id="email-status"></span>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="telefone" class="form-label">
                                 <i class="fas fa-phone"></i> Telefone*
                             </label>
@@ -343,7 +346,7 @@ include 'sidebar.php';
                             </label>
                             <input type="text" class="form-control" id="cidade" name="cidade" readonly placeholder="Cidade">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <label for="estado" class="form-label">
                                 <i class="fas fa-flag"></i> Estado
                             </label>
@@ -352,7 +355,7 @@ include 'sidebar.php';
                     </div>
 
                     <div class="row">
-                        <div class="col-md-12">
+                        <div class="col-md-5">
                             <label for="complemento" class="form-label">
                                 <i class="fas fa-info-circle"></i> Complemento
                             </label>
@@ -382,6 +385,27 @@ include 'sidebar.php';
                 </button>
             </div>
         </form>
+    </div>
+
+    <div class="modal fade" id="modalMicroArea" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Nova Micro Área</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nova_micro_area">Nome da Micro Área</label>
+                        <input type="text" class="form-control" id="nova_micro_area" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarMicroArea()">Salvar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/confirmar_senha.js"></script>
@@ -847,28 +871,84 @@ include 'sidebar.php';
                 }
             });
         }
-    </script>
 
-    <!-- Adicione este modal no final do arquivo, antes do </body> -->
-    <div class="modal fade" id="modalMicroArea" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Adicionar Nova Micro Área</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="nova_micro_area">Nome da Micro Área</label>
-                        <input type="text" class="form-control" id="nova_micro_area" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="salvarMicroArea()">Salvar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+        // Habilitar/desabilitar botão de deletar baseado na seleção
+        document.getElementById('micro_area').addEventListener('change', function() {
+            const btnDeletar = document.getElementById('btn-deletar-micro-area');
+            btnDeletar.disabled = !this.value;
+        });
+
+        function deletarMicroArea() {
+            const select = document.getElementById('micro_area');
+            const option = select.options[select.selectedIndex];
+            const microAreaId = option.getAttribute('data-id');
+            const microAreaNome = option.text;
+
+            if (!microAreaId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Por favor, selecione uma micro área para deletar'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Confirmar exclusão',
+                text: `Deseja realmente excluir a micro área "${microAreaNome}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sim, deletar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'deletar_micro_area.php',
+                        type: 'POST',
+                        data: { id: microAreaId },
+                        success: function(response) {
+                            try {
+                                const data = JSON.parse(response);
+                                if (data.success) {
+                                    // Remove a opção do select
+                                    option.remove();
+                                    
+                                    // Desabilita o botão de deletar
+                                    document.getElementById('btn-deletar-micro-area').disabled = true;
+                                    
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Sucesso',
+                                        text: 'Micro área deletada com sucesso!'
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Erro',
+                                        text: data.message || 'Erro ao deletar micro área'
+                                    });
+                                }
+                            } catch (e) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: 'Erro ao processar resposta do servidor'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro ao comunicar com o servidor'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    </script>
 </body>
 </html>

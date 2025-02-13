@@ -19,7 +19,7 @@ $usuario_id = $_SESSION['usuario_id'] ?? null;
 if ($tipo_usuario === 'Admin') {
     // Admin vê todos os profissionais e ACS
     $sql = "SELECT u.id as usuario_id, 
-            u.nome, u.email, u.telefone, u.tipo_usuario,
+            u.nome, u.email, u.telefone, u.tipo_usuario, u.micro_area,
             p.id as profissional_id,
             p.especialidade, p.registro_profissional, p.unidade_saude 
             FROM usuarios u 
@@ -29,7 +29,7 @@ if ($tipo_usuario === 'Admin') {
 } elseif ($tipo_usuario === 'ACS') {
     // ACS vê apenas seu próprio perfil
     $sql = "SELECT u.id as usuario_id, 
-            u.nome, u.email, u.telefone, u.tipo_usuario,
+            u.nome, u.email, u.telefone, u.tipo_usuario, u.micro_area,
             p.id as profissional_id,
             p.especialidade, p.registro_profissional, p.unidade_saude 
             FROM usuarios u 
@@ -507,6 +507,9 @@ $unidades = [
                         <th><i class="fas fa-envelope"></i> Email</th>
                         <th><i class="fas fa-phone"></i> Telefone</th>
                         <th><i class="fas fa-user-md"></i> Profissional</th>
+                        <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'ACS'): ?>
+                            <th><i class="fas fa-map-marked-alt"></i> Micro Área</th>
+                        <?php endif; ?>
                         <th><i class="fas fa-stethoscope"></i> Especialidade</th>
                         <th><i class="fas fa-id-card"></i> Registro Profissional</th>
                         <th><i class="fas fa-hospital"></i> Unidade de Saúde</th>
@@ -520,6 +523,17 @@ $unidades = [
                             <td><?php echo htmlspecialchars($profissional['email']); ?></td>
                             <td><?php echo htmlspecialchars($profissional['telefone']); ?></td>
                             <td><?php echo htmlspecialchars($profissional['tipo_usuario']); ?></td>
+                            <?php if ($tipo_usuario === 'Admin' || $tipo_usuario === 'ACS'): ?>
+                                <td>
+                                    <?php 
+                                    if ($profissional['tipo_usuario'] === 'ACS') {
+                                        echo htmlspecialchars($profissional['micro_area'] ?? 'Não definida');
+                                    } else {
+                                        echo '-';
+                                    }
+                                    ?>
+                                </td>
+                            <?php endif; ?>
                             <td><?php echo htmlspecialchars($profissional['especialidade'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($profissional['registro_profissional'] ?? ''); ?></td>
                             <td><?php echo htmlspecialchars($profissional['unidade_saude'] ?? ''); ?></td>
@@ -592,18 +606,21 @@ $unidades = [
                                     <select class="form-select" id="micro_area" name="micro_area" required>
                                         <option value="">Selecione</option>
                                         <?php
-                                            $sql = "SELECT nome FROM micro_areas ORDER BY nome";
+                                            $sql = "SELECT id, nome FROM micro_areas ORDER BY nome";
                                             $result = $conn->query($sql);
                                             
                                             if ($result && $result->num_rows > 0) {
                                                 while($row = $result->fetch_assoc()) {
-                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "'>" . htmlspecialchars($row['nome']) . "</option>";
+                                                    echo "<option value='" . htmlspecialchars($row['nome']) . "' data-id='" . $row['id'] . "'>" . htmlspecialchars($row['nome']) . "</option>";
                                                 }
                                             }
                                         ?>
                                     </select>
                                     <button type="button" class="btn btn-primary" onclick="abrirModalMicroArea()">
                                         <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger" onclick="deletarMicroArea()" id="btn-deletar-micro-area" disabled>
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                             </div>
@@ -1040,72 +1057,73 @@ $unidades = [
                         handleError(error, 'carregar os dados do profissional');
                     });
             }
+        });
 
-            function abrirModalMicroArea() {
-                var myModal = new bootstrap.Modal(document.getElementById('modalMicroArea'));
-                myModal.show();
+        function abrirModalMicroArea() {
+            var myModal = new bootstrap.Modal(document.getElementById('modalMicroArea'));
+            myModal.show();
+        }
+
+        function salvarMicroArea() {
+            const novaMicroArea = $('#nova_micro_area').val().trim();
+            
+            if (!novaMicroArea) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Por favor, insira um nome para a micro área'
+                });
+                return;
             }
 
-            function salvarMicroArea() {
-                const novaMicroArea = $('#nova_micro_area').val().trim();
-                
-                if (!novaMicroArea) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erro',
-                        text: 'Por favor, insira um nome para a micro área'
-                    });
-                    return;
-                }
-
-                $.ajax({
-                    url: 'salvar_micro_area.php',
-                    type: 'POST',
-                    data: { nome: novaMicroArea },
-                    success: function(response) {
-                        try {
-                            const data = JSON.parse(response);
-                            if (data.success) {
-                                // Adiciona a nova opção ao select
-                                $('#micro_area').append(new Option(novaMicroArea, novaMicroArea));
-                                
-                                // Fecha o modal
-                                $('#modalMicroArea').modal('hide');
-                                
-                                // Limpa o campo
-                                $('#nova_micro_area').val('');
-                                
-                                // Mostra mensagem de sucesso
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Sucesso',
-                                    text: 'Micro área adicionada com sucesso!'
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Erro',
-                                    text: data.message || 'Erro ao salvar micro área'
-                                });
-                            }
-                        } catch (e) {
+            $.ajax({
+                url: 'salvar_micro_area.php',
+                type: 'POST',
+                data: { nome: novaMicroArea },
+                success: function(response) {
+                    try {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            // Adiciona a nova opção ao select
+                            $('#micro_area').append(new Option(novaMicroArea, novaMicroArea));
+                            
+                            // Fecha o modal
+                            $('#modalMicroArea').modal('hide');
+                            
+                            // Limpa o campo
+                            $('#nova_micro_area').val('');
+                            
+                            // Mostra mensagem de sucesso
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso',
+                                text: 'Micro área adicionada com sucesso!'
+                            });
+                        } else {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Erro',
-                                text: 'Erro ao processar resposta do servidor'
+                                text: data.message || 'Erro ao salvar micro área'
                             });
                         }
-                    },
-                    error: function() {
+                    } catch (e) {
                         Swal.fire({
                             icon: 'error',
                             title: 'Erro',
-                            text: 'Erro ao comunicar com o servidor'
+                            text: 'Erro ao processar resposta do servidor'
                         });
                     }
-                });
-            }
-        });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao comunicar com o servidor'
+                    });
+                }
+            });
+        }
+
 
         // Adicione esta função no início do seu arquivo
         function handleError(error, context) {
@@ -1116,6 +1134,156 @@ $unidades = [
                 icon: 'error',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#4CAF50'
+            });
+        }
+
+        // Funções globais
+        function abrirModalMicroArea() {
+            const modalMicroArea = new bootstrap.Modal(document.getElementById('modalMicroArea'));
+            modalMicroArea.show();
+        }
+
+        // Habilitar/desabilitar botão de deletar baseado na seleção
+        document.getElementById('micro_area')?.addEventListener('change', function() {
+            const btnDeletar = document.getElementById('btn-deletar-micro-area');
+            btnDeletar.disabled = !this.value;
+        });
+
+        function deletarMicroArea() {
+            const select = document.getElementById('micro_area');
+            const option = select.options[select.selectedIndex];
+            const microAreaId = option.getAttribute('data-id');
+            const microAreaNome = option.text;
+
+            if (!microAreaId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Por favor, selecione uma micro área para deletar'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'Confirmar exclusão',
+                text: `Deseja realmente excluir a micro área "${microAreaNome}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sim, deletar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'deletar_micro_area.php',
+                        type: 'POST',
+                        data: { id: microAreaId },
+                        success: function(response) {
+                            try {
+                                const data = JSON.parse(response);
+                                if (data.success) {
+                                    // Remove a opção do select
+                                    option.remove();
+                                    
+                                    // Desabilita o botão de deletar
+                                    document.getElementById('btn-deletar-micro-area').disabled = true;
+                                    
+                                    // Limpa a seleção
+                                    select.value = '';
+                                    
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Sucesso',
+                                        text: 'Micro área deletada com sucesso!'
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Erro',
+                                        text: data.message || 'Erro ao deletar micro área'
+                                    });
+                                }
+                            } catch (e) {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Erro',
+                                    text: 'Erro ao processar resposta do servidor'
+                                });
+                            }
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: 'Erro ao comunicar com o servidor'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function salvarMicroArea() {
+            const novaMicroArea = $('#nova_micro_area').val().trim();
+            
+            if (!novaMicroArea) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erro',
+                    text: 'Por favor, insira um nome para a micro área'
+                });
+                return;
+            }
+
+            $.ajax({
+                url: 'salvar_micro_area.php',
+                type: 'POST',
+                data: { nome: novaMicroArea },
+                success: function(response) {
+                    try {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            // Adiciona a nova opção ao select
+                            const select = document.getElementById('micro_area');
+                            const newOption = new Option(novaMicroArea, novaMicroArea);
+                            newOption.setAttribute('data-id', data.id); // Assumindo que o backend retorna o ID
+                            select.add(newOption);
+                            
+                            // Fecha o modal
+                            const modalMicroArea = bootstrap.Modal.getInstance(document.getElementById('modalMicroArea'));
+                            modalMicroArea.hide();
+                            
+                            // Limpa o campo
+                            $('#nova_micro_area').val('');
+                            
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sucesso',
+                                text: 'Micro área adicionada com sucesso!'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erro',
+                                text: data.message || 'Erro ao salvar micro área'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erro',
+                            text: 'Erro ao processar resposta do servidor'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erro',
+                        text: 'Erro ao comunicar com o servidor'
+                    });
+                }
             });
         }
     </script>
