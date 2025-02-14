@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $nome_medicamento = $_POST['nome_medicamento'];
         $dosagem = $_POST['dosagem'];
         $frequencia = $_POST['frequencia'];
+        $horario = $_POST['horario'];
         $data_inicio = $_POST['data_inicio'];
         $data_fim = !empty($_POST['data_fim']) ? $_POST['data_fim'] : null;
         $observacoes = $_POST['observacoes'];
@@ -27,16 +28,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         nome_medicamento = ?, 
                         dosagem = ?, 
                         frequencia = ?, 
+                        horario = ?,
                         data_inicio = ?, 
                         data_fim = ?, 
                         observacoes = ? 
                      WHERE id = ? AND paciente_id = ?";
             
             $stmt = $conn->prepare($query);
-            $stmt->bind_param("ssssssii", 
+            $stmt->bind_param("sssssssii", 
                 $nome_medicamento, 
                 $dosagem, 
-                $frequencia, 
+                $frequencia,
+                $horario, 
                 $data_inicio, 
                 $data_fim, 
                 $observacoes, 
@@ -49,18 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         paciente_id, 
                         nome_medicamento, 
                         dosagem, 
-                        frequencia, 
+                        frequencia,
+                        horario, 
                         data_inicio, 
                         data_fim, 
                         observacoes
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $conn->prepare($query);
-            $stmt->bind_param("issssss", 
+            $stmt->bind_param("isssssss", 
                 $paciente_id, 
                 $nome_medicamento, 
                 $dosagem, 
-                $frequencia, 
+                $frequencia,
+                $horario, 
                 $data_inicio, 
                 $data_fim, 
                 $observacoes

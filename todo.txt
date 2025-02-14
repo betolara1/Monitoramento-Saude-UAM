@@ -3,5 +3,4 @@
 
 * notificação de medicamento via SMS (horário, nome e dosagem)
 
-* Colocar os card no inicio pra entrar nas respectivas paginas 
-(Paciente ir direto pra pagina de acessar dados e pagina para dados clinicos)
+ver o calculo do risco cardíaco

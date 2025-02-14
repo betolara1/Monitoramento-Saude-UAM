@@ -50,6 +50,24 @@ function podeEditarAcompanhamento() {
     return isset($_SESSION['tipo_usuario']) && in_array($_SESSION['tipo_usuario'], $tiposPermitidos);
 }
 
+// Adicione esta função no início do arquivo ou em um arquivo de funções
+function calcularHorarios($horarioInicial, $frequencia) {
+    if (!$horarioInicial || !$frequencia) return '';
+    
+    $horarios = [];
+    $hora = DateTime::createFromFormat('H:i:s', $horarioInicial);
+    
+    if (!$hora) return '';
+    
+    // Gerar 4 horários (24h / frequência, limitado a 4)
+    for ($i = 0; $i < min(4, 24/$frequencia); $i++) {
+        $horarios[] = $hora->format('H:i');
+        $hora->modify("+{$frequencia} hours");
+    }
+    
+    return implode(' → ', $horarios);
+}
+
 // Consultar dados de acompanhamento em casa
 $query_acompanhamento = "SELECT * FROM acompanhamento_em_casa WHERE paciente_id = ? ORDER BY data_acompanhamento DESC";
 $stmt_acompanhamento = $conn->prepare($query_acompanhamento);
@@ -575,6 +593,13 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 padding: 4px 8px;
                 font-size: 0.75rem;
             }
+        }
+        .table td {
+            vertical-align: middle;
+        }
+        /* Estilo para os horários */
+        td:nth-child(4) {
+            white-space: nowrap;
         }
 
     </style>
@@ -1740,6 +1765,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <th>Medicamento</th>
                             <th>Dosagem</th>
                             <th>Frequência</th>
+                            <th>Horário</th>
                             <th>Data Início</th>
                             <th>Data Fim</th>
                             <th>Observações</th>
@@ -1761,7 +1787,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             <tr>
                                 <td><?php echo htmlspecialchars($medicamento['nome_medicamento']); ?></td>
                                 <td><?php echo htmlspecialchars($medicamento['dosagem']); ?></td>
-                                <td><?php echo htmlspecialchars($medicamento['frequencia']); ?></td>
+                                <td>A cada <?php echo htmlspecialchars($medicamento['frequencia']); ?> horas</td>
+                                <td><?php echo calcularHorarios($medicamento['horario'], $medicamento['frequencia']); ?></td>
                                 <td><?php echo date('d/m/Y', strtotime($medicamento['data_inicio'])); ?></td>
                                 <td><?php echo $medicamento['data_fim'] ? date('d/m/Y', strtotime($medicamento['data_fim'])) : '-'; ?></td>
                                 <td><?php echo htmlspecialchars($medicamento['observacoes']); ?></td>
@@ -1804,6 +1831,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                         <th>Medicamento</th>
                                         <th>Dosagem</th>
                                         <th>Frequência</th>
+                                        <th>Horário</th>
                                         <th>Data Início</th>
                                         <th>Data Fim</th>
                                         <th>Observações</th>
@@ -1822,53 +1850,128 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             </div>
         </div>
 
-        <!-- Modal de Medicamento -->
-        <div class="modal fade" id="modalMedicamento" tabindex="-1" aria-labelledby="modalMedicamentoLabel" aria-hidden="true">
+
+        <!-- Modal de Adicionar Medicamento -->
+        <div class="modal fade" id="modalAdicionarMedicamento" tabindex="-1" aria-labelledby="modalAdicionarMedicamentoLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalMedicamentoLabel">Novo Medicamento</h5>
+                        <h5 class="modal-title" id="modalAdicionarMedicamentoLabel">Adicionar Medicamento</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form id="formMedicamento" method="POST">
+                    <form id="formAdicionarMedicamento" method="POST">
                         <div class="modal-body">
-                            <input type="hidden" name="medicamento_id" id="medicamento_id">
                             <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
-                            
+                            <!-- Mesmos campos do formulário original -->
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label><i class="fas fa-pills"></i> Nome do Medicamento:</label>
-                                    <input type="text" name="nome_medicamento" id="nome_medicamento" class="form-control" required>
+                                    <input type="text" name="nome_medicamento" class="form-control" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label><i class="fas fa-syringe"></i> Dosagem:</label>
-                                    <input type="text" name="dosagem" id="dosagem" class="form-control" required>
+                                    <input type="text" name="dosagem" class="form-control" required>
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label><i class="fas fa-clock"></i> Frequência:</label>
-                                    <input type="text" name="frequencia" id="frequencia" class="form-control" required>
+                                    <label><i class="fas fa-clock"></i> Frequência (horas):</label>
+                                    <select name="frequencia" class="form-control" required>
+                                        <option value="">Selecione...</option>
+                                        <?php for($i = 1; $i <= 24; $i++): ?>
+                                            <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <small class="form-text text-muted">A cada quantas horas o medicamento deve ser tomado</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label><i class="fas fa-clock"></i> Horário Inicial:</label>
+                                    <input type="time" name="horario" class="form-control" required>
+                                    <small class="form-text text-muted">Horário da primeira dose</small>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label><i class="fas fa-calendar-alt"></i> Data Início:</label>
-                                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" required>
+                                    <input type="date" name="data_inicio" class="form-control" required>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label><i class="fas fa-calendar-alt"></i> Data Fim:</label>
-                                    <input type="date" name="data_fim" id="data_fim" class="form-control">
+                                    <input type="date" name="data_fim" class="form-control">
                                 </div>
                             </div>
 
                             <div class="form-group mb-3">
                                 <label><i class="fas fa-comment"></i> Observações:</label>
-                                <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
+                                <textarea name="observacoes" class="form-control" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Editar Medicamento -->
+        <div class="modal fade" id="modalEditarMedicamento" tabindex="-1" aria-labelledby="modalEditarMedicamentoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarMedicamentoLabel">Editar Medicamento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formEditarMedicamento" method="POST">
+                        <div class="modal-body">
+                            <input type="hidden" name="medicamento_id" id="editar_medicamento_id">
+                            <input type="hidden" name="paciente_id" value="<?php echo $paciente_id; ?>">
+                            <!-- Mesmos campos do formulário original -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label><i class="fas fa-pills"></i> Nome do Medicamento:</label>
+                                    <input type="text" name="nome_medicamento" id="editar_nome_medicamento" class="form-control" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label><i class="fas fa-syringe"></i> Dosagem:</label>
+                                    <input type="text" name="dosagem" id="editar_dosagem" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label><i class="fas fa-clock"></i> Frequência (horas):</label>
+                                    <select name="frequencia" id="editar_frequencia" class="form-control" required>
+                                        <option value="">Selecione...</option>
+                                        <?php for($i = 1; $i <= 24; $i++): ?>
+                                            <option value="<?php echo $i; ?>"><?php echo $i; ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                    <small class="form-text text-muted">A cada quantas horas o medicamento deve ser tomado</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label><i class="fas fa-clock"></i> Horário Inicial:</label>
+                                    <input type="time" name="horario" id="editar_horario" class="form-control" required>
+                                    <small class="form-text text-muted">Horário da primeira dose</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label><i class="fas fa-calendar-alt"></i> Data Início:</label>
+                                    <input type="date" name="data_inicio" id="editar_data_inicio" class="form-control" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label><i class="fas fa-calendar-alt"></i> Data Fim:</label>
+                                    <input type="date" name="data_fim" id="editar_data_fim" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label><i class="fas fa-comment"></i> Observações:</label>
+                                <textarea name="observacoes" id="editar_observacoes" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                         </div>
                     </form>
                 </div>
@@ -3550,27 +3653,51 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
         // Adicionar variável global para permissão
         const userHasPermission = <?php echo json_encode(temPermissao()); ?>;
+        
+        // Atualizar o botão de adicionar para abrir o modal correto
+        $('.btn-primary[data-bs-toggle="modal"]').attr('data-bs-target', '#modalAdicionarMedicamento');
 
-        function abrirModalMedicamento(pacienteId) {
-            $('#formMedicamento')[0].reset();
-            $('#medicamento_id').val('');
-            $('#modalMedicamentoLabel').text('Novo Medicamento');
-            var myModal = new bootstrap.Modal(document.getElementById('modalMedicamento'));
+        // Função para editar medicamento
+        function editarMedicamento(medicamento) {
+            $('#editar_medicamento_id').val(medicamento.id);
+            $('#editar_nome_medicamento').val(medicamento.nome_medicamento);
+            $('#editar_dosagem').val(medicamento.dosagem);
+            $('#editar_frequencia').val(medicamento.frequencia);
+            $('#editar_horario').val(medicamento.horario_formatado);
+            $('#editar_data_inicio').val(medicamento.data_inicio);
+            $('#editar_data_fim').val(medicamento.data_fim);
+            $('#editar_observacoes').val(medicamento.observacoes);
+            
+            var myModal = new bootstrap.Modal(document.getElementById('modalEditarMedicamento'));
             myModal.show();
         }
 
-        function editarMedicamento(medicamento) {
-            $('#medicamento_id').val(medicamento.id);
-            $('#nome_medicamento').val(medicamento.nome_medicamento);
-            $('#dosagem').val(medicamento.dosagem);
-            $('#frequencia').val(medicamento.frequencia);
-            $('#data_inicio').val(medicamento.data_inicio);
-            $('#data_fim').val(medicamento.data_fim);
-            $('#observacoes').val(medicamento.observacoes);
+        // Manipular o envio do formulário de adicionar
+        $('#formAdicionarMedicamento').on('submit', function(e) {
+            e.preventDefault();
+            salvarMedicamento(this, 'modalAdicionarMedicamento');
+        });
+
+        // Manipular o envio do formulário de editar
+        $('#formEditarMedicamento').on('submit', function(e) {
+            e.preventDefault();
+            salvarMedicamento(this, 'modalEditarMedicamento');
+        });
+
+        // Adicione esta função auxiliar para calcular os horários
+        function calcularHorarios(horarioInicial, frequencia) {
+            if (!horarioInicial || !frequencia) return '';
             
-            $('#modalMedicamentoLabel').text('Editar Medicamento');
-            var myModal = new bootstrap.Modal(document.getElementById('modalMedicamento'));
-            myModal.show();
+            const horarios = [];
+            let hora = new Date(`2000-01-01 ${horarioInicial}`);
+            
+            // Gerar 4 horários (24h / frequência, limitado a 4 para não sobrecarregar a visualização)
+            for (let i = 0; i < Math.min(4, 24/frequencia); i++) {
+                horarios.push(hora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+                hora.setHours(hora.getHours() + parseInt(frequencia));
+            }
+            
+            return horarios.join(' → ');
         }
 
         function excluirMedicamento(medicamentoId) {
@@ -3628,23 +3755,19 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
             });
         }
 
-        $('#formMedicamento').on('submit', function(e) {
-            e.preventDefault();
-            
+        // Função genérica para salvar medicamento
+        function salvarMedicamento(form, modalId) {
             $.ajax({
                 url: 'salvar_medicamento.php',
                 type: 'POST',
-                data: $(this).serialize(),
+                data: $(form).serialize(),
                 dataType: 'json',
                 success: function(response) {
-                    console.log('Response:', response);
                     if (response.success) {
-                        // Fechar o modal e limpar o formulário
-                        const myModal = bootstrap.Modal.getInstance(document.getElementById('modalMedicamento'));
+                        const myModal = bootstrap.Modal.getInstance(document.getElementById(modalId));
                         myModal.hide();
-                        $('#formMedicamento')[0].reset();
+                        $(form)[0].reset();
                         
-                        // Primeiro mostrar o Swal.fire
                         Swal.fire({
                             icon: 'success',
                             title: 'Sucesso!',
@@ -3652,7 +3775,6 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                             showConfirmButton: false,
                             timer: 1500,
                             didOpen: () => {
-                                // Atualizar as tabelas enquanto o Swal está visível
                                 Promise.all([
                                     atualizarTabelaMedicamentos('principal'),
                                     $('#modalTodosMedicamentos').hasClass('show') ? 
@@ -3680,9 +3802,9 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                     });
                 }
             });
-        });
+        }
 
-        // Função para atualizar tabelas (modificada para retornar Promise)
+        // Função para atualizar tabelas (modificada para atualizar apenas medicamentos)
         function atualizarTabelaMedicamentos(tipo = 'principal') {
             const paciente_id = $('#p_id').val();
             
@@ -3699,14 +3821,15 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                         console.log('Response:', response);
                         if (response.success) {
                             console.log('Medicamentos:', response.medicamentos);
+                            // Seleciona especificamente a tabela de medicamentos
                             const tbody = tipo === 'principal' 
-                                ? $('.section-card .table tbody')
+                                ? $('.section-card:has(.section-header:contains("Medicamentos")) .table tbody')
                                 : $('#modalTodosMedicamentos .table tbody');
                             
                             tbody.empty();
                             
                             if (response.medicamentos.length === 0) {
-                                const colSpan = userHasPermission ? 7 : 6;
+                                const colSpan = userHasPermission ? 8 : 7;
                                 tbody.append(`
                                     <tr>
                                         <td colspan="${colSpan}" class="text-center">Nenhum registro encontrado</td>
@@ -3718,7 +3841,8 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                                         <tr data-id="${medicamento.id}">
                                             <td>${medicamento.nome_medicamento}</td>
                                             <td>${medicamento.dosagem}</td>
-                                            <td>${medicamento.frequencia}</td>
+                                            <td>A cada ${medicamento.frequencia} horas</td>
+                                            <td>${medicamento.horarios_calculados}</td>
                                             <td>${medicamento.data_inicio_formatada}</td>
                                             <td>${medicamento.data_fim_formatada || 'Em uso'}</td>
                                             <td>${medicamento.observacoes || 'Não informado'}</td>
@@ -3742,7 +3866,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
 
                             // Atualizar botão "Ver Todos" apenas para tabela principal
                             if (tipo === 'principal') {
-                                const btnContainer = $('.d-flex.justify-content-between.mb-3');
+                                const btnContainer = $('.section-card:has(.section-header:contains("Medicamentos")) .d-flex.justify-content-between.mb-3');
                                 if (response.total > 3) {
                                     let btnVerTodos = btnContainer.find('.btn-info');
                                     if (btnVerTodos.length) {
@@ -3775,6 +3899,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
         $('#modalTodosMedicamentos').on('show.bs.modal', function () {
             atualizarTabelaMedicamentos('todos');
         });
+
 
         <!---------------------------------------------------------------------------->
         <!-- Script para o modal de exames -->
@@ -3989,6 +4114,7 @@ $result_acompanhamento = $stmt_acompanhamento->get_result();
                 }
             });
         }
+
 
     </script>
 

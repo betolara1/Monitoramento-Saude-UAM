@@ -115,12 +115,15 @@ CREATE TABLE IF NOT EXISTS medicamentos (
  paciente_id INT NOT NULL,
  nome_medicamento VARCHAR(100),
  dosagem VARCHAR(50),
- frequencia VARCHAR(50),
+ frequencia VARCHAR(2),
+ horario TIME,
  observacoes TEXT,
  data_inicio DATE,
  data_fim DATE,
  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
+ALTER TABLE medicamentos ADD COLUMN horario TIME AFTER frequencia;
+ALTER TABLE medicamentos MODIFY COLUMN frequencia VARCHAR(2);
 
 
 -- Tabela para Análises e Estatísticas
