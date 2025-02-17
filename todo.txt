@@ -1,6 +1,0 @@
-
-
-
-* notificação de medicamento via SMS (horário, nome e dosagem)
-
-ver o calculo do risco cardíaco
