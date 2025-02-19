@@ -75,8 +75,6 @@ $stmt_acompanhamento->bind_param("i", $paciente_id);
 $stmt_acompanhamento->execute();
 $result_acompanhamento = $stmt_acompanhamento->get_result();
 
-require_once 'push_config.php';
-include 'headerPush.php';
 ?>
 
 

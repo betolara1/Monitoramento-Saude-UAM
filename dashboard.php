@@ -37,8 +37,6 @@ function temPermissao($tipo_permissao = null) {
     }
 }
 
-require_once 'push_config.php';
-include 'headerPush.php';
 ?>
 
 
