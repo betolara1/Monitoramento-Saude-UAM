@@ -1,5 +1,5 @@
 <?php
 // Twilio configs
-define('TWILIO_ACCOUNT_SID', '');
-define('TWILIO_AUTH_TOKEN', '');
-define('TWILIO_PHONE_NUMBER', '');
+define('TWILIO_ACCOUNT_SID', 'TWILIO_ACCOUNT_SID');
+define('TWILIO_AUTH_TOKEN', 'TWILIO_AUTH_TOKEN');
+define('TWILIO_PHONE_NUMBER', 'TWILIO_PHONE_NUMBER');
