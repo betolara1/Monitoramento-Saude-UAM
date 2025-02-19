@@ -2,6 +2,7 @@
 session_start();
 include 'sidebar.php';
 
+
 // Verifica se o usuário está logado
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: index.php");
@@ -35,7 +36,11 @@ function temPermissao($tipo_permissao = null) {
             return false;
     }
 }
+
+require_once 'push_config.php';
+include 'headerPush.php';
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">

@@ -164,14 +164,11 @@ CREATE TABLE IF NOT EXISTS riscos_saude (
     FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
 
-
-CREATE TABLE IF NOT EXISTS notificacoes_medicamentos (
+CREATE TABLE IF NOT EXISTS logs_medicamentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     medicamento_id INT NOT NULL,
-    paciente_id INT NOT NULL,
-    horario_previsto DATETIME NOT NULL,
-    notificacao_enviada BOOLEAN DEFAULT FALSE,
-    data_envio DATETIME,
-    FOREIGN KEY (medicamento_id) REFERENCES medicamentos(id) ON DELETE CASCADE,
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+    horario_envio DATETIME NOT NULL,
+    status ENUM('enviado', 'erro') NOT NULL,
+    mensagem TEXT,
+    FOREIGN KEY (medicamento_id) REFERENCES medicamentos(id) ON DELETE CASCADE
 );

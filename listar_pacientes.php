@@ -64,7 +64,11 @@ $usuarios = $stmt->get_result();
 
 // Ajusta o título baseado no tipo de usuário
 $titulo = ($is_admin || $is_medico || $is_enfermeiro || $is_acs) ? "Lista de Pacientes" : "Meus Dados";
+
+require_once 'push_config.php';
+include 'headerPush.php';
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-BR">
