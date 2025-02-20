@@ -1,14 +1,6 @@
 const venom = require('venom-bot');
-const mysql = require('mysql2/promise');
+const { criarConexao } = require('./conexao');
 require('dotenv').config();
-
-// Configuração do MySQL
-const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'medicina'
-};
 
 // Função para logging
 function logDebug(mensagem) {
@@ -17,15 +9,17 @@ function logDebug(mensagem) {
 }
 
 // Função para verificar se está dentro da janela de 15 minutos
-function dentroJanelaEnvio(horarioMedicamento) {
+function dentroJanelaEnvio(horarioAlvo) {
     const agora = new Date();
-    const [horas, minutos] = horarioMedicamento.split(':');
-    const horaMed = new Date();
-    horaMed.setHours(parseInt(horas), parseInt(minutos), 0);
+    const [horas, minutos] = horarioAlvo.split(':');
+    const horarioMedicamento = new Date();
+    horarioMedicamento.setHours(parseInt(horas), parseInt(minutos), 0, 0);
     
-    const limiteInicial = new Date(horaMed.getTime() - 15 * 60000); // 15 minutos antes
+    // 15 minutos antes do horário
+    const inicioJanela = new Date(horarioMedicamento.getTime() - 15 * 60000);
     
-    return agora >= limiteInicial && agora < horaMed;
+    // Verifica se está dentro da janela de 15 minutos
+    return agora >= inicioJanela && agora < horarioMedicamento;
 }
 
 // Função para formatar número de telefone
@@ -52,15 +46,47 @@ async function enviarMensagem(client, telefone, mensagem) {
     }
 }
 
-// Função para processar medicamentos
-async function processarMedicamentos(client) {
-    const connection = await mysql.createConnection(dbConfig);
+// Função para calcular todos os horários do dia baseado na frequência
+function calcularHorariosDoDia(horarioBase, frequencia) {
+    const horarios = [];
+    const [horaBase, minutoBase] = horarioBase.split(':').map(Number);
+    const freq = parseInt(frequencia);
     
+    // Adiciona o horário base
+    horarios.push(`${horaBase.toString().padStart(2, '0')}:${minutoBase.toString().padStart(2, '0')}:00`);
+    
+    // Calcula os próximos horários baseado na frequência
+    let proximaHora = horaBase;
+    for (let i = 1; i < 24/freq; i++) {
+        proximaHora = (proximaHora + freq) % 24;
+        horarios.push(`${proximaHora.toString().padStart(2, '0')}:${minutoBase.toString().padStart(2, '0')}:00`);
+    }
+    
+    return horarios;
+}
+
+// Função para verificar se já foi enviado
+async function verificarEnvioHoje(connection, medicamentoId, horario) {
+    const dataAtual = new Date().toISOString().split('T')[0];
+    const [registros] = await connection.execute(`
+        SELECT COUNT(*) as total
+        FROM logs_medicamentos 
+        WHERE medicamento_id = ? 
+        AND DATE(horario_envio) = ?
+        AND ABS(TIME_TO_SEC(TIMEDIFF(TIME(horario_envio), ?))) < 900
+        AND status = 'enviado'
+    `, [medicamentoId, dataAtual, horario]);
+
+    return registros[0].total > 0;
+}
+
+// Função principal modificada
+async function processarMedicamentos(client) {
+    let connection;
     try {
-        logDebug("Iniciando processamento de medicamentos");
+        connection = await criarConexao();
         const dataAtual = new Date().toISOString().split('T')[0];
         
-        // Busca medicamentos ativos
         const [medicamentos] = await connection.execute(`
             SELECT m.*, u.nome, u.telefone 
             FROM medicamentos m 
@@ -70,77 +96,59 @@ async function processarMedicamentos(client) {
             AND (m.data_inicio <= ?)
         `, [dataAtual, dataAtual]);
 
-        logDebug(`Total de medicamentos encontrados: ${medicamentos.length}`);
-
         for (const med of medicamentos) {
-            logDebug(`\nProcessando medicamento: ${med.nome_medicamento} para paciente: ${med.nome}`);
+            const horariosDoDia = calcularHorariosDoDia(med.horario, med.frequencia);
+            
+            for (const horario of horariosDoDia) {
+                // Primeiro verifica se já foi enviado
+                const jaEnviado = await verificarEnvioHoje(connection, med.id, horario);
+                
+                if (!jaEnviado && dentroJanelaEnvio(horario)) {
+                    try {
+                        let mensagem = `Lembrete de medicação\n\n`;
+                        mensagem += `${med.nome}, está na hora de tomar ${med.nome_medicamento}\n`;
+                        mensagem += `Horário: ${horario.slice(0, 5)}\n`;
+                        
+                        if (med.dosagem) {
+                            mensagem += `Dosagem: ${med.dosagem}\n`;
+                        }
 
-            // Verifica se já foi enviado hoje
-            const [jaEnviado] = await connection.execute(`
-                SELECT id FROM logs_medicamentos 
-                WHERE medicamento_id = ? 
-                AND DATE(horario_envio) = CURRENT_DATE 
-                AND status = 'enviado'
-            `, [med.id]);
+                        // Registra antes de enviar para evitar duplicatas
+                        await connection.execute(`
+                            INSERT INTO logs_medicamentos 
+                            (medicamento_id, horario_envio, status, mensagem)
+                            VALUES (?, NOW(), 'enviado', ?)
+                        `, [med.id, mensagem]);
 
-            if (jaEnviado.length > 0) {
-                logDebug("Mensagem já enviada hoje para este medicamento");
-                continue;
-            }
-
-            // Verifica janela de envio
-            if (dentroJanelaEnvio(med.horario)) {
-                try {
-                    const horaMed = new Date();
-                    const [horas, minutos] = med.horario.split(':');
-                    horaMed.setHours(parseInt(horas), parseInt(minutos), 0);
-                    
-                    const agora = new Date();
-                    const minutosRestantes = Math.floor((horaMed - agora) / 60000);
-
-                    // Prepara a mensagem
-                    let mensagem = `Lembrete de medicação\n\n`;
-                    mensagem += `${med.nome}, você precisará tomar sua medicação ${med.nome_medicamento} `;
-                    mensagem += `em ${minutosRestantes > 1 ? minutosRestantes + ' minutos' : '1 minuto'} `;
-                    mensagem += `(às ${med.horario})\n`;
-                    
-                    if (med.dosagem) {
-                        mensagem += `Dosagem: ${med.dosagem}`;
+                        // Envia a mensagem
+                        await enviarMensagem(client, med.telefone, mensagem);
+                        logDebug(`Mensagem enviada com sucesso para ${med.nome} - ${horario}`);
+                    } catch (error) {
+                        logDebug(`Erro ao enviar mensagem: ${error.message}`);
+                        
+                        // Registra o erro
+                        await connection.execute(`
+                            INSERT INTO logs_medicamentos 
+                            (medicamento_id, horario_envio, status, mensagem)
+                            VALUES (?, NOW(), 'erro', ?)
+                        `, [med.id, error.message]);
                     }
-
-                    // Envia a mensagem
-                    await enviarMensagem(client, med.telefone, mensagem);
-                    
-                    // Registra o envio no banco
-                    await connection.execute(`
-                        INSERT INTO logs_medicamentos (medicamento_id, horario_envio, status, mensagem)
-                        VALUES (?, NOW(), 'enviado', ?)
-                    `, [med.id, mensagem]);
-
-                    logDebug('Mensagem registrada no banco de dados');
-
-                } catch (error) {
-                    logDebug(`ERRO ao processar: ${error.message}`);
-                    
-                    // Registra o erro no banco
-                    await connection.execute(`
-                        INSERT INTO logs_medicamentos (medicamento_id, horario_envio, status, mensagem)
-                        VALUES (?, NOW(), 'erro', ?)
-                    `, [med.id, error.message]);
+                } else {
+                    logDebug(`Pulando envio para ${med.nome} - ${horario} (${jaEnviado ? 'já enviado' : 'fora da janela'})`);
                 }
-            } else {
-                logDebug(`Fora da janela de envio para o horário: ${med.horario}`);
             }
         }
 
     } catch (error) {
         logDebug(`Erro geral: ${error.message}`);
     } finally {
-        await connection.end();
+        if (connection) {
+            await connection.end();
+        }
     }
 }
 
-// Inicializa o cliente
+// Inicialização do cliente
 venom
     .create({
         session: 'medicina-session',
@@ -153,12 +161,14 @@ venom
     .then((client) => {
         logDebug('Cliente conectado com sucesso!');
         
-        // Executa o processamento a cada minuto
+        // Executa a cada minuto
         setInterval(() => {
-            processarMedicamentos(client);
-        }, 60000); // 60000 ms = 1 minuto
+            processarMedicamentos(client).catch(err => {
+                logDebug('Erro no processamento:', err);
+            });
+        }, 60000);
         
-        // Executa imediatamente na primeira vez
+        // Primeira execução
         processarMedicamentos(client);
     })
     .catch((error) => {

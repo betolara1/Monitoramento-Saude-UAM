@@ -1,2 +1,3 @@
-2025/02/19-16:19:39.265 84c Creating DB C:\xampp\htdocs\medicina\tokens\medicina-session\Default\Site Characteristics Database since it was missing.
-2025/02/19-16:19:39.322 84c Reusing MANIFEST C:\xampp\htdocs\medicina\tokens\medicina-session\Default\Site Characteristics Database/MANIFEST-000001
+2025/02/20-08:56:15.779 c68 Reusing MANIFEST C:\xampp\htdocs\medicina\tokens\medicina-session\Default\Site Characteristics Database/MANIFEST-000001
+2025/02/20-08:56:15.780 c68 Recovering log #3
+2025/02/20-08:56:15.781 c68 Reusing old log C:\xampp\htdocs\medicina\tokens\medicina-session\Default\Site Characteristics Database/000003.log 
