@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     data_nascimento VARCHAR(12) NOT NULL,
     sexo VARCHAR(20) NOT NULL,
     micro_area VARCHAR(50),
+    push_subscription TEXT,
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 alter table usuarios add column micro_area VARCHAR(50) after sexo;
@@ -29,6 +30,7 @@ alter table usuarios modify sexo VARCHAR(20) NOT NULL;
 alter table usuarios modify data_nascimento VARCHAR(12) NOT NULL;
 ALTER TABLE usuarios ADD COLUMN micro_area_id INT;
 ALTER TABLE usuarios ADD FOREIGN KEY (micro_area_id) REFERENCES micro_areas(id);
+ALTER TABLE usuarios ADD COLUMN push_subscription TEXT AFTER micro_area_id;
 
 CREATE TABLE IF NOT EXISTS micro_areas (
     id INT AUTO_INCREMENT PRIMARY KEY,

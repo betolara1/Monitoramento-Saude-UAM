@@ -171,6 +171,115 @@ function temPermissao($tipo_permissao = null) {
         a.text-decoration-none {
             color: inherit;
         }
+
+        .notification-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4e73df, #224abe);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(78, 115, 223, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .notification-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(78, 115, 223, 0.4);
+            background: linear-gradient(45deg, #224abe, #4e73df);
+        }
+
+        .notification-btn .bell-icon {
+            font-size: 24px;
+            animation: ring 4s ease-in-out infinite;
+        }
+
+        @keyframes ring {
+            0% { transform: rotate(0); }
+            5% { transform: rotate(25deg); }
+            10% { transform: rotate(-20deg); }
+            15% { transform: rotate(15deg); }
+            20% { transform: rotate(-10deg); }
+            25% { transform: rotate(5deg); }
+            30% { transform: rotate(0); }
+            100% { transform: rotate(0); }
+        }
+
+        .notification-btn.active {
+            background: linear-gradient(45deg, #1cc88a, #169b6b);
+            pointer-events: none;
+        }
+
+        .notification-btn.active .bell-icon {
+            animation: none;
+        }
+
+        .notification-status {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            display: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 9999;
+            max-width: 250px;
+            text-align: center;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification-status.success {
+            display: block;
+            background-color: white;
+            color: #169b6b;
+            border: 1px solid #1cc88a;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .notification-status.error {
+            display: block;
+            background-color: white;
+            color: #e74a3b;
+            border: 1px solid #e74a3b;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Tooltip */
+        .notification-btn::before {
+            content: 'Ativar Notificações';
+            position: absolute;
+            right: 70px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .notification-btn:hover::before {
+            opacity: 1;
+        }
+
+        .notification-btn.active::before {
+            content: 'Notificações Ativadas';
+        }
     </style>
 </head>
 <body>
@@ -179,7 +288,12 @@ function temPermissao($tipo_permissao = null) {
     <div class="welcome-message">
         <h2>Bem-vindo(a), <?php echo $_SESSION['nome'] ?? 'Usuário'; ?>!</h2>
         <p>Painel de Controle do Sistema de Monitoramento de Saúde</p>
+        <button id="notificationBtn" class="notification-btn" onclick="registrarServiceWorker()">
+            <i class="fas fa-bell bell-icon"></i>
+        </button>
     </div>
+
+    <div id="notificationStatus" class="notification-status"></div>
 
     <div class="row">
         <?php if (temPermissao('Admin') || temPermissao('ACS') || temPermissao('Enfermeiro') || temPermissao('Medico')): ?>
@@ -266,5 +380,77 @@ function temPermissao($tipo_permissao = null) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+<script>
+    async function registrarServiceWorker() {
+        const btn = document.getElementById('notificationBtn');
+        const status = document.getElementById('notificationStatus');
+        
+        try {
+            const registration = await navigator.serviceWorker.register('./src/service-worker.js', {
+                scope: '/medicina/src/'
+            });
+            console.log('Service Worker registrado:', registration);
+            
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: 'BLXcZTuDynYjNrB-30khCkSHmLKhnR4tKIaMEiIOL5vxgSGdlhWLfR0NogDdFr8pi3b4aahogSaZ2mq8XVSd2Mk'
+                });
+                
+                // Adicionar ID do usuário na requisição
+                const userId = <?php echo $_SESSION['usuario_id']; ?>; // Pegando ID do usuário da sessão PHP
+                
+                // Enviar para salvar no banco
+                const response = await fetch('http://localhost:3000/api/salvar-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        subscription: subscription
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                console.log('Subscription salva com sucesso!');
+
+                // Quando der sucesso
+                btn.classList.add('active');
+                btn.innerHTML = `<i class="fas fa-bell bell-icon"></i>`;
+                status.className = 'notification-status success';
+                status.textContent = 'Notificações ativadas!';
+                
+                // Esconder a mensagem de status após 3 segundos
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+
+            }
+        } catch (error) {
+            console.error('Erro ao registrar Service Worker:', error);
+            status.className = 'notification-status error';
+            status.textContent = 'Erro ao ativar notificações';
+            
+            // Esconder a mensagem de erro após 3 segundos
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+    }
+
+    // Verificar estado inicial das notificações
+    if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+            const btn = document.getElementById('notificationBtn');
+            btn.classList.add('active');
+            btn.innerHTML = `<i class="fas fa-bell bell-icon"></i>`;
+        }
+    }
+</script>
 </body>
 </html>
