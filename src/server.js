@@ -7,7 +7,7 @@ const app = express();
 
 // Configurar CORS para permitir requisições do seu frontend
 app.use(cors({
-    origin: 'http://localhost'  // ou 'http://localhost/medicina'
+    origin: ['https://apimedicina.com', 'https://www.apimedicina.com']
 }));
 
 app.use(bodyParser.json());
